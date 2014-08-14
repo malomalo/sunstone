@@ -108,6 +108,16 @@ class SunstoneTest < Minitest::Test
     assert_raises(Sunstone::Exception)               { Sunstone.send_request(Net::HTTP::Get.new('/550')) }
   end
   
+  test '#send_request(#<Net::HTTPRequest>, &block) returns value returned from &block' do
+    stub_request(:get, "http://testhost.com/test").to_return(:body => 'get')
+    
+    value = Sunstone.send_request(Net::HTTP::Get.new('/test')) do |response|
+      3215
+    end
+    
+    assert_equal 3215, value
+  end
+  
   test '#send_request(#<Net::HTTPRequest>, &block)' do
     stub_request(:get, "http://testhost.com/test").to_return(:body => 'get')
     

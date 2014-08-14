@@ -18,6 +18,21 @@ end
 
 class Sunstone::ParserTest < Minitest::Test
 
+  test '::parse(klass, string)' do
+    assert_equal true, Sunstone::Parser.parse(TestModel, '{"red": true}').red
+  end
+  
+  test '::parse(klass, response)' do
+    Sunstone.site = "http://test_api_key@testhost.com"
+    stub_request(:get, "http://testhost.com/test").to_return(:body => '{"red": true}')
+    
+    model = Sunstone.get('/test') do |response|
+      Sunstone::Parser.parse(TestModel, response)
+    end
+    
+    assert_equal true, model.red
+  end
+  
   test "parse boolean attributes" do
     parser = Sunstone::Parser.new(TestModel)
     assert_equal true, parser.parse('{"red": true}').red
@@ -49,6 +64,13 @@ class Sunstone::ParserTest < Minitest::Test
   test "parse array attribute" do
     parser = Sunstone::Parser.new(TestModel)
     assert_equal ["name 1", "name 2"], parser.parse('{"nicknames": ["name 1", "name 2"]}').nicknames
+  end
+  
+  test "parse skips over unkown key" do
+    assert_nothing_raised do
+      Sunstone::Parser.parse(TestModel, '{"other_key": "name 2"}')
+      Sunstone::Parser.parse(TestModel, '{"other_key": ["name 1", "name 2"]}')
+    end
   end
   
   test "parse belong_to association" do

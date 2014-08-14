@@ -9,7 +9,7 @@ require 'connection_pool'
 require 'active_support'
 require 'active_support/core_ext'
 
-# require 'active_model'
+require 'active_model'
 
 require 'sunstone/exception'
 require 'sunstone/schema'
@@ -108,6 +108,7 @@ module Sunstone
       request.body = Wankel.encode(body)
     end
     
+    return_value = nil
     with_connection do |connection|
       connection.request(request) do |response|
         
@@ -125,12 +126,14 @@ module Sunstone
         end
         
         if block_given?
-          yield(response)
+          return_value =yield(response)
         else
-          response
+          return_value =response
         end
       end
     end
+    
+    return_value
   end
   
   # Send a GET request to +path+ on the Sunstone Server via +Sunstone#send_request+.

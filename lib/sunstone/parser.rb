@@ -2,6 +2,20 @@ module Sunstone
   class Parser < Wankel::SaxParser
     
     attr_reader :object
+    
+    def self.parse(klass, response_or_body)
+      parser = self.new(klass)
+      
+      if response_or_body.is_a?(Net::HTTPResponse)
+        response_or_body.read_body do |chunk|
+          parser << chunk
+        end
+      else
+        parser << response_or_body
+      end
+      
+      parser.complete
+    end
   
     def initialize(klass, options=nil)
       super(options)
@@ -43,11 +57,11 @@ module Sunstone
         @stack.last << value
       else
         attribute = @stack.pop
-        @stack.last.send(:"#{attribute}=", value)
+        @stack.last.send(:"#{attribute}=", value) if @stack.last.respond_to?(:"#{attribute}=")
       end
     end
   
-    def on_null; set_value(nil) ;end
+    def on_null; on_value(nil) ;end
     alias :on_boolean :on_value
     alias :on_integer :on_value
     alias :on_double  :on_value
@@ -60,7 +74,7 @@ module Sunstone
     def on_array_end
       value = @stack.pop
       attribute = @stack.pop
-      @stack.last.send(:"#{attribute}=", value)
+      @stack.last.send(:"#{attribute}=", value) if @stack.last.respond_to?(:"#{attribute}=")
     end
   
     # Override to return the account

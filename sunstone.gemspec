@@ -29,5 +29,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
   s.add_runtime_dependency 'activesupport'
+  s.add_runtime_dependency 'activemodel'
   s.add_runtime_dependency 'connection_pool'
 end
