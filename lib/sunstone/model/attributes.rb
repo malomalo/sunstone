@@ -39,6 +39,10 @@ module Sunstone
         self.class.schema
       end
       
+      def has?(attribute)
+        !!@attributes[attribute]
+      end
+      
       module ClassMethods
         
         def inherited(subclass)

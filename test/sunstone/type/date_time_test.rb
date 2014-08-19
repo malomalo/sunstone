@@ -22,4 +22,10 @@ class Sunstone::Type::DateTimeTest < Minitest::Test
     assert_equal Rational(123,1000), type.type_cast_from_json('2001-02-03T04:05:06.123+07:00').sec_fraction
   end
 
+  test "#type_cast_for_json" do
+    type = Sunstone::Type::DateTime.new
+    
+    assert_equal '2001-02-03T04:05:06.000+07:00', type.type_cast_for_json(DateTime.new(2001, 2, 3, 4, 5, 6, '+7'))
+  end
+  
 end

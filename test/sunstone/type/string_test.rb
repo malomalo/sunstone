@@ -20,6 +20,12 @@ class Sunstone::Type::StringTest < Minitest::Test
     assert_equal "string",  type.type_cast_from_json("string")
   end
   
+  test "#type_cast_for_json" do
+    type = Sunstone::Type::String.new
+    
+    assert_equal "10", type.type_cast_for_json("10")
+  end
+  
   test "values are duped coming out" do
     s = "foo"
     type = Sunstone::Type::String.new

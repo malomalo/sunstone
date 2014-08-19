@@ -46,4 +46,15 @@ class Sunstone::Model::AttributesTest < Minitest::Test
     assert_kind_of Sunstone::Type::Integer, @klass.schema[:size]
   end
   
+  test '#has?' do
+    @klass.define_schema do
+      attribute :name, :string
+      integer   :size
+    end
+    model = @klass.new(:size => 20)
+    
+    assert_equal false, model.has?(:name)
+    assert_equal true,  model.has?(:size)
+  end
+  
 end

@@ -21,6 +21,12 @@ class Sunstone::ParserTest < Minitest::Test
   test '::parse(klass, string)' do
     assert_equal true, Sunstone::Parser.parse(TestModel, '{"red": true}').red
   end
+
+  test '::parse(model_instance, string)' do
+    model = TestModel.new
+    Sunstone::Parser.parse(model, '{"red": true}')
+    assert_equal true, model.red
+  end
   
   test '::parse(klass, response)' do
     Sunstone.site = "http://test_api_key@testhost.com"

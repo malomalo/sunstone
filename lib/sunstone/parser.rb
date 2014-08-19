@@ -3,8 +3,8 @@ module Sunstone
     
     attr_reader :object
     
-    def self.parse(klass, response_or_body)
-      parser = self.new(klass)
+    def self.parse(instance_or_class, response_or_body)
+      parser = self.new(instance_or_class)
       
       if response_or_body.is_a?(Net::HTTPResponse)
         response_or_body.read_body do |chunk|
@@ -20,7 +20,7 @@ module Sunstone
     def initialize(klass, options=nil)
       super(options)
       
-      @object = klass.new
+      @object = klass.class == Class ? klass.new : klass
       @stack = []
     end
 

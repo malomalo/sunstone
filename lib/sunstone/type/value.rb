@@ -24,11 +24,12 @@ module Sunstone
         end
       end
     
-      # Cast a value from the ruby type to a type that the json knows how
-      # to understand. The returned value from this method should be a
-      # +String+, +Numeric+, +Symbol+, +true+, +false+, or +nil+
       def type_cast_for_json(value)
-        value
+        if @options[:array]
+          value.nil? ? nil : value.map{ |v| _type_cast_for_json(v) }
+        else
+          _type_cast_for_json(value)
+        end
       end
     
       # Determines whether a value has changed for dirty checking. +old_value+
@@ -44,6 +45,10 @@ module Sunstone
       # +Type::Mutable+, which will define this method.
       def changed_in_place?(*)
         false
+      end
+      
+      def readonly?
+        @options[:readonly]
       end
     
       private
@@ -64,6 +69,13 @@ module Sunstone
       # instead.      
       def _type_cast_from_user(value)
         _type_cast(value)
+      end
+
+      # Cast a value from the ruby type to a type that the json knows how
+      # to understand. The returned value from this method should be a
+      # +String+, +Numeric+, +Symbol+, +true+, +false+, or +nil+      
+      def _type_cast_for_json(value)
+        value
       end
     
       def _type_cast(value)

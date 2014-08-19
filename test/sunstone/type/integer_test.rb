@@ -20,4 +20,10 @@ class Sunstone::Type::IntegerTest < Minitest::Test
     assert_equal 0,  type.type_cast_from_json(false)
   end
 
+  test "#type_cast_for_json" do
+    type = Sunstone::Type::Integer.new
+    
+    assert_equal 10, type.type_cast_for_json(10)
+  end
+  
 end
