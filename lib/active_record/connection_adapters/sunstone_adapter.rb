@@ -8,6 +8,8 @@ require 'active_record/connection_adapters/sunstone/database_statements'
 require 'active_record/connection_adapters/sunstone/schema_statements'
 require 'active_record/connection_adapters/sunstone/column'
 
+require 'active_record/connection_adapters/sunstone/type/date_time'
+
 module ActiveRecord
   module ConnectionHandling # :nodoc:
 
@@ -148,6 +150,8 @@ module ActiveRecord
           m.register_type 'boolean',    Type::Boolean.new
           m.register_type 'string',     Type::String.new
           m.register_type 'integer',    Type::Integer.new
+          m.register_type 'decimal',    Type::Decimal.new
+          m.register_type 'datetime',   Sunstone::Type::DateTime.new
         end
 
         def exec(arel, name='SAR', binds=[])

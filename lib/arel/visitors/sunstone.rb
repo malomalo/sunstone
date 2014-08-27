@@ -32,16 +32,10 @@ module Arel
           visit_Arel_Nodes_SelectCore(x, c)
         }
         
-        # unless o.orders.empty?
-        #   collector << SPACE
-        #   collector << ORDER_BY
-        #   len = o.orders.length - 1
-        #   o.orders.each_with_index { |x, i|
-        #     collector = visit(x, collector)
-        #     collector << COMMA unless len == i
-        #   }
-        # end
-        #
+        if !o.orders.empty?
+          collector.order = o.orders.map { |x| visit(x, collector) }
+        end
+
         collector = maybe_visit o.limit, collector
         collector = maybe_visit o.offset, collector
         # collector = maybe_visit o.lock, collector
@@ -52,14 +46,14 @@ module Arel
       def visit_Arel_Nodes_SelectCore o, collector
         collector.request_type = Net::HTTP::Get
         
+        unless o.projections.empty?
+          collector.operation = visit(o.projections.first, collector)
+        else
+          collector.operation = :select
+        end
+        
         if o.source && !o.source.empty?
-          if o.source.left.is_a?(Arel::Table)
-            collector.table = o.source.left.name
-          else
-            # THIS is a count, not sure how to detect that
-            collector.table = "#{o.source.left.left.expr.cores.first.source.left.name}/count"
-            # visit(, collector)
-          end
+          collector.table = o.source.left.name
         end
 
         if !o.wheres.empty?
@@ -363,12 +357,12 @@ module Arel
       # end
       #
       def visit_Arel_Nodes_Ascending o, collector
-        visit(o.expr, collector) << " ASC"
+        { visit(o.expr, collector) => :asc }
       end
-      #
-      # def visit_Arel_Nodes_Descending o, collector
-      #   visit(o.expr, collector) << " DESC"
-      # end
+
+      def visit_Arel_Nodes_Descending o, collector
+        { visit(o.expr, collector) => :desc }
+      end
       #
       # def visit_Arel_Nodes_Group o, collector
       #   visit o.expr, collector
@@ -399,9 +393,9 @@ module Arel
       #   end
       # end
       #
-      # def visit_Arel_Nodes_Count o, collector
-      #   aggregate "COUNT", o, collector
-      # end
+      def visit_Arel_Nodes_Count o, collector
+        :count
+      end
       #
       # def visit_Arel_Nodes_Sum o, collector
       #   aggregate "SUM", o, collector

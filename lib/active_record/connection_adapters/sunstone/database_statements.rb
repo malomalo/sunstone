@@ -20,7 +20,13 @@ module ActiveRecord
         
         def exec_query(arel, name = 'SAR', binds = [])
           result = exec(to_sar(arel, binds), name)
-          ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
+
+          if result.is_a?(Array)
+            ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
+          else
+            # this is a count.. yea i know..
+            ActiveRecord::Result.new(['all'], [[result]], {:all => type_map.lookup('integer')})
+          end
         end
 
       end
