@@ -11,6 +11,7 @@ require 'active_record'
 require 'sunstone/connection'
 require 'sunstone/exception'
 require 'ext/active_record/statement_cache'
+require 'ext/active_record/relation'
 
 # require 'sunstone/parser'
 

@@ -4,9 +4,9 @@ module ActiveRecord
       
       def initialize collector
         @collector = collector
-        @indexes = collector.value.each_with_index.find_all { |thing,i|
+        @indexes = collector.value.find_all { |thing|
           Arel::Nodes::BindParam === thing
-        }.map(&:last)
+        }
       end
 
       def sql_for(binds, connection)

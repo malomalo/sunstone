@@ -47,7 +47,7 @@ module Arel
         get_params = {}
         
         if where
-          get_params[:where] = substitute_binds(where, bvs)
+          get_params[:where] = substitute_binds(where.clone, bvs)
           if get_params[:where].size == 1
             get_params[:where] = get_params[:where].pop
           end
