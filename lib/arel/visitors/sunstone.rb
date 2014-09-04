@@ -47,7 +47,7 @@ module Arel
         collector.request_type = Net::HTTP::Get
         
         unless o.projections.empty?
-          collector.operation = visit(o.projections.first, collector)
+          visit(o.projections.first, collector)
         else
           collector.operation = :select
         end
@@ -394,24 +394,49 @@ module Arel
       # end
       #
       def visit_Arel_Nodes_Count o, collector
-        :count
+        collector.operation = :count
+        collector.columns   = o.expressions.first
       end
       #
       # def visit_Arel_Nodes_Sum o, collector
       #   aggregate "SUM", o, collector
       # end
       #
-      # def visit_Arel_Nodes_Max o, collector
-      #   aggregate "MAX", o, collector
-      # end
-      #
-      # def visit_Arel_Nodes_Min o, collector
-      #   aggregate "MIN", o, collector
-      # end
-      #
-      # def visit_Arel_Nodes_Avg o, collector
-      #   aggregate "AVG", o, collector
-      # end
+      def visit_Arel_Nodes_Max o, collector
+        collector.operation = :max
+        if o.expressions.first.is_a?(Arel::Attributes::Attribute)
+          relation = o.expressions.first.relation
+          join_name = relation.table_alias || relation.name
+          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+        else
+          collector.columns   = o.expressions.first
+        end
+      end
+
+      def visit_Arel_Nodes_Min o, collector
+        collector.operation = :min
+        if o.expressions.first.is_a?(Arel::Attributes::Attribute)
+          relation = o.expressions.first.relation
+          join_name = relation.table_alias || relation.name
+          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+        else
+          collector.columns   = o.expressions.first
+        end
+      end
+
+      def visit_Arel_Nodes_Avg o, collector
+        # puts o.inspect
+        # #<Arel::Nodes::Avg:0x007fd863f55df0 @expressions=["rate_per_sqft_per_year"], @alias="avg_id", @distinct=false>
+
+        collector.operation = :average
+        if o.expressions.first.is_a?(Arel::Attributes::Attribute)
+          relation = o.expressions.first.relation
+          join_name = relation.table_alias || relation.name
+          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+        else
+          collector.columns   = o.expressions.first
+        end
+      end
       #
       # def visit_Arel_Nodes_TableAlias o, collector
       #   collector = visit o.relation, collector
@@ -720,19 +745,19 @@ module Arel
       #   visit o.right, collector
       # end
       #
-      # def aggregate name, o, collector
-      #   collector << "#{name}("
-      #   if o.distinct
-      #     collector << "DISTINCT "
-      #   end
-      #   collector = inject_join(o.expressions, collector, ", ") << ")"
-      #   if o.alias
-      #     collector << " AS "
-      #     visit o.alias, collector
-      #   else
-      #     collector
-      #   end
-      # end
+      def aggregate name, o, collector
+        collector << "#{name}("
+        if o.distinct
+          collector << "DISTINCT "
+        end
+        collector = inject_join(o.expressions, collector, ", ") << ")"
+        if o.alias
+          collector << " AS "
+          visit o.alias, collector
+        else
+          collector
+        end
+      end
       
       def maybe_visit thing, collector
         return collector unless thing

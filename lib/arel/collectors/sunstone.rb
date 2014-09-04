@@ -2,7 +2,7 @@ module Arel
   module Collectors
     class Sunstone < Arel::Collectors::Bind
       
-      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation
+      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns
       
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
@@ -40,8 +40,8 @@ module Arel
         path = "/#{table}"
         
         case operation
-        when :count
-          path += '/count'
+        when :count, :average, :min, :max
+          path += "/#{operation}"
         end
         
         get_params = {}
@@ -56,6 +56,7 @@ module Arel
         get_params[:limit] = limit if limit
         get_params[:offset] = offset if offset
         get_params[:order] = order if order
+        get_params[:columns] = columns if columns
         
         if get_params.size > 0
           path += '?' + get_params.to_param
