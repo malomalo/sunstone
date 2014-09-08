@@ -160,7 +160,7 @@ module ActiveRecord
           #                                               exec_cache(sql, name, binds)
           sar = to_sar(arel, binds)
 
-          log(sar, name) { Wankel.parse(@connection.send_request(sar).body) }
+          log(sar.is_a?(String) ? sar : "#{sar.class} #{CGI.unescape(sar.path)}", name) { Wankel.parse(@connection.send_request(sar).body) }
         end
 
         # Connects to a Sunstone API server and sets up the adapter depending on
