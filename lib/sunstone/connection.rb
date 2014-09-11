@@ -115,7 +115,7 @@ module Sunstone
         if response['X-42Floors-API-Version-Deprecated']
           logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
         end
-      
+
         validate_response_code(response)
       
         # Get the cookies
@@ -131,6 +131,7 @@ module Sunstone
           return_value =response
         end
       end
+
 
     
       return_value

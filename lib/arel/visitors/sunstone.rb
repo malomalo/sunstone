@@ -64,6 +64,19 @@ module Arel
 
         collector
       end
+      
+      def visit_Arel_Nodes_InsertStatement o, collector
+        collector.request_type  = Net::HTTP::Post
+        collector.table         = o.relation.name
+        collector.operation     = :insert
+        
+        if o.values
+          collector.updates = o.values.right.map { |x| visit(x, collector) }.zip(o.values.left).to_h
+        end
+        
+        collector
+      end
+
 
       
       #
@@ -114,23 +127,6 @@ module Arel
       #   collector
       # end
       #
-      # def visit_Arel_Nodes_InsertStatement o, collector
-      #   collector << "INSERT INTO "
-      #   collector = visit o.relation, collector
-      #   if o.columns.any?
-      #     collector << " (#{o.columns.map { |x|
-      #       quote_column_name x.name
-      #     }.join ', '})"
-      #   end
-      #
-      #   if o.values
-      #     maybe_visit o.values, collector
-      #   elsif o.select
-      #     maybe_visit o.select, collector
-      #   else
-      #     collector
-      #   end
-      # end
       #
       # def visit_Arel_Nodes_Exists o, collector
       #   collector << "EXISTS ("
@@ -179,7 +175,6 @@ module Arel
       # end
       #
       # def visit_Arel_Nodes_Values o, collector
-      #   collector << "VALUES ("
       #
       #   len = o.expressions.length - 1
       #   o.expressions.zip(o.columns).each_with_index { |(value, attr), i|
@@ -193,11 +188,9 @@ module Arel
       #     end
       #   }
       #
-      #   collector << ")"
       # end
       #
-
-
+      #
       #
       # def visit_Arel_Nodes_Bin o, collector
       #   visit o.expr, collector
@@ -425,9 +418,6 @@ module Arel
       end
 
       def visit_Arel_Nodes_Avg o, collector
-        # puts o.inspect
-        # #<Arel::Nodes::Avg:0x007fd863f55df0 @expressions=["rate_per_sqft_per_year"], @alias="avg_id", @distinct=false>
-
         collector.operation = :average
         if o.expressions.first.is_a?(Arel::Attributes::Attribute)
           relation = o.expressions.first.relation

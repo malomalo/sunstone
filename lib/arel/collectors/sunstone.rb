@@ -2,7 +2,7 @@ module Arel
   module Collectors
     class Sunstone < Arel::Collectors::Bind
       
-      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns
+      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates
       
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
@@ -36,7 +36,7 @@ module Arel
         end
       end
       
-      def compile bvs
+      def compile bvs, conn = nil
         path = "/#{table}"
         
         case operation
@@ -63,6 +63,9 @@ module Arel
         end
           
         request = request_type.new(path)
+        if updates
+          request.body = {table.singularize => substitute_binds(updates.clone, bvs)}.to_json
+        end
         
         request
       end
