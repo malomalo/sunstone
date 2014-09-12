@@ -24,34 +24,42 @@ module Arel
       def compile node, &block
         accept(node, Arel::Collectors::SQLString.new, &block).value
       end
-      
+
       private
-      
+
       def visit_Arel_Nodes_SelectStatement o, collector
         collector = o.cores.inject(collector) { |c,x|
           visit_Arel_Nodes_SelectCore(x, c)
         }
-        
+
         if !o.orders.empty?
           collector.order = o.orders.map { |x| visit(x, collector) }
         end
 
         collector = maybe_visit o.limit, collector
         collector = maybe_visit o.offset, collector
+        collector = maybe_visit o.includes, collector
         # collector = maybe_visit o.lock, collector
+
+        # collector = visit(o.includes, collector) if !o.includes.empty?
 
         collector
       end
-      
+
+      def visit_Arel_Nodes_Includes o, collector
+        collector.includes = o.expr
+        collector
+      end
+
       def visit_Arel_Nodes_SelectCore o, collector
         collector.request_type = Net::HTTP::Get
-        
+
         unless o.projections.empty?
           visit(o.projections.first, collector)
         else
           collector.operation = :select
         end
-        
+
         if o.source && !o.source.empty?
           collector.table = o.source.left.name
         end
@@ -78,8 +86,6 @@ module Arel
       end
 
 
-      
-      #
       # private
       #
       # def visit_Arel_Nodes_DeleteStatement o, collector
@@ -625,13 +631,14 @@ module Arel
       #     visit right, collector
       #   end
       # end
-      #
-      # def visit_Arel_Nodes_As o, collector
-      #   collector = visit o.left, collector
-      #   collector << " AS "
-      #   visit o.right, collector
-      # end
-      #
+
+      def visit_Arel_Nodes_As o, collector
+        # collector = visit o.left, collector
+        # collector << " AS "
+        # visit o.right, collector
+        collector
+      end
+
       # def visit_Arel_Nodes_UnqualifiedColumn o, collector
       #   collector << "#{quote_column_name o.name}"
       #   collector

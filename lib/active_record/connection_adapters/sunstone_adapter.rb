@@ -135,11 +135,11 @@ module ActiveRecord
       def update_table_definition(table_name, base) #:nodoc:
         SunstoneAPI::Table.new(table_name, base)
       end
-      
+
       def collector
         Arel::Collectors::Sunstone.new
       end
-      
+
       def server_config
         Wankel.parse(@connection.get("/configuration").body)
       end

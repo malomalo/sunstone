@@ -99,7 +99,7 @@ module Sunstone
     #  end
     def send_request(request, body=nil, &block)
       request_headers.each { |k, v| request[k] = v }
-    
+
       if body.is_a?(IO)
         request['Transfer-Encoding'] = 'chunked'
         request.body_stream =  body
@@ -108,23 +108,24 @@ module Sunstone
       elsif body
         request.body = Wankel.encode(body)
       end
-    
+
       return_value = nil
+      # raise 'hi' unless request.path =~ /ping|schema/
       @connection.request(request) do |response|
-      
+
         if response['X-42Floors-API-Version-Deprecated']
           logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
         end
 
         validate_response_code(response)
-      
+
         # Get the cookies
         response.each_header do |key, value|
           if key.downcase == 'set-cookie' && Thread.current[:sunstone_cookie_store]
             Thread.current[:sunstone_cookie_store].set_cookie("#{site}#{request.path}", value)
           end
         end
-      
+
         if block_given?
           return_value =yield(response)
         else
@@ -132,11 +133,9 @@ module Sunstone
         end
       end
 
-
-    
       return_value
     end
-    
+
     # Send a GET request to +path+ on the Sunstone Server via +Sunstone#send_request+.
     # See +Sunstone#send_request+ for more details on how the response is handled.
     #
