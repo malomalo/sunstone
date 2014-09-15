@@ -2,7 +2,7 @@ module Arel
   module Collectors
     class Sunstone < Arel::Collectors::Bind
 
-      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :includes
+      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads
 
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
@@ -52,9 +52,9 @@ module Arel
             get_params[:where] = get_params[:where].pop
           end
         end
-
-        if includes
-          get_params[:include] = includes.clone # substitude_binds(includes.clone, bvs)
+        
+        if eager_loads
+          get_params[:include] = eager_loads.clone
         end
 
         get_params[:limit] = limit if limit

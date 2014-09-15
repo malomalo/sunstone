@@ -35,19 +35,17 @@ module Arel
         if !o.orders.empty?
           collector.order = o.orders.map { |x| visit(x, collector) }
         end
-
+        
         collector = maybe_visit o.limit, collector
         collector = maybe_visit o.offset, collector
-        collector = maybe_visit o.includes, collector
+        collector = maybe_visit o.eager_load, collector
         # collector = maybe_visit o.lock, collector
-
-        # collector = visit(o.includes, collector) if !o.includes.empty?
 
         collector
       end
 
-      def visit_Arel_Nodes_Includes o, collector
-        collector.includes = o.expr
+      def visit_Arel_Nodes_EagerLoad o, collector
+        collector.eager_loads = o.expr
         collector
       end
 

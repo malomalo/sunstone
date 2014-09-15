@@ -15,9 +15,9 @@ require 'ext/active_record/relation'
 require 'ext/active_record/associations/builder/has_and_belongs_to_many'
 
 require 'ext/arel/select_manager'
-require 'ext/arel/nodes/includes'
+require 'ext/arel/nodes/eager_load'
 require 'ext/arel/nodes/select_statement'
-require 'ext/active_record/query_methods'
+require 'ext/active_record/finder_methods'
 
 # require 'sunstone/parser'
 

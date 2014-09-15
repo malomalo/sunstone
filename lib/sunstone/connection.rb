@@ -2,9 +2,9 @@ require 'uri'
 require 'net/http'
 require 'net/https'
 
-# # _Sunstone_ is a low-level API. It provides basic HTTP #get, #post, #put, and
-# # #delete calls to the Sunstone Server. It can also provides basic error
-# # checking of responses.
+# _Sunstone_ is a low-level API. It provides basic HTTP #get, #post, #put, and
+# #delete calls to the Sunstone Server. It can also provides basic error
+# checking of responses.
 module Sunstone
   class Connection
     
@@ -110,7 +110,6 @@ module Sunstone
       end
 
       return_value = nil
-      # raise 'hi' unless request.path =~ /ping|schema/
       @connection.request(request) do |response|
 
         if response['X-42Floors-API-Version-Deprecated']

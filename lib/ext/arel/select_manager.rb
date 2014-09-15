@@ -1,15 +1,15 @@
 module Arel
   class SelectManager < Arel::TreeManager
 
-    def includes
-      @ast.includes
+    def eager_load
+      @ast.eager_load
     end
 
-    def includes=(includes)
-      if includes.nil? || includes.expr.empty?
-        @ast.includes = nil
+    def eager_load=(eager_load)
+      if eager_load.nil? || eager_load.expr.empty?
+        @ast.eager_load = nil
       else
-        @ast.includes = includes
+        @ast.eager_load = eager_load
       end
       self
     end
