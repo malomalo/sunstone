@@ -98,8 +98,13 @@ module Sunstone
     #    end
     #  end
     def send_request(request, body=nil, &block)
+      request_uri = "http#{use_ssl ? 's' : ''}://#{host}#{port != 80 ? (port == 443 && use_ssl ? '' : ":#{port}") : ''}#{request.path}"
       request_headers.each { |k, v| request[k] = v }
-
+      
+      if Thread.current[:sunstone_cookie_store]
+        request['Cookie'] = Thread.current[:sunstone_cookie_store].cookie_header_for(request_uri)
+      end
+      
       if body.is_a?(IO)
         request['Transfer-Encoding'] = 'chunked'
         request.body_stream =  body
@@ -112,7 +117,7 @@ module Sunstone
       return_value = nil
       @connection.request(request) do |response|
 
-        if response['X-42Floors-API-Version-Deprecated']
+        if response['API-Version-Deprecated']
           logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
         end
 
@@ -121,7 +126,7 @@ module Sunstone
         # Get the cookies
         response.each_header do |key, value|
           if key.downcase == 'set-cookie' && Thread.current[:sunstone_cookie_store]
-            Thread.current[:sunstone_cookie_store].set_cookie("#{site}#{request.path}", value)
+            Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
           end
         end
 
