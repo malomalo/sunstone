@@ -25,14 +25,6 @@ module Sunstone
   VERSION = 0.1
 
 # TODO:
-#   # Set a cookie jar to use during request sent during the
-#   def with_cookie_store(store, &block)
-#     Thread.current[:sunstone_cookie_store] = store
-#     yield
-#   ensure
-#     Thread.current[:sunstone_cookie_store] = nil
-#   end
-#
 #
 #   # Get a connection from the connection pool and perform the block with
 #   # the connection

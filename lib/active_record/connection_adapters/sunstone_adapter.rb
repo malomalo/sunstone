@@ -104,12 +104,12 @@ module ActiveRecord
       def reconnect!
         super
         @connection.reset
-        configure_connection
+        # configure_connection
       end
 
       # TODO don't know about this yet
       def reset!
-        configure_connection
+        # configure_connection
       end
 
       # TODO: deal with connection.close
