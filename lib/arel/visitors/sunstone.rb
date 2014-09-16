@@ -604,7 +604,7 @@ module Arel
       # end
 
       def visit_Arel_Nodes_Equality o, collector
-        key = visit(o.left, collector).split('.')
+        key = visit(o.left, collector).to_s.split('.')
         value = (o.right.nil? ? nil : visit(o.right, collector))
         
         hash = {
