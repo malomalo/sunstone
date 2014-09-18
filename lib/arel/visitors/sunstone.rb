@@ -109,27 +109,26 @@ module Arel
       #   stmt
       # end
       #
-      # def visit_Arel_Nodes_UpdateStatement o, collector
-      #   if o.orders.empty? && o.limit.nil?
-      #     wheres = o.wheres
-      #   else
-      #     wheres = [Nodes::In.new(o.key, [build_subselect(o.key, o)])]
-      #   end
-      #
-      #   collector << "UPDATE "
-      #   collector = visit o.relation, collector
-      #   unless o.values.empty?
-      #     collector << " SET "
-      #     collector = inject_join o.values, collector, ", "
-      #   end
-      #
-      #   unless wheres.empty?
-      #     collector << " WHERE "
-      #     collector = inject_join wheres, collector, " AND "
-      #   end
-      #
-      #   collector
-      # end
+      def visit_Arel_Nodes_UpdateStatement o, collector
+        collector.request_type  = Net::HTTP::Patch
+        collector.table         = o.relation.name
+        collector.operation     = :update
+
+        wheres = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
+          w.is_a?(Array) ? c += w : c << w
+        }
+        if wheres.size != 1 && wheres.first.size != 1 && !wheres['id']
+          raise 'Upsupported'
+        end
+        
+        collector.id = wheres.first['id']
+        
+        if o.values
+          collector.updates = o.values.map { |x| visit(x, collector) }.inject({}){|c,v| c.merge(v) }#.zip(o.values).to_h
+        end
+
+        collector
+      end
       #
       #
       # def visit_Arel_Nodes_Exists o, collector
@@ -392,7 +391,7 @@ module Arel
       #
       def visit_Arel_Nodes_Count o, collector
         collector.operation = :count
-        collector.columns   = o.expressions.first
+        collector.columns   = visit o.expressions.first, collector
       end
       #
       # def visit_Arel_Nodes_Sum o, collector
@@ -590,18 +589,16 @@ module Arel
         ors
       end
 
-      # def visit_Arel_Nodes_Assignment o, collector
-      #   case o.right
-      #   when Arel::Nodes::UnqualifiedColumn, Arel::Attributes::Attribute, Arel::Nodes::BindParam
-      #     collector = visit o.left, collector
-      #     collector << " = "
-      #     visit o.right, collector
-      #   else
-      #     collector = visit o.left, collector
-      #     collector << " = "
-      #     collector << quote(o.right, column_for(o.left)).to_s
-      #   end
-      # end
+      def visit_Arel_Nodes_Assignment o, collector
+        case o.right
+        when Arel::Nodes::UnqualifiedColumn, Arel::Attributes::Attribute, Arel::Nodes::BindParam
+          { visit(o.left, collector) => visit(o.right, collector) }
+        else
+          collector = visit o.left, collector
+          collector << " = "
+          collector << quote(o.right, column_for(o.left)).to_s
+        end
+      end
 
       def visit_Arel_Nodes_Equality o, collector
         key = visit(o.left, collector).to_s.split('.')
@@ -637,11 +634,10 @@ module Arel
         collector
       end
 
-      # def visit_Arel_Nodes_UnqualifiedColumn o, collector
-      #   collector << "#{quote_column_name o.name}"
-      #   collector
-      # end
-      #
+      def visit_Arel_Nodes_UnqualifiedColumn o, collector
+        o.name
+      end
+
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
         # collector <<
