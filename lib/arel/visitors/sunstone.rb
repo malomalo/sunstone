@@ -84,18 +84,24 @@ module Arel
       end
 
 
-      # private
-      #
-      # def visit_Arel_Nodes_DeleteStatement o, collector
-      #   collector << "DELETE FROM "
-      #   collector = visit o.relation, collector
-      #   if o.wheres.any?
-      #     collector << " WHERE "
-      #     inject_join o.wheres, collector, AND
-      #   else
-      #     collector
-      #   end
-      # end
+      private
+
+      def visit_Arel_Nodes_DeleteStatement o, collector
+        collector.request_type  = Net::HTTP::Delete
+        collector.table         = o.relation.name
+        collector.operation     = :delete
+
+        wheres = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
+          w.is_a?(Array) ? c += w : c << w
+        }
+        if wheres.size != 1 && wheres.first.size != 1 && !wheres['id']
+          raise 'Upsupported'
+        else
+          collector.where = wheres
+        end
+
+        collector
+      end
       #
       # # FIXME: we should probably have a 2-pass visitor for this
       # def build_subselect key, o
@@ -119,6 +125,8 @@ module Arel
         }
         if wheres.size != 1 && wheres.first.size != 1 && !wheres['id']
           raise 'Upsupported'
+        else
+          collector.where = wheres
         end
         
         collector.id = wheres.first['id']

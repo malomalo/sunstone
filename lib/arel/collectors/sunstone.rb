@@ -39,13 +39,6 @@ module Arel
       def compile bvs, conn = nil
         path = "/#{table}"
 
-        case operation
-        when :count, :average, :min, :max
-          path += "/#{operation}"
-        when :update
-          path += "/#{id}"
-        end
-
         get_params = {}
 
         if where
@@ -64,6 +57,15 @@ module Arel
         get_params[:order] = order if order
         get_params[:columns] = columns if columns
 
+
+        case operation
+        when :count, :average, :min, :max
+          path += "/#{operation}"
+        when :update, :delete
+          path += "/#{get_params[:where]['id']}"
+          get_params.delete(:where)
+        end
+        
         if get_params.size > 0
           path += '?' + get_params.to_param
         end

@@ -111,6 +111,12 @@ module ActiveRecord
       def reset!
         # configure_connection
       end
+      
+      # Executes the delete statement and returns the number of rows affected.
+      def delete(arel, name = nil, binds = [])
+        r = exec_delete(to_sql(arel, binds), name, binds)
+        r.rows.first.to_i
+      end
 
       # TODO: deal with connection.close
       # Disconnects from the database if already connected. Otherwise, this
