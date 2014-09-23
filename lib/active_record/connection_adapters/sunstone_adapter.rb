@@ -115,7 +115,7 @@ module ActiveRecord
       # Executes the delete statement and returns the number of rows affected.
       def delete(arel, name = nil, binds = [])
         r = exec_delete(to_sql(arel, binds), name, binds)
-        r.rows.first.to_i
+        r.rows.first.first.to_i
       end
 
       # TODO: deal with connection.close
