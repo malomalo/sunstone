@@ -11,7 +11,7 @@ module Arel
           newhash = {}
           hash.each do |k, v|
             if Arel::Nodes::BindParam === v
-              newhash[k] = bvs.shift.last
+              newhash[k] = (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
             else
