@@ -35,10 +35,8 @@ module Sunstone
         self.send(:"#{key}=", config[key])
       end
       
-      @host = host
-      @port = port
-      # @connection = Net::HTTP.new(host, port)
-      # @connection.use_ssl = use_ssl
+      @connection = Net::HTTP.new(host, port)
+      @connection.use_ssl = use_ssl
     end
     
     # Ping the Sunstone. If everything is configured and operating correctly
@@ -117,8 +115,7 @@ module Sunstone
       end
 
       return_value = nil
-      # @connection.request(request) do |response|
-      Net::HTTP.new(@host, @port).request(request) do |response|
+      @connection.request(request) do |response|
         if response['API-Version-Deprecated']
           logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
         end
