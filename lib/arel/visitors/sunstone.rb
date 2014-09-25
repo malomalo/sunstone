@@ -446,12 +446,12 @@ module Arel
       #   visit o.right, collector
       # end
       #
-      # def visit_Arel_Nodes_GreaterThan o, collector
-      #   collector = visit o.left, collector
-      #   collector << " > "
-      #   visit o.right, collector
-      # end
-      #
+      def visit_Arel_Nodes_GreaterThan o, collector
+        {
+          visit(o.left, collector) => { :greater_than => visit(o.right, collector) }
+        }
+      end
+
       # def visit_Arel_Nodes_LessThanOrEqual o, collector
       #   collector = visit o.left, collector
       #   collector << " <= "
