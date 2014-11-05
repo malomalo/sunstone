@@ -10,17 +10,6 @@ module Arel
   module Visitors
     class Sunstone < Arel::Visitors::Reduce
 
-      def initialize connection
-        @connection     = connection
-        @schema_cache   = connection.schema_cache
-
-        @nodes      = []
-        @edges      = []
-        @node_stack = []
-        @edge_stack = []
-        @seen       = {}
-      end
-
       def compile node, &block
         accept(node, Arel::Collectors::SQLString.new, &block).value
       end

@@ -28,8 +28,8 @@ Gem::Specification.new do |s|
   # Runtime
   s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
-  s.add_runtime_dependency 'arel'
-  s.add_runtime_dependency 'activesupport'
-  s.add_runtime_dependency 'activemodel'
-  s.add_runtime_dependency 'activerecord'
+  s.add_runtime_dependency 'arel', '6.0.0.beta2'
+  s.add_runtime_dependency 'activesupport', '4.2.0.beta4'
+  s.add_runtime_dependency 'activemodel', '4.2.0.beta4'
+  s.add_runtime_dependency 'activerecord', '4.2.0.beta4'
 end

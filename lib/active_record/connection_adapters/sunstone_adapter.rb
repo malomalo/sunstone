@@ -82,7 +82,7 @@ module ActiveRecord
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger)
 
-        @visitor = Arel::Visitors::Sunstone.new self
+        @visitor = Arel::Visitors::Sunstone.new
         @connection_parameters, @config = connection_parameters, config
 
         connect
