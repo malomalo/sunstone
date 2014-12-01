@@ -128,14 +128,14 @@ module Sunstone
             Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
           end
         end
-
+        
         if block_given?
           return_value =yield(response)
         else
           return_value =response
         end
       end
-
+      
       return_value
     end
 
