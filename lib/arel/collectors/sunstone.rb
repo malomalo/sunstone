@@ -39,8 +39,11 @@ module Arel
       def compile bvs, conn = nil
         path = "/#{table}"
 
-        get_params = {}
+        if updates
+          body = {table.singularize => substitute_binds(updates.clone, bvs)}.to_json
+        end
 
+        get_params = {}
         if where
           get_params[:where] = substitute_binds(where.clone, bvs)
           if get_params[:where].size == 1
@@ -57,7 +60,6 @@ module Arel
         get_params[:order] = order if order
         get_params[:columns] = columns if columns
 
-
         case operation
         when :count, :average, :min, :max
           path += "/#{operation}"
@@ -73,7 +75,7 @@ module Arel
         request = request_type.new(path)
 
         if updates
-          request.body = {table.singularize => substitute_binds(updates.clone, bvs)}.to_json
+          request.body = body
         end
 
         request

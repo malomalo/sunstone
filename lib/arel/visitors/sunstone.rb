@@ -9,7 +9,11 @@ end
 module Arel
   module Visitors
     class Sunstone < Arel::Visitors::Reduce
-
+      
+      def initialize
+        @dispatch = get_dispatch_cache
+      end
+      
       def compile node, &block
         accept(node, Arel::Collectors::SQLString.new, &block).value
       end

@@ -4,10 +4,10 @@ module ActiveRecord
       module DatabaseStatements
 
         # Converts an arel AST to a Sunstone API Request
-        def to_sar(arel, bvs)
+        def to_sar(arel, bvs = [])
           if arel.respond_to?(:ast)
             collected = visitor.accept(arel.ast, collector)
-            collected.compile(bvs)
+            collected.compile(bvs, self)
           else
             arel
           end
