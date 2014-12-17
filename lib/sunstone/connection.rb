@@ -7,11 +7,11 @@ require 'net/https'
 # checking of responses.
 module Sunstone
   class Connection
-    
+
     # Set the User-Agent of the client. Will be joined with other User-Agent info
     attr_writer :user_agent
     attr_accessor :api_key, :host, :port, :use_ssl
-    
+
     # Initialize a connection a Sunstone API server.
     #
     # Options:
@@ -30,15 +30,15 @@ module Sunstone
         config[:port]    ||= uri.port
         config[:use_ssl] ||= (uri.scheme == 'https')
       end
-      
+
       [:api_key, :host, :port, :use_ssl, :user_agent].each do |key|
         self.send(:"#{key}=", config[key])
       end
-      
+
       @connection = Net::HTTP.new(host, port)
       @connection.use_ssl = use_ssl
     end
-    
+
     # Ping the Sunstone. If everything is configured and operating correctly
     # <tt>"pong"</tt> will be returned. Otherwise and Sunstone::Exception should be
     # thrown.
@@ -61,7 +61,7 @@ module Sunstone
         RUBY_PLATFORM
       ].compact.join(' ')
     end
-   
+
     # Sends a Net::HTTPRequest to the server. The headers returned from
     # Sunestone#headers are automatically added to the request. The appropriate
     # error is raised if the response is not in the 200..299 range.
@@ -69,7 +69,7 @@ module Sunstone
     # Paramaters::
     #
     # * +request+ - A Net::HTTPRequest to send to the server
-    # * +body+ - Optional, a String, IO Object, or a Ruby object which is 
+    # * +body+ - Optional, a String, IO Object, or a Ruby object which is
     #            converted into JSON and sent as the body
     # * +block+ - An optional block to call with the +Net::HTTPResponse+ object.
     #
@@ -100,11 +100,11 @@ module Sunstone
     def send_request(request, body=nil, &block)
       request_uri = "http#{use_ssl ? 's' : ''}://#{host}#{port != 80 ? (port == 443 && use_ssl ? '' : ":#{port}") : ''}#{request.path}"
       request_headers.each { |k, v| request[k] = v }
-      
+
       if Thread.current[:sunstone_cookie_store]
         request['Cookie'] = Thread.current[:sunstone_cookie_store].cookie_header_for(request_uri)
       end
-      
+
       if body.is_a?(IO)
         request['Transfer-Encoding'] = 'chunked'
         request.body_stream =  body
@@ -128,14 +128,14 @@ module Sunstone
             Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
           end
         end
-        
+
         if block_given?
           return_value =yield(response)
         else
           return_value =response
         end
       end
-      
+
       return_value
     end
 
@@ -170,10 +170,10 @@ module Sunstone
     def get(path, params='', &block)
       params ||= ''
       request = Net::HTTP::Get.new(path + '?' + params.to_param)
-    
+
       send_request(request, nil, &block)
     end
-    
+
     # Send a POST request to +path+ on the Sunstone Server via +Sunstone#send_request+.
     # See +Sunstone#send_request+ for more details on how the response is handled.
     #
@@ -205,10 +205,10 @@ module Sunstone
     #  end
     def post(path, body=nil, &block)
       request = Net::HTTP::Post.new(path)
-    
+
       send_request(request, body, &block)
     end
-    
+
     # Send a PUT request to +path+ on the Sunstone Server via +Sunstone#send_request+.
     # See +Sunstone#send_request+ for more details on how the response is handled.
     #
@@ -240,10 +240,10 @@ module Sunstone
     #  end
     def put(path, body=nil, *valid_response_codes, &block)
       request = Net::HTTP::Put.new(path)
-    
+
       send_request(request, body, &block)
     end
-  
+
     # Send a DELETE request to +path+ on the Sunstone Server via +Sunstone#send_request+.
     # See +Sunstone#send_request+ for more details on how the response is handled
     #
@@ -268,25 +268,25 @@ module Sunstone
     #  end
     def delete(path, &block)
       request = Net::HTTP::Delete.new(path)
-    
+
       send_request(request, nil, &block)
     end
 
     def server_config
       @server_config ||= Wankel.parse(get('/config').body, :symbolize_keys => true)
     end
-    
+
     private
-    
+
     def request_headers
       headers = {
         'Content-Type'            => 'application/json',
         'User-Agent'              => user_agent,
         'Api-Version' => '0.1.0'
       }
-    
-      headers['Api-Key'] = api_key if api_key
-    
+      request_api_key = Thread.current[:sunstone_api_key] || api_key
+
+      headers['Api-Key'] = request_api_key if request_api_key
       headers
     end
 
@@ -311,7 +311,7 @@ module Sunstone
     #  Sunstone.validate_response_code(<Net::HTTP::Response @code=500>) # => raises Sunstone::Exception
     def validate_response_code(response)
       code = response.code.to_i
-    
+
       if !(200..299).include?(code)
         case code
         when 400
@@ -335,6 +335,6 @@ module Sunstone
         end
       end
     end
-    
+
   end
 end
