@@ -58,10 +58,12 @@ module Arel
         get_params[:limit] = limit if limit
         get_params[:offset] = offset if offset
         get_params[:order] = order if order
-        get_params[:columns] = columns if columns
 
         case operation
-        when :count, :average, :min, :max
+        when :count
+          path += "/#{operation}"
+        when :average, :min, :max
+          get_params[:column] = columns
           path += "/#{operation}"
         when :update, :delete
           path += "/#{get_params[:where]['id']}"

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "sunstone"
-  s.version     = '1.6.6'
+  s.version     = '1.6.8'
   s.authors     = ["Jon Bracy"]
   s.email       = ["jonbracy@gmail.com"]
   s.homepage    = "http://sunstonerb.com"
