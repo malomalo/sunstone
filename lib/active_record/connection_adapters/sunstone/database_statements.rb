@@ -19,16 +19,17 @@ module ActiveRecord
         end
 
         def exec_query(arel, name = 'SAR', binds = [])
-          result = exec(to_sar(arel, binds), name)
+          sar = to_sar(arel, binds)
+          result = exec(sar, name)
 
-          if result.is_a?(Array)
-            ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
+          if sar.instance_variable_get(:@sunstone_calculation)
+            # this is a count, min, max.... yea i know..
+            ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
           else
-            # this is a count.. yea i know..
-            ActiveRecord::Result.new(['all'], [[result]], {:all => type_map.lookup('integer')})
+            ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
           end
         end
-
+        
       end
     end
   end

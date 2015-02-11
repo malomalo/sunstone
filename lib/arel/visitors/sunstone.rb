@@ -46,7 +46,7 @@ module Arel
         collector.request_type = Net::HTTP::Get
 
         unless o.projections.empty?
-          visit(o.projections.first, collector)
+          o.projections.each { |proj| visit(proj, collector) }
         else
           collector.operation = :select
         end
@@ -391,8 +391,11 @@ module Arel
       # end
       #
       def visit_Arel_Nodes_Count o, collector
-        collector.operation = :count
-        collector.columns   = visit o.expressions.first, collector
+        collector.operation = :calculate
+        
+        collector.columns   ||= []
+        collector.columns   << {:count => (o.expressions.first.is_a?(Arel::Attributes::Attribute) ? o.expressions.first.name : o.expressions.first) }
+        # collector.columns   = visit o.expressions.first, collector
       end
       #
       # def visit_Arel_Nodes_Sum o, collector
@@ -400,35 +403,42 @@ module Arel
       # end
       #
       def visit_Arel_Nodes_Max o, collector
-        collector.operation = :max
+        collector.operation = :calculate
+        
+        collector.columns   ||= []
         if o.expressions.first.is_a?(Arel::Attributes::Attribute)
           relation = o.expressions.first.relation
           join_name = relation.table_alias || relation.name
-          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+          collector.columns << {:maximum => join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"}
         else
-          collector.columns   = o.expressions.first
+          collector.columns << {:maximum => o.expressions.first}
         end
       end
 
       def visit_Arel_Nodes_Min o, collector
-        collector.operation = :min
+        collector.operation = :calculate
+
+        collector.columns   ||= []
         if o.expressions.first.is_a?(Arel::Attributes::Attribute)
           relation = o.expressions.first.relation
           join_name = relation.table_alias || relation.name
-          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+          collector.columns << {:minimum => join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"}
         else
-          collector.columns   = o.expressions.first
+          collector.columns << {:minimum => o.expressions.first}
         end
       end
 
       def visit_Arel_Nodes_Avg o, collector
-        collector.operation = :average
+        collector.operation = :calculate
+
+        collector.columns   ||= []
         if o.expressions.first.is_a?(Arel::Attributes::Attribute)
           relation = o.expressions.first.relation
           join_name = relation.table_alias || relation.name
-          collector.columns = join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"
+          collector.columns << {:average => join_name ? o.expressions.first.name : "#{join_name}.#{o.expressions.first.name}"}
         else
-          collector.columns   = o.expressions.first
+
+          collector.columns << {:average => o.expressions.first}
         end
       end
       #

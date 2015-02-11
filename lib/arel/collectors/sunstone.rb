@@ -62,9 +62,9 @@ module Arel
         case operation
         when :count
           path += "/#{operation}"
-        when :average, :min, :max
-          get_params[:column] = columns
-          path += "/#{operation}"
+        when :calculate
+          path += "/calculate"
+          get_params[:select] = columns
         when :update, :delete
           path += "/#{get_params[:where]['id']}"
           get_params.delete(:where)
@@ -75,6 +75,7 @@ module Arel
         end
 
         request = request_type.new(path)
+        request.instance_variable_set(:@sunstone_calculation, true) if operation == :calculate
 
         if updates
           request.body = body
