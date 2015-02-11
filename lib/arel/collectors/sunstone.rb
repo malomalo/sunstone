@@ -75,7 +75,7 @@ module Arel
         end
 
         request = request_type.new(path)
-        request.instance_variable_set(:@sunstone_calculation, true) if operation == :calculate
+        request.instance_variable_set(:@sunstone_calculation, true) if [:calculate, :update, :delete].include?(operation)
 
         if updates
           request.body = body
