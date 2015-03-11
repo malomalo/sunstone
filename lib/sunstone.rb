@@ -12,6 +12,7 @@ require 'sunstone/connection'
 require 'sunstone/exception'
 require 'ext/active_record/statement_cache'
 require 'ext/active_record/relation'
+require 'ext/active_record/relation/predicate_builder'
 require 'ext/active_record/calculations'
 require 'ext/active_record/associations/builder/has_and_belongs_to_many'
 
@@ -24,7 +25,7 @@ require 'ext/active_record/batches'
 # require 'sunstone/parser'
 
 module Sunstone
-  VERSION = 0.1
+  VERSION = 1.7.4
 
 # TODO:
 #
