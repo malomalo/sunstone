@@ -30,6 +30,11 @@ module ActiveRecord
           end
         end
         
+        def last_inserted_id(result)
+          row = result.rows.first
+          row && row['id']
+        end
+
       end
     end
   end
