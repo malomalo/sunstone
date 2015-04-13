@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "sunstone"
-  s.version     = '1.7.6'
+  s.version     = '1.7.7'
   s.authors     = ["Jon Bracy"]
   s.email       = ["jonbracy@gmail.com"]
   s.homepage    = "http://sunstonerb.com"
@@ -28,8 +28,8 @@ Gem::Specification.new do |s|
   # Runtime
   s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
-  s.add_runtime_dependency 'arel', '6.0.0'
-  s.add_runtime_dependency 'activesupport', '4.2.0'
-  s.add_runtime_dependency 'activemodel', '4.2.0'
-  s.add_runtime_dependency 'activerecord', '4.2.0'
+  s.add_runtime_dependency 'arel', '~> 6.0'
+  s.add_runtime_dependency 'activesupport', '~> 4.2'
+  s.add_runtime_dependency 'activemodel', '~> 4.2'
+  s.add_runtime_dependency 'activerecord', '~> 4.2'
 end
