@@ -42,6 +42,10 @@ module ActiveRecord
         def new_column(name, cast_type, options={}) # :nodoc:
           SunstoneColumn.new(name, cast_type, options)
         end
+        
+        def column_name_for_operation(operation, node) # :nodoc:
+          visitor.accept(node, collector).first[operation.to_sym]
+        end
 
         # TODO: def encoding
 
