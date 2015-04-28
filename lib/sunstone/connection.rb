@@ -115,25 +115,31 @@ module Sunstone
       end
 
       return_value = nil
-      @connection.request(request) do |response|
-        if response['API-Version-Deprecated']
-          logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
-        end
+      retry_count = 0
+      begin
+        @connection.request(request) do |response|
+          if response['API-Version-Deprecated']
+            logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
+          end
 
-        validate_response_code(response)
+          validate_response_code(response)
 
-        # Get the cookies
-        response.each_header do |key, value|
-          if key.downcase == 'set-cookie' && Thread.current[:sunstone_cookie_store]
-            Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
+          # Get the cookies
+          response.each_header do |key, value|
+            if key.downcase == 'set-cookie' && Thread.current[:sunstone_cookie_store]
+              Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
+            end
+          end
+
+          if block_given?
+            return_value =yield(response)
+          else
+            return_value =response
           end
         end
-
-        if block_given?
-          return_value =yield(response)
-        else
-          return_value =response
-        end
+      rescue ActiveRecord::ConnectionNotEstablished
+        retry_count += 1
+        retry if retry_count == 1
       end
 
       return_value
@@ -328,6 +334,8 @@ module Sunstone
           raise Sunstone::Exception::ServiceUnavailable, response
         when 301
           raise Sunstone::Exception::MovedPermanently, response
+        when 502
+          raise ActiveRecord::ConnectionNotEstablished, response
         when 300..599
           raise Sunstone::Exception, response
         else
