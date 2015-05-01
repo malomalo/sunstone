@@ -625,18 +625,11 @@ module Arel
         hash
       end
 
-      # def visit_Arel_Nodes_NotEqual o, collector
-      #   right = o.right
-      #
-      #   collector = visit o.left, collector
-      #
-      #   if right.nil?
-      #     collector << " IS NOT NULL"
-      #   else
-      #     collector << " != "
-      #     visit right, collector
-      #   end
-      # end
+      def visit_Arel_Nodes_NotEqual o, collector
+        {
+          visit(o.left, collector) => { :not => visit(o.right, collector) }
+        }
+      end
 
       def visit_Arel_Nodes_As o, collector
         # collector = visit o.left, collector
