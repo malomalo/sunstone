@@ -111,6 +111,7 @@ module Sunstone
       elsif body.is_a?(String)
         request.body = body
       elsif body
+        request['Content-Type'] = 'application/json'
         request.body = Wankel.encode(body)
       end
 
@@ -286,8 +287,8 @@ module Sunstone
 
     def request_headers
       headers = {
-        'Content-Type'            => 'application/json',
-        'User-Agent'              => user_agent,
+        'Accept'      => 'application/json',
+        'User-Agent'  => user_agent,
         'Api-Version' => '0.1.0'
       }
       request_api_key = Thread.current[:sunstone_api_key] || api_key
