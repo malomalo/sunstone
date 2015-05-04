@@ -100,7 +100,8 @@ module Sunstone
     def send_request(request, body=nil, &block)
       request_uri = "http#{use_ssl ? 's' : ''}://#{host}#{port != 80 ? (port == 443 && use_ssl ? '' : ":#{port}") : ''}#{request.path}"
       request_headers.each { |k, v| request[k] = v }
-
+      request['Content-Type'] ||= 'application/json'
+      
       if Thread.current[:sunstone_cookie_store]
         request['Cookie'] = Thread.current[:sunstone_cookie_store].cookie_header_for(request_uri)
       end
@@ -111,7 +112,7 @@ module Sunstone
       elsif body.is_a?(String)
         request.body = body
       elsif body
-        request['Content-Type'] = 'application/json'
+        
         request.body = Wankel.encode(body)
       end
 
