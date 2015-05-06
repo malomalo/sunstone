@@ -141,7 +141,7 @@ module Sunstone
         end
       rescue ActiveRecord::ConnectionNotEstablished
         retry_count += 1
-        retry if retry_count == 1
+        retry_count == 1 ? retry : raise
       end
 
       return_value
