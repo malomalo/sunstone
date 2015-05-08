@@ -25,7 +25,7 @@ require 'ext/active_record/batches'
 # require 'sunstone/parser'
 
 module Sunstone
-  VERSION = '1.7.5'
+  VERSION = '1.7.15'
 
 # TODO:
 #
