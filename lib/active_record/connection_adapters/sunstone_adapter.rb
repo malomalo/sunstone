@@ -9,6 +9,7 @@ require 'active_record/connection_adapters/sunstone/schema_statements'
 require 'active_record/connection_adapters/sunstone/column'
 
 require 'active_record/connection_adapters/sunstone/type/date_time'
+require 'active_record/connection_adapters/sunstone/type/array'
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:

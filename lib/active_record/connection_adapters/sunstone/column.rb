@@ -7,7 +7,11 @@ module ActiveRecord
       def initialize(name, cast_type, options={})
         @primary_key = (options['primary_key'] == true)
         @array = !!options['array']
-        super(name, options['default'], cast_type, nil, options['null'])
+        if @array
+          super(name, options['default'], Sunstone::Type::Array.new(cast_type), nil, options['null'])
+        else
+          super(name, options['default'], cast_type, nil, options['null'])
+        end
       end
       
       def primary_key?
