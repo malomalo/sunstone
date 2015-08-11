@@ -63,11 +63,17 @@ module ActiveRecord
     
     def construct_association(parent, reflection, attributes, seen, model_cache)
       return if attributes.nil?
-      id = attributes[reflection.klass.primary_key]
-      model = seen[parent.class.base_class][parent.id][reflection.klass][id]
+      
+      klass = if reflection.polymorphic?
+        parent.send(reflection.foreign_type).constantize.base_class
+      else
+        reflection.klass
+      end
+      id = attributes[klass.primary_key]
+      model = seen[parent.class.base_class][parent.id][klass][id]
       
       if model
-        construct(model, attributes.select{|k,v| !reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
+        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
 
         other = parent.association(reflection.name)
         
@@ -79,15 +85,21 @@ module ActiveRecord
 
         other.set_inverse_instance(model)
       else
-        model = construct_model(parent, reflection, id, attributes.select{|k,v| reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
+        model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
         seen[parent.class.base_class][parent.id][model.class.base_class][id] = model
-        construct(model, attributes.select{|k,v| !reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
+        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
       end
     end
     
 
     def construct_model(record, reflection, id, attributes, seen, model_cache)
-      model = model_cache[reflection.klass][id] ||= reflection.klass.instantiate(attributes)
+      klass = if reflection.polymorphic?
+        record.send(reflection.foreign_type).constantize
+      else
+        reflection.klass
+      end
+      
+      model = model_cache[klass][id] ||= klass.instantiate(attributes)
       other = record.association(reflection.name)
 
       if reflection.collection?
