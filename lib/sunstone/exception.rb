@@ -1,11 +1,5 @@
 module Sunstone
   
-  class RecordInvalid < ::Exception
-  end
-  
-  class RecordNotSaved < ::Exception
-  end
-  
   class Exception < ::Exception
     
     class UnexpectedResponse < Sunstone::Exception

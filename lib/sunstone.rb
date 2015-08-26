@@ -1,51 +1,19 @@
 require 'wankel'
 require 'cookie_store'
-
-require 'active_support'
-require 'active_support/core_ext'
-
-require 'active_model'
-
 require 'active_record'
 
-require 'sunstone/connection'
-require 'sunstone/exception'
-require 'ext/active_record/statement_cache'
-require 'ext/active_record/relation'
-require 'ext/active_record/relation/predicate_builder'
-require 'ext/active_record/calculations'
-require 'ext/active_record/associations/builder/has_and_belongs_to_many'
+require File.expand_path(File.join(__FILE__, '../sunstone/version'))
+require File.expand_path(File.join(__FILE__, '../sunstone/connection'))
+require File.expand_path(File.join(__FILE__, '../sunstone/exception'))
 
-require 'ext/arel/select_manager'
-require 'ext/arel/nodes/eager_load'
-require 'ext/arel/nodes/select_statement'
-require 'ext/active_record/finder_methods'
-require 'ext/active_record/batches'
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/statement_cache'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/predicate_builder'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/calculations'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/builder/has_and_belongs_to_many'))
 
-# require 'sunstone/parser'
-
-module Sunstone
-  VERSION = '1.7.15'
-
-# TODO:
-#
-#   # Get a connection from the connection pool and perform the block with
-#   # the connection
-#   def with_connection(&block)
-#     connection_pool.with({}, &block)
-#   end
-#
-#   private
-#
-#   def request_headers
-#     headers = {
-#       'Content-Type'            => 'application/json',
-#       'User-Agent'              => user_agent
-#     }
-#
-#     headers['Api-Key'] = api_key if api_key
-#
-#     headers
-#   end
-#
-end
+require File.expand_path(File.join(__FILE__, '../../ext/arel/select_manager'))
+require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/eager_load'))
+require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/select_statement'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/finder_methods'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/batches'))

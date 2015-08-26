@@ -1,6 +1,8 @@
+require File.expand_path("../lib/sunstone/version", __FILE__)
+
 Gem::Specification.new do |s|
   s.name        = "sunstone"
-  s.version     = '1.8.2'
+  s.version     = Sunstone::VERSION
   s.authors     = ["Jon Bracy"]
   s.email       = ["jonbracy@gmail.com"]
   s.homepage    = "http://sunstonerb.com"
