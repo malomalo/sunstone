@@ -31,7 +31,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
   s.add_runtime_dependency 'arel', '~> 6.0'
-  s.add_runtime_dependency 'activesupport', '>= 4.2.3'
-  s.add_runtime_dependency 'activemodel', '>= 4.2.3'
-  s.add_runtime_dependency 'activerecord', '>= 4.2.3'
+  s.add_runtime_dependency 'activesupport', '>= 4.2.4'
+  s.add_runtime_dependency 'activemodel', '>= 4.2.4'
+  s.add_runtime_dependency 'activerecord', '>= 4.2.4'
 end

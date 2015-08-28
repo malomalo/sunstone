@@ -397,11 +397,15 @@ module Arel
         collector.columns   << {:count => (o.expressions.first.is_a?(Arel::Attributes::Attribute) ? o.expressions.first.name : o.expressions.first) }
         # collector.columns   = visit o.expressions.first, collector
       end
-      #
-      # def visit_Arel_Nodes_Sum o, collector
-      #   aggregate "SUM", o, collector
-      # end
-      #
+
+      def visit_Arel_Nodes_Sum o, collector
+        collector.operation = :calculate
+        
+        collector.columns   ||= []
+        collector.columns   << {:sum => (o.expressions.first.is_a?(Arel::Attributes::Attribute) ? o.expressions.first.name : o.expressions.first) }
+        # collector.columns   = visit o.expressions.first, collector
+      end
+
       def visit_Arel_Nodes_Max o, collector
         collector.operation = :calculate
         

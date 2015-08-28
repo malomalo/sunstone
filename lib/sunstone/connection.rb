@@ -9,8 +9,7 @@ module Sunstone
   class Connection
 
     # Set the User-Agent of the client. Will be joined with other User-Agent info
-    attr_writer :user_agent
-    attr_accessor :api_key, :host, :port, :use_ssl
+    attr_reader :api_key, :host, :port, :use_ssl
 
     # Initialize a connection a Sunstone API server.
     #
@@ -32,7 +31,7 @@ module Sunstone
       end
 
       [:api_key, :host, :port, :use_ssl, :user_agent].each do |key|
-        self.send(:"#{key}=", config[key])
+        self.instance_variable_set(:"@#{key}", config[key])
       end
 
       @connection = Net::HTTP.new(host, port)

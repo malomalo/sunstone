@@ -3,9 +3,9 @@ module ActiveRecord
 
     private
 
-    # "#{quoted_table_name}.#{quoted_primary_key} ASC"
+    # Arrrr Rails hard coding SQL
     def batch_order
-      {:id => :asc}
+      primary_key ? {primary_key => :asc} : {}
     end
 
   end
