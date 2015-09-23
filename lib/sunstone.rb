@@ -18,6 +18,8 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation')
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/query_methods'))
 # require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/builder/has_and_belongs_to_many'))
 
+require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))
+
 require File.expand_path(File.join(__FILE__, '../../ext/arel/select_manager'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/eager_load'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/select_statement'))

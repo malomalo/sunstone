@@ -58,6 +58,12 @@ class QueryTest < Minitest::Test
     assert_equal [], Ship.where(:id => 10).to_a
   end
   
+  test '::where column is nil' do
+    stub_request(:get, URI::escape('malomalo.io/ships?where[leased_at]')).to_return(body: [].to_json)
+
+    assert_equal [], Ship.where(:leased_at => nil).to_a
+  end
+  
   test '::where on belongs_to relation' do
     stub_request(:get, URI::escape('malomalo.io/ships?where[fleet][id]=1')).to_return(body: [].to_json)
 
