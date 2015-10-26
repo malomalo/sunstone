@@ -8,6 +8,7 @@ require 'active_record/connection_adapters/sunstone/column'
 
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
+require 'active_record/connection_adapters/sunstone/type/ewkb'
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
@@ -158,6 +159,7 @@ module ActiveRecord
           m.register_type 'decimal',    Type::Decimal.new
           m.register_type 'datetime',   Sunstone::Type::DateTime.new
           m.register_type 'hash',       Type::Value.new
+          m.register_type 'ewkb',       Sunstone::Type::EWKB.new
         end
 
         def exec(arel, name='SAR', binds=[])
