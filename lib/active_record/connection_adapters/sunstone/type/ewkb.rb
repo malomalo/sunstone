@@ -1,3 +1,5 @@
+require 'rgeo'
+
 module ActiveRecord
   module ConnectionAdapters
     module Sunstone
@@ -19,7 +21,7 @@ module ActiveRecord
           def cast_value(string)
             return string unless string.is_a?(::String)
 
-            RGeo::WKRep::WKBParser.new(RGeo::Geos.factory_generator, support_ewkb: true).parse(string)
+            ::RGeo::WKRep::WKBParser.new(RGeo::Geos.factory_generator, support_ewkb: true).parse(string)
           end
          
         end
