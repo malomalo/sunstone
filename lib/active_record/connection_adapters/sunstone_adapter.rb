@@ -13,7 +13,7 @@ require 'active_record/connection_adapters/sunstone/type/ewkb'
 module ActiveRecord
   module ConnectionHandling # :nodoc:
 
-    VALID_SUNSTONE_CONN_PARAMS = [:site, :host, :port, :api_key, :use_ssl, :user_agent]
+    VALID_SUNSTONE_CONN_PARAMS = [:site, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
 
     # Establishes a connection to the database that's used by all Active Record
     # objects

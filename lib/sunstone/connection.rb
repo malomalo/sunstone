@@ -36,6 +36,12 @@ module Sunstone
 
       @connection = Net::HTTP.new(host, port)
       @connection.use_ssl = use_ssl
+      if use_ssl && config[:ca_cert]
+        @connection.cert_store = OpenSSL::X509::Store.new
+        @connection.cert_store.add_cert(OpenSSL::X509::Certificate.new(File.read(config[:ca_cert])))
+      end
+
+      true
     end
 
     # Ping the Sunstone. If everything is configured and operating correctly
