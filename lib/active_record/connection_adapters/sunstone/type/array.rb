@@ -3,7 +3,7 @@ module ActiveRecord
     module Sunstone
       module Type
         class Array < ActiveRecord::Type::Value
-          include ActiveRecord::Type::Mutable
+          include ActiveRecord::Type::Helpers::Mutable
           
           attr_reader :subtype
           delegate :type, to: :subtype
