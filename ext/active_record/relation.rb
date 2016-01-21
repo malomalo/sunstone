@@ -12,8 +12,8 @@ module ActiveRecord
                     end
 
                     arel  = relation.arel
-                    binds = (arel.bind_values + relation.bind_values).dup
-                    binds.map! { |bv| connection.quote(*bv.reverse) }
+                    binds = connection.prepare_binds_for_database(arel.bind_values + relation.bound_attributes)
+                    binds.map! { |bv| connection.quote(bv) }
                     collect = visitor.accept(arel.ast, Arel::Collectors::Bind.new)
                     collect.substitute_binds(binds).join
                   end

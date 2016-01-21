@@ -15,7 +15,7 @@ module ActiveRecord
         def columns(table_name)
           # Limit, precision, and scale are all handled by the superclass.
           column_definitions(table_name).map do |column_name, options|
-            new_column(column_name, lookup_cast_type(options['type']), options)
+            new_column(column_name, options)
           end
         end
 
@@ -34,8 +34,25 @@ module ActiveRecord
           Wankel.parse(@connection.get('/tables').body)
         end
         
-        def new_column(name, cast_type, options={}) # :nodoc:
-          SunstoneColumn.new(name, cast_type, options)
+        def views
+          []
+        end
+        
+        def new_column(name, options)
+          sql_type_metadata = fetch_type_metadata(options)
+          SunstoneColumn.new(name, sql_type_metadata, options)
+        end
+        
+        def fetch_type_metadata(options)
+          cast_type = lookup_cast_type(options['type'])
+          simple_type = SqlTypeMetadata.new(
+            sql_type: options['type'],
+            type: cast_type.type,
+            limit: cast_type.limit,
+            precision: cast_type.precision,
+            scale: cast_type.scale,
+          )
+          SunstoneSQLTypeMetadata.new(simple_type, options)
         end
         
         def column_name_for_operation(operation, node) # :nodoc:

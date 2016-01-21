@@ -10,6 +10,7 @@ require File.expand_path(File.join(__FILE__, '../arel/visitors/sunstone'))
 require File.expand_path(File.join(__FILE__, '../arel/collectors/sunstone'))
 
 require File.expand_path(File.join(__FILE__, '../active_record/connection_adapters/sunstone_adapter'))
+require File.expand_path(File.join(__FILE__, '../active_record/connection_adapters/sunstone/type_metadata'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/statement_cache'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))

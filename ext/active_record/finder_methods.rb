@@ -20,13 +20,12 @@ module ActiveRecord
           []
         else
           arel = relation.arel
-          rows = connection.select_all(arel, 'SQL', arel.bind_values + relation.bind_values)
+          rows = connection.select_all(arel, 'SQL', arel.bind_values + relation.bound_attributes)
           if join_dependency
             join_dependency.instantiate(rows, aliases)
           else
             instantiate_with_associations(rows, relation)
           end
-          
         end
       end
     end

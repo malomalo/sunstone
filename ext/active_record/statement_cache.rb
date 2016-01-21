@@ -16,7 +16,7 @@ module ActiveRecord
       end
 
       def sql_for(binds, connection)
-        binds = binds.dup
+        binds = connection.prepare_binds_for_database(binds)
         
         if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
           @values.compile(binds)

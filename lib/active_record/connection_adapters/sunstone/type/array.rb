@@ -12,7 +12,7 @@ module ActiveRecord
             @subtype = subtype
           end
           
-          def type_cast_for_database(value)
+          def serialize(value)
             super(value).to_json if value
           end
           

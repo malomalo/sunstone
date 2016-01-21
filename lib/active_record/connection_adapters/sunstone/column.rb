@@ -2,16 +2,18 @@ module ActiveRecord
   module ConnectionAdapters
     # Sunstone-specific extensions to column definitions in a table.
     class SunstoneColumn < Column #:nodoc:
-      attr_accessor :array
-
-      def initialize(name, cast_type, options={})
+      delegate :array, to: :sql_type_metadata
+      alias :array? :array
+      
+      def initialize(name, sql_type_metadata, options={})
+        @name = name.freeze
+        @sql_type_metadata = sql_type_metadata
+        @null = options['null']
+        @default = options['default']
+        @default_function = nil
+        @collation = nil
+        @table_name = nil
         @primary_key = (options['primary_key'] == true)
-        @array = !!options['array']
-        if @array
-          super(name, options['default'], Sunstone::Type::Array.new(cast_type), nil, options['null'])
-        else
-          super(name, options['default'], cast_type, nil, options['null'])
-        end
       end
       
       def primary_key?

@@ -10,7 +10,7 @@ module ActiveRecord
             :ewkb
           end
           
-          def type_cast_for_database(value)
+          def serialize(value)
             if value
               ::RGeo::WKRep::WKBGenerator.new(hex_format: true, type_format: :ewkb, emit_ewkb_srid: true).generate(value)
             end

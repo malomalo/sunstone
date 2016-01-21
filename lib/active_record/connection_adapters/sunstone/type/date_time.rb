@@ -4,7 +4,7 @@ module ActiveRecord
       module Type
         class DateTime < ActiveRecord::Type::DateTime
           
-          def type_cast_for_database(value)
+          def serialize(value)
             super(value).iso8601(3) if value
           end
           
