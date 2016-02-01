@@ -20,7 +20,11 @@ module Arel
           end
           newhash
         else
-          (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
+          if v.is_a?(Arel::Nodes::BindParam)
+            (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
+          else
+            (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+          end
         end
       end
 
