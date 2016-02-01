@@ -4,6 +4,14 @@ module Arel
 
       attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id
 
+      def cast_attribute(v)
+        if (v.is_a?(ActiveRecord::Attribute))
+          v.value_for_database
+        else
+          v
+        end
+      end
+
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
           hash.map { |w| substitute_binds(w, bvs) }
@@ -11,7 +19,7 @@ module Arel
           newhash = {}
           hash.each do |k, v|
             if v.is_a?(Arel::Nodes::BindParam)
-              newhash[k] = (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
+              newhash[k] = cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
             else
@@ -20,11 +28,7 @@ module Arel
           end
           newhash
         else
-          if hash.is_a?(Arel::Nodes::BindParam)
-            (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
-          else
-            (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
-          end
+          cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
         end
       end
 
