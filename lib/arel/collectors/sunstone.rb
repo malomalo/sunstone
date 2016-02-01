@@ -7,11 +7,11 @@ module Arel
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
           hash.map { |w| substitute_binds(w, bvs) }
-        else
+        elsif hash.is_a?(Hash)
           newhash = {}
           hash.each do |k, v|
-            if Arel::Nodes::BindParam === v
-              newhash[k] = (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+            if v.is_a?(Arel::Nodes::BindParam)
+              newhash[k] = (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
             else
@@ -19,6 +19,8 @@ module Arel
             end
           end
           newhash
+        else
+          (bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift).value_for_database
         end
       end
 
@@ -55,9 +57,9 @@ module Arel
           get_params[:include] = eager_loads.clone
         end
 
-        get_params[:limit] = limit if limit
-        get_params[:offset] = offset if offset
-        get_params[:order] = order if order
+        get_params[:limit] = substitute_binds(limit, bvs) if limit
+        get_params[:offset] = substitute_binds(offset, bvs) if offset
+        get_params[:order] = substitute_binds(order, bvs) if order
 
         case operation
         when :count
