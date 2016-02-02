@@ -34,7 +34,7 @@ module ActiveRecord
       end
       
       # Forward only valid config params to PGconn.connect.
-      conn_params.keep_if { |k, _| VALID_SUNSTONE_CONN_PARAMS.include?(k) }
+      conn_params.slice!(*VALID_SUNSTONE_CONN_PARAMS)
 
       # The postgres drivers don't allow the creation of an unconnected PGconn object,
       # so just pass a nil connection object for the time being.
@@ -54,7 +54,7 @@ module ActiveRecord
     # * <tt>:encoding</tt> - An optional client encoding that is used in a <tt>SET client_encoding TO
     #   <encoding></tt> call on the connection.
     class SunstoneAPIAdapter < AbstractAdapter
-      ADAPTER_NAME = 'Sunstone'
+      ADAPTER_NAME = 'Sunstone'.freeze
 
       NATIVE_DATABASE_TYPES = {
         string:      { name: "string" },
@@ -63,8 +63,12 @@ module ActiveRecord
         boolean:     { name: "boolean" }
       }
 
-      include Sunstone::DatabaseStatements
+      # include PostgreSQL::Quoting
+      # include PostgreSQL::ReferentialIntegrity
       include Sunstone::SchemaStatements
+      include Sunstone::DatabaseStatements
+      # include PostgreSQL::ColumnDumper
+      # include Savepoints
       
       # Returns 'SunstoneAPI' as adapter name for identification purposes.
       def adapter_name
@@ -80,7 +84,7 @@ module ActiveRecord
 
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
-        super(connection, logger)
+        super(connection, logger, config)
 
         @visitor = Arel::Visitors::Sunstone.new
         @connection_parameters, @config = connection_parameters, config
@@ -149,6 +153,15 @@ module ActiveRecord
       def server_config
         Wankel.parse(@connection.get("/configuration").body)
       end
+      
+      def lookup_cast_type_from_column(column) # :nodoc:
+        if column.array
+          Sunstone::Type::Array.new(type_map.lookup(column.sql_type))
+        else
+          type_map.lookup(column.sql_type)
+        end
+      end
+      
 
       private
 
@@ -158,7 +171,7 @@ module ActiveRecord
           m.register_type 'integer',    Type::Integer.new
           m.register_type 'decimal',    Type::Decimal.new
           m.register_type 'datetime',   Sunstone::Type::DateTime.new
-          m.register_type 'hash',       Type::Value.new
+          m.register_type 'hash',       Type::Internal::AbstractJson.new
           m.register_type 'ewkb',       Sunstone::Type::EWKB.new
         end
 
@@ -186,6 +199,9 @@ module ActiveRecord
         def create_table_definition(name, temporary, options, as = nil) # :nodoc:
           SunstoneAPI::TableDefinition.new native_database_types, name, temporary, options, as
         end
+        
+        ActiveRecord::Type.add_modifier({ array: true }, Sunstone::Type::Array, adapter: :sunstone)
+        # ActiveRecord::Type.add_modifier({ range: true }, OID::Range, adapter: :postgresql)
     end
   end
 end

@@ -18,8 +18,12 @@ module Arel
         accept(node, Arel::Collectors::SQLString.new, &block).value
       end
 
+      def preparable
+        false
+      end
+      
       private
-
+      
       def visit_Arel_Nodes_SelectStatement o, collector
         collector = o.cores.inject(collector) { |c,x|
           visit_Arel_Nodes_SelectCore(x, c)

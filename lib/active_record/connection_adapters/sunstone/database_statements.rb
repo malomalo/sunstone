@@ -13,12 +13,7 @@ module ActiveRecord
           end
         end
 
-        # Returns an ActiveRecord::Result instance.
-        def select_all(arel, name = nil, binds = [], &block)
-          exec_query(arel, name, binds)
-        end
-
-        def exec_query(arel, name = 'SAR', binds = [])
+        def exec_query(arel, name = 'SAR', binds = [], prepare: false)
           sar = to_sar(arel, binds)
           result = exec(sar, name)
 

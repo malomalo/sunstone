@@ -57,7 +57,7 @@ module ActiveRecord
           other = parent.association(reflection.name)
           other.loaded!
         else
-          if parent.association_cache.key?(reflection.name)
+          if parent.association_cached?(reflection.name)
             model = parent.association(reflection.name).target
             construct(model, attributes.select{|k,v| !reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
           end
