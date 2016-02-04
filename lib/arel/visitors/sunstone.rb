@@ -461,31 +461,31 @@ module Arel
       #   collector << " BETWEEN "
       #   visit o.right, collector
       # end
-      #
-      # def visit_Arel_Nodes_GreaterThanOrEqual o, collector
-      #   collector = visit o.left, collector
-      #   collector << " >= "
-      #   visit o.right, collector
-      # end
-      #
-      def visit_Arel_Nodes_GreaterThan o, collector
+
+      def visit_Arel_Nodes_GreaterThanOrEqual o, collector
         {
-          visit(o.left, collector) => { :greater_than => visit(o.right, collector) }
+          visit(o.left, collector) => { :gte => visit(o.right, collector) }
         }
       end
 
-      # def visit_Arel_Nodes_LessThanOrEqual o, collector
-      #   collector = visit o.left, collector
-      #   collector << " <= "
-      #   visit o.right, collector
-      # end
-      #
-      # def visit_Arel_Nodes_LessThan o, collector
-      #   collector = visit o.left, collector
-      #   collector << " < "
-      #   visit o.right, collector
-      # end
-      #
+      def visit_Arel_Nodes_GreaterThan o, collector
+        {
+          visit(o.left, collector) => { :gt => visit(o.right, collector) }
+        }
+      end
+
+      def visit_Arel_Nodes_LessThanOrEqual o, collector
+        {
+          visit(o.left, collector) => { :lte => visit(o.right, collector) }
+        }
+      end
+
+      def visit_Arel_Nodes_LessThan o, collector
+        {
+          visit(o.left, collector) => { :lt => visit(o.right, collector) }
+        }
+      end
+
       # def visit_Arel_Nodes_Matches o, collector
       #   collector = visit o.left, collector
       #   collector << " LIKE "
