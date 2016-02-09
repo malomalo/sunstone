@@ -292,14 +292,14 @@ module Sunstone
     private
 
     def request_headers
-      headers = {
-        'Accept'      => 'application/json',
-        'User-Agent'  => user_agent,
-        'Api-Version' => '0.1.0'
-      }
+      headers = Thread.current[:sunstone_headers] || {}
+      headers['Accept'] = 'application/json'
+      headers['User-Agent'] = user_agent
+      headers['Api-Version'] = '0.1.0'
+      
       request_api_key = Thread.current[:sunstone_api_key] || api_key
-
       headers['Api-Key'] = request_api_key if request_api_key
+      
       headers
     end
 

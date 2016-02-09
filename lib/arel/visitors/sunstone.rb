@@ -631,7 +631,6 @@ module Arel
           nkey = okey.keys.first
           nvalue = okey.values.first
           okey[nkey] = { nvalue => {eq: value} }
-          puts key
           key
         else
           key = key.to_s.split('.')
@@ -640,6 +639,23 @@ module Arel
             hash = { key.pop => hash }
           end
           hash
+        end
+      end
+      
+      def visit_Arel_Nodes_HasKey o, collector
+        key = visit(o.left, collector)
+        value = (o.right.nil? ? nil : o.right.to_s)
+        
+        if key.is_a?(Hash)
+          okey = key
+          while okey.values.first.is_a?(Hash)
+            okey = okey.values.first
+          end
+          nkey = okey.keys.first
+          nvalue = okey.values.first
+          okey[nkey] = { nvalue => {has_key: value} }
+        else
+          { key => {has_key: value} }
         end
       end
 
