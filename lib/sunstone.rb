@@ -1,3 +1,4 @@
+require 'msgpack'
 require 'wankel'
 require 'cookie_store'
 require 'active_record'
