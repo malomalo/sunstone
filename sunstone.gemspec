@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'sdoc-templates-42floors'
 
   # Runtime
+  s.add_runtime_dependency 'msgpack'
   s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
   s.add_runtime_dependency 'arel', '~> 7.0'

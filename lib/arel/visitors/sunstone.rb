@@ -620,17 +620,27 @@ module Arel
       end
 
       def visit_Arel_Nodes_Equality o, collector
-        key = visit(o.left, collector).to_s.split('.')
+        key = visit(o.left, collector)
         value = (o.right.nil? ? nil : visit(o.right, collector))
         
-        hash = {
-          key.pop => value
-        }
-        
-        while key.size > 0
-          hash = { key.pop => hash }
+        if key.is_a?(Hash)
+          okey = key
+          while okey.values.first.is_a?(Hash)
+            okey = okey.values.first
+          end
+          nkey = okey.keys.first
+          nvalue = okey.values.first
+          okey[nkey] = { nvalue => {eq: value} }
+          puts key
+          key
+        else
+          key = key.to_s.split('.')
+          hash = { key.pop => value }
+          while key.size > 0
+            hash = { key.pop => hash }
+          end
+          hash
         end
-        hash
       end
 
       def visit_Arel_Nodes_NotEqual o, collector
@@ -649,10 +659,25 @@ module Arel
       def visit_Arel_Nodes_UnqualifiedColumn o, collector
         o.name
       end
+      
+      def visit_Arel_Attributes_Key o, collector
+        key = visit(o.relation, collector)
+        if key.is_a?(Hash)
+          okey = key
+          while okey.values.first.is_a?(Hash)
+            okey = okey.values.first
+          end
+          nkey = okey.keys.first
+          value = okey.values.first
+          okey[nkey] = {value => o.name}
+          key
+        else
+          { key => o.name }
+        end
+      end
 
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
-        # collector <<
         collector.table == join_name ? o.name : "#{join_name}.#{o.name}"
       end
       alias :visit_Arel_Attributes_Integer :visit_Arel_Attributes_Attribute

@@ -81,7 +81,7 @@ module Arel
         end
         
         if get_params.size > 0
-          path += '?' + get_params.to_param
+          path += '?' + {m: URI.escape(get_params.to_msgpack)}.to_param
         end
 
         request = request_type.new(path)
