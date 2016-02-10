@@ -29,7 +29,7 @@ module ActiveRecord
           
           def serialize(value)
             if value.is_a?(::Array)
-              JSON.encode(type_cast_array(value, :serialize))
+              type_cast_array(value, :serialize).to_json
             else
               super
             end
