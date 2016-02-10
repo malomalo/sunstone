@@ -463,27 +463,43 @@ module Arel
       # end
 
       def visit_Arel_Nodes_GreaterThanOrEqual o, collector
-        {
-          visit(o.left, collector) => { :gte => visit(o.right, collector) }
-        }
+        key = visit(o.left, collector)
+        value = { :gte => visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          { key => value }
+        end
       end
 
       def visit_Arel_Nodes_GreaterThan o, collector
-        {
-          visit(o.left, collector) => { :gt => visit(o.right, collector) }
-        }
+        key = visit(o.left, collector)
+        value = { :gt => visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          { key => value }
+        end
       end
 
       def visit_Arel_Nodes_LessThanOrEqual o, collector
-        {
-          visit(o.left, collector) => { :lte => visit(o.right, collector) }
-        }
+        key = visit(o.left, collector)
+        value = { :lte => visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          { key => value }
+        end
       end
 
       def visit_Arel_Nodes_LessThan o, collector
-        {
-          visit(o.left, collector) => { :lt => visit(o.right, collector) }
-        }
+        key = visit(o.left, collector)
+        value = { :lte => visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          { key => value }
+        end
       end
 
       # def visit_Arel_Nodes_Matches o, collector
@@ -619,19 +635,23 @@ module Arel
         end
       end
 
+      def add_to_bottom_of_hash(hash, value)
+        okey = hash
+        while okey.values.first.is_a?(Hash)
+          okey = okey.values.first
+        end
+        nkey = okey.keys.first
+        nvalue = okey.values.first
+        okey[nkey] = { nvalue => value }
+        hash
+      end
+      
       def visit_Arel_Nodes_Equality o, collector
         key = visit(o.left, collector)
         value = (o.right.nil? ? nil : visit(o.right, collector))
         
         if key.is_a?(Hash)
-          okey = key
-          while okey.values.first.is_a?(Hash)
-            okey = okey.values.first
-          end
-          nkey = okey.keys.first
-          nvalue = okey.values.first
-          okey[nkey] = { nvalue => {eq: value} }
-          key
+          add_to_bottom_of_hash(key, {eq: value})
         else
           key = key.to_s.split('.')
           hash = { key.pop => value }
