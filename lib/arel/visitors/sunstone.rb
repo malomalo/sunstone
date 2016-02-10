@@ -466,7 +466,11 @@ module Arel
         key = visit(o.left, collector)
         value = { :gte => visit(o.right, collector) }
         if key.is_a?(Hash)
-          add_to_bottom_of_hash(key, value)
+          if o.left.is_a?(Arel::Attributes::Cast)
+            merge_to_bottom_hash(key, value)
+          else
+            add_to_bottom_of_hash(key, value)
+          end
         else
           { key => value }
         end
@@ -476,7 +480,11 @@ module Arel
         key = visit(o.left, collector)
         value = { :gt => visit(o.right, collector) }
         if key.is_a?(Hash)
-          add_to_bottom_of_hash(key, value)
+          if o.left.is_a?(Arel::Attributes::Cast)
+            merge_to_bottom_hash(key, value)
+          else
+            add_to_bottom_of_hash(key, value)
+          end
         else
           { key => value }
         end
@@ -486,7 +494,11 @@ module Arel
         key = visit(o.left, collector)
         value = { :lte => visit(o.right, collector) }
         if key.is_a?(Hash)
-          add_to_bottom_of_hash(key, value)
+          if o.left.is_a?(Arel::Attributes::Cast)
+            merge_to_bottom_hash(key, value)
+          else
+            add_to_bottom_of_hash(key, value)
+          end
         else
           { key => value }
         end
@@ -496,7 +508,11 @@ module Arel
         key = visit(o.left, collector)
         value = { :lte => visit(o.right, collector) }
         if key.is_a?(Hash)
-          add_to_bottom_of_hash(key, value)
+          if o.left.is_a?(Arel::Attributes::Cast)
+            merge_to_bottom_hash(key, value)
+          else
+            add_to_bottom_of_hash(key, value)
+          end
         else
           { key => value }
         end
@@ -635,6 +651,15 @@ module Arel
         end
       end
 
+      def merge_to_bottom_hash(hash, value)
+        okey = hash
+        while okey.values.first.is_a?(Hash)
+          okey = okey.values.first
+        end
+        okey.merge!(value)
+        hash
+      end
+      
       def add_to_bottom_of_hash(hash, value)
         okey = hash
         while okey.values.first.is_a?(Hash)
@@ -678,7 +703,7 @@ module Arel
           { key => {has_key: value} }
         end
       end
-
+      
       def visit_Arel_Nodes_NotEqual o, collector
         {
           visit(o.left, collector) => { :not => visit(o.right, collector) }
@@ -694,6 +719,16 @@ module Arel
 
       def visit_Arel_Nodes_UnqualifiedColumn o, collector
         o.name
+      end
+      
+      def visit_Arel_Attributes_Cast(o, collector)
+        key = visit(o.relation, collector)
+        value = { :cast => o.name }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          { key => value }
+        end
       end
       
       def visit_Arel_Attributes_Key o, collector
