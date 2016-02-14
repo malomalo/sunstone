@@ -68,16 +68,75 @@ module Arel
         collector
       end
       
+      def visit_Arel_Nodes_Overlaps o, collector
+        { visit(o.left, collector) => {overlaps: o.left.type_cast_for_database(o.right) }}
+      end
+      
       def visit_Arel_Nodes_InsertStatement o, collector
         collector.request_type  = Net::HTTP::Post
         collector.table         = o.relation.name
         collector.operation     = :insert
         
         if o.values
-          collector.updates = o.values.right.map { |x| visit(x, collector) }.zip(o.values.left).to_h
+          keys = o.values.right.map { |x| visit(x, collector) }
+          values = o.values.left
+          collector.updates = {}
+          
+
+          keys.each_with_index do |k, i|
+            if k.is_a?(Hash)
+              add_to_bottom_of_hash_or_array(k, values[i])
+              collector.updates.deep_merge!(k) { |key, v1, v2|
+                if (v1.is_a?(Array) && v2.is_a?(Array))
+                  v2.each_with_index do |v, i|
+                    if v1[i].nil?
+                      v1[i] = v2[i]
+                    else
+                      v1[i].deep_merge!(v2[i]) unless v2[i].nil?
+                    end
+                  end
+                  v1
+                else
+                  v2
+                end
+              }
+            else
+              collector.updates[k] = values[i]
+            end
+          end
         end
         
         collector
+      end
+      
+      def find_bottom(hash)
+        if hash.is_a?(Hash)
+          if hash.values.first.is_a?(Array) || hash.values.first.is_a?(Hash)
+            find_bottom(hash.values.first)
+          else
+            hash
+          end
+        elsif hash.is_a?(Array)
+          fnn = hash.find { |i| !i.nil? }
+          if fnn.is_a?(Array) || fnn.is_a?(Hash)
+            fnn
+          else
+            hash
+          end
+        end
+      end
+      
+      def add_to_bottom_of_hash_or_array(hash, value)
+        hash = find_bottom(hash)
+        if hash.is_a?(Hash)
+          nkey = hash.keys.first
+          nvalue = hash.values.first
+          hash[nkey] = { nvalue => value }
+        elsif hash.is_a?(Array)
+          fnni = hash.find_index { |i| !i.nil? }
+          nvalue = hash[fnni]
+          hash[fnni] = { nvalue => value }
+        end
       end
 
 
@@ -597,15 +656,11 @@ module Arel
         end
       end
 
-      # def visit_Arel_Nodes_In o, collector
-      #   if Array === o.right && o.right.empty?
-      #     collector << '1=0'
-      #   else
-      #     collector = visit o.left, collector
-      #     collector << " IN ("
-      #     visit(o.right, collector) << ")"
-      #   end
-      # end
+      def visit_Arel_Nodes_In o, collector
+        {
+          visit(o.left, collector) => {in: visit(o.right, collector)}
+        }
+      end
       #
       # def visit_Arel_Nodes_NotIn o, collector
       #   if Array === o.right && o.right.empty?
@@ -623,10 +678,11 @@ module Arel
         ors << o.children.inject({}) do |c, x|
           value = visit(x, collector)
           if value.is_a?(Hash)
-            c.deep_merge(value)
+            c.deep_merge!(value)
           elsif value.is_a?(Array)
             value.size == 1 ? ors << value : ors += value
           end
+          c
         end
         ors
       end
@@ -662,8 +718,12 @@ module Arel
       
       def add_to_bottom_of_hash(hash, value)
         okey = hash
-        while okey.values.first.is_a?(Hash)
-          okey = okey.values.first
+        while okey.is_a?(Hash) && (okey.values.first.is_a?(Hash) || okey.values.first.is_a?(Array))
+          if okey.is_a?(Array)
+            okey = okey.find { |i| !i.nil? }
+          else
+            okey = okey.values.first
+          end
         end
         nkey = okey.keys.first
         nvalue = okey.values.first
@@ -747,9 +807,20 @@ module Arel
         end
       end
 
+      def visit_Arel_Attributes_Relation o, collector
+        if o.collection
+          ary = []
+          ary[o.collection] = visit(o.relation, collector).to_s.split('.').last
+          {"#{o.name}_attributes" => ary}
+        else
+          {"#{o.name}_attributes" => visit(o.relation, collector).to_s.split('.').last}
+        end
+      end
+      
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
         collector.table == join_name ? o.name : "#{join_name}.#{o.name}"
+        # o.name
       end
       alias :visit_Arel_Attributes_Integer :visit_Arel_Attributes_Attribute
       alias :visit_Arel_Attributes_Float :visit_Arel_Attributes_Attribute

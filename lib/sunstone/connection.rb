@@ -117,7 +117,6 @@ module Sunstone
       elsif body.is_a?(String)
         request.body = body
       elsif body
-        
         request.body = Wankel.encode(body)
       end
 
@@ -328,7 +327,7 @@ module Sunstone
       if !(200..299).include?(code)
         case code
         when 400
-          raise Sunstone::Exception::BadRequest, response
+          raise Sunstone::Exception::BadRequest, response.body
         when 401
           raise Sunstone::Exception::Unauthorized, response
         when 404

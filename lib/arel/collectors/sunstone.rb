@@ -14,13 +14,23 @@ module Arel
 
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
-          hash.map { |w| substitute_binds(w, bvs) }
+          hash.map do |v|
+            if v.is_a?(Arel::Nodes::BindParam)
+              cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+            elsif v.is_a?(Hash) || v.is_a?(Array)
+              substitute_binds(v, bvs)
+            else
+              v
+            end
+          end
         elsif hash.is_a?(Hash)
           newhash = {}
           hash.each do |k, v|
             if v.is_a?(Arel::Nodes::BindParam)
               newhash[k] = cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
             elsif v.is_a?(Hash)
+              newhash[k] = substitute_binds(v, bvs)
+            elsif v.is_a?(Array)
               newhash[k] = substitute_binds(v, bvs)
             else
               newhash[k] = v
@@ -81,7 +91,7 @@ module Arel
         end
         
         if get_params.size > 0
-          path += '?' + {m: URI.escape(MessagePack.pack(get_params))}.to_param
+          path += '?m=' + URI.escape(CGI.escape(MessagePack.pack(get_params)))
         end
 
         request = request_type.new(path)
