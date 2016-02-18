@@ -1,6 +1,6 @@
 module ActiveRecord
   module QueryMethods
-      
+    
     def reverse_sql_order(order_query)
       order_query = [arel_table[primary_key].asc] if order_query.empty?
 
@@ -18,6 +18,13 @@ module ActiveRecord
         end
       end
     end
-      
+    
+    def joins(*args)
+      # If a joins happen with sunstone messes up visitor / collector
+      return self if klass.connection.class.name == "ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter"
+      check_if_method_has_arguments!(:joins, args)
+      spawn.joins!(*args)
+    end
+    
   end
 end
