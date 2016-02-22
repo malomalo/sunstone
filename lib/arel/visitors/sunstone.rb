@@ -747,9 +747,37 @@ module Arel
         end
       end
       
+      def visit_Arel_Nodes_TSMatch(o, collector)
+        key = visit(o.left, collector)
+        value = { ts_match: (o.right.nil? ? nil : visit(o.right, collector)) }
+
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash(key, value)
+        else
+          key = key.to_s.split('.')
+          hash = { key.pop => value }
+          while key.size > 0
+            hash = { key.pop => hash }
+          end
+          hash
+        end
+      end
+      
+      def visit_Arel_Nodes_TSVector(o, collector)
+        visit(o.attribute, collector)
+      end
+      
+      def visit_Arel_Nodes_TSQuery(o, collector)
+        if o.language
+          [visit(o.expression, collector), visit(o.language, collector)]
+        else
+          visit(o.expression, collector)
+        end
+      end
+      
       def visit_Arel_Nodes_HasKey o, collector
         key = visit(o.left, collector)
-        value = (o.right.nil? ? nil : o.right.to_s)
+        value = {has_key: (o.right.nil? ? nil : o.right.to_s)}
         
         if key.is_a?(Hash)
           okey = key
@@ -758,9 +786,9 @@ module Arel
           end
           nkey = okey.keys.first
           nvalue = okey.values.first
-          okey[nkey] = { nvalue => {has_key: value} }
+          okey[nkey] = { nvalue => value }
         else
-          { key => {has_key: value} }
+          { key => value }
         end
       end
       
