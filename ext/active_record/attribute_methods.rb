@@ -45,10 +45,14 @@ module ActiveRecord
           record.destroy
         elsif autosave != false
           if record.new_record? || (autosave && record.changed_for_autosave?)
-            attrs[Arel::Attributes::Relation.new(reflection, reflection.name)] = if record.new_record?
-              arel_attributes_with_values_for_create(record.attribute_names)
+            if record.new_record?
+              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+              end
             else
-              arel_attributes_with_values_for_update(record.attribute_names)
+              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+              end
             end
           end
         end
@@ -78,10 +82,14 @@ module ActiveRecord
               record[reflection.foreign_key] = key
             end
 
-            attrs[Arel::Attributes::Relation.new(reflection, reflection.name)] = if record.new_record?
-              arel_attributes_with_values_for_create(record.attribute_names)
+            if record.new_record?
+              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+              end
             else
-              arel_attributes_with_values_for_update(record.attribute_names)
+              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+              end
             end
           end
         end
