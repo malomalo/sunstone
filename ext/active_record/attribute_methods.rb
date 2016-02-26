@@ -45,7 +45,7 @@ module ActiveRecord
           record.destroy
         elsif autosave != false
           if record.new_record? || (autosave && record.changed_for_autosave?)
-            attrs[Arel::Attributes::Relation.new(reflection.name)] = if record.new_record?
+            attrs[Arel::Attributes::Relation.new(reflection, reflection.name)] = if record.new_record?
               arel_attributes_with_values_for_create(record.attribute_names)
             else
               arel_attributes_with_values_for_update(record.attribute_names)
@@ -78,7 +78,7 @@ module ActiveRecord
               record[reflection.foreign_key] = key
             end
 
-            attrs[Arel::Attributes::Relation.new(reflection.name)] = if record.new_record?
+            attrs[Arel::Attributes::Relation.new(reflection, reflection.name)] = if record.new_record?
               arel_attributes_with_values_for_create(record.attribute_names)
             else
               arel_attributes_with_values_for_update(record.attribute_names)
