@@ -63,7 +63,7 @@ module ActiveRecord
 
         # Returns just a table's primary key
         def primary_key(table)
-          columns(table).find{ |c| c.primary_key? }.name
+          columns(table).find{ |c| c.primary_key? }.try(:name)
         end
 
       end
