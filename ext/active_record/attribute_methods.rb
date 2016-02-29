@@ -102,6 +102,9 @@ module ActiveRecord
       return if @_already_called[key]
       @_already_called[key]=true
       @_already_called[:"autosave_associated_records_for_#{reflection.name}"] = true
+      if reflection.is_a?(ActiveRecord::Reflection::HasAndBelongsToManyReflection)
+        @_already_called[:"autosave_associated_records_for_#{self.class.name.downcase.pluralize}_#{reflection.name}"] = true
+      end
       
       if association = association_instance_get(reflection.name)
         autosave = reflection.options[:autosave]
