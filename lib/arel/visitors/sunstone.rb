@@ -175,22 +175,46 @@ module Arel
         collector.request_type  = Net::HTTP::Patch
         collector.table         = o.relation.name
         collector.operation     = :update
-
-        wheres = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
-          w.is_a?(Array) ? c += w : c << w
-        }
-        if wheres.size != 1 && wheres.first.size != 1 && !wheres['id']
-          raise 'Upsupported'
-        else
-          collector.where = wheres
+        
+        # collector.id = o.wheres.first.children.first.right
+        if !o.wheres.empty?
+          collector.where = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
+            w.is_a?(Array) ? c += w : c << w
+          }
         end
         
-        collector.id = wheres.first['id']
+        if collector.where.size != 1 && collector.where.first.size != 1 && !collector.where.first['id']
+          raise 'Upsupported'
+        end
         
         if o.values
-          collector.updates = o.values.map { |x| visit(x, collector) }.inject({}){|c,v| c.merge(v) }#.zip(o.values).to_h
+          collector.updates = {}
+          
+          o.values.map { |x| visit(x, collector) }.each do |value|
+            value.each do |key, v|
+              if key.is_a?(Hash)
+                add_to_bottom_of_hash_or_array(key, v)
+                collector.updates.deep_merge!(key) { |key, v1, v2|
+                  if (v1.is_a?(Array) && v2.is_a?(Array))
+                    v2.each_with_index do |v, i|
+                      if v1[i].nil?
+                        v1[i] = v2[i]
+                      else
+                        v1[i].deep_merge!(v2[i]) unless v2[i].nil?
+                      end
+                    end
+                    v1
+                  else
+                    v2
+                  end
+                }
+              else
+                collector.updates[key] = v
+              end
+            end
+          end
         end
-
+        
         collector
       end
       #
@@ -697,8 +721,10 @@ module Arel
       end
 
       def visit_Arel_Nodes_Assignment o, collector
-        case o.right
-        when Arel::Nodes::UnqualifiedColumn, Arel::Attributes::Attribute, Arel::Nodes::BindParam
+        case o.left
+        when Arel::Nodes::UnqualifiedColumn
+          { visit(o.left.expr, collector) => visit(o.right, collector) }
+        when Arel::Attributes::Attribute, Arel::Nodes::BindParam
           { visit(o.left, collector) => visit(o.right, collector) }
         else
           collector = visit o.left, collector

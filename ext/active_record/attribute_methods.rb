@@ -50,7 +50,7 @@ module ActiveRecord
                 attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
               end
             else
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
               end
             end
@@ -87,7 +87,7 @@ module ActiveRecord
                 attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
               end
             else
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
               end
             end
@@ -132,7 +132,7 @@ module ActiveRecord
                   attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
                 end
               else
-                record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
                   attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
                 end
               end

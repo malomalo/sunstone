@@ -89,7 +89,7 @@ module Arel
           path += "/#{get_params[:where]['id']}"
           get_params.delete(:where)
         end
-        
+
         if get_params.size > 0
           path += '?m=' + URI.escape(CGI.escape(MessagePack.pack(get_params)))
         end
