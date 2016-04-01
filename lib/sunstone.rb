@@ -20,6 +20,7 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_
 # require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/predicate_builder'))
 # require File.expand_path(File.join(__FILE__, '../../ext/active_record/calculations'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/query_methods'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/collection_association'))
 # require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/builder/has_and_belongs_to_many'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))

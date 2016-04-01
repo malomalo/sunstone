@@ -108,36 +108,19 @@ module ActiveRecord
       
       if association = association_instance_get(reflection.name)
         autosave = reflection.options[:autosave]
-
         if records = associated_records_to_validate_or_save(association, @new_record_before_save, autosave)
-          if autosave
-            records_to_destroy = records.select(&:marked_for_destruction?)
-            records_to_destroy.each { |record| association.destroy(record) }
-            records -= records_to_destroy
-          end
 
           records.each_with_index do |record, idx|
             next if record.destroyed?
 
-            saved = true
-
-            if autosave != false && (@new_record_before_save || record.new_record?)
-              # if autosave
-              #   saved = association.insert_record(record, false)
-              # else
-              #   association.insert_record(record) unless reflection.nested?
-              # end
-              if record.new_record?
-                record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                  attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
-                end
-              else
-                record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                  attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
-                end
+            if record.new_record?
+              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
               end
-            elsif autosave
-              # saved = record.save(:validate => false)
+            else
+              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
+              end
             end
 
           end
@@ -148,7 +131,7 @@ module ActiveRecord
       end
     end
 
-    
+
     
   end
 end

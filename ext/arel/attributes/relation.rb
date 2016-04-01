@@ -17,6 +17,14 @@ module Arel
       def table_name
         nil
       end
+      
+      def eql? other
+        self.class == other.class &&
+          self.relation == other.relation &&
+          self.name == other.name &&
+          self.collection == other.collection
+      end
+      
     end
   end
 end

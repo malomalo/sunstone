@@ -186,6 +186,10 @@ module Arel
         if collector.where.size != 1 && collector.where.first.size != 1 && !collector.where.first['id']
           raise 'Upsupported'
         end
+        if !collector.where.first['id']
+          collector.table = collector.where.first.keys.first
+          collector.where[0] = {'id' => collector.where.first.values.first.values.first}
+        end
         
         if o.values
           collector.updates = {}
