@@ -865,20 +865,38 @@ module Arel
         end
       end
 
-      def visit_Arel_Attributes_Relation o, collector
+      def visit_Arel_Attributes_Relation o, collector, top=true
+        value = if o.relation.is_a?(Arel::Attributes::Relation)
+          visit_Arel_Attributes_Relation(o.relation, collector, false)
+        else
+          visit(o.relation, collector)
+        end
+        value = value.to_s.split('.').last if !value.is_a?(Hash)
+        
         if o.collection
           ary = []
-          ary[o.collection] = visit(o.relation, collector).to_s.split('.').last
-          {"#{o.name}_attributes" => ary}
+          ary[o.collection] = value
+          if top && o.name == collector.table
+            ary
+          elsif o.for_write
+            {"#{o.name}_attributes" => ary}
+          else
+            {o.name => ary}
+          end
         else
-          {"#{o.name}_attributes" => visit(o.relation, collector).to_s.split('.').last}
+          if top && o.name == collector.table
+            value
+          elsif o.for_write
+            {"#{o.name}_attributes" => value}
+          else
+            {o.name => value}
+          end
         end
       end
       
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
         collector.table == join_name ? o.name : "#{join_name}.#{o.name}"
-        # o.name
       end
       alias :visit_Arel_Attributes_Integer :visit_Arel_Attributes_Attribute
       alias :visit_Arel_Attributes_Float :visit_Arel_Attributes_Attribute

@@ -1,3 +1,39 @@
+module Arel
+  module Visitors
+    class ToSql < Arel::Visitors::Reduce
+      
+      def visit_Arel_Attributes_Relation o, collector
+        visit(o.relation, collector)
+      end
+      
+    end
+  end
+end
+
+module ActiveRecord
+  class PredicateBuilder # :nodoc:
+
+    def expand_from_hash(attributes)
+      return ["1=0"] if attributes.empty?
+  
+      attributes.flat_map do |key, value|
+        if value.is_a?(Hash)
+          ka = associated_predicate_builder(key).expand_from_hash(value)
+          ka.each { |k|
+            if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
+              k.left = Arel::Attributes::Relation.new(k.left, key)
+            end
+          }
+          ka
+        else
+          expand(key, value)
+        end
+      end
+    end
+
+  end
+end
+
 module ActiveRecord
   module FinderMethods
 

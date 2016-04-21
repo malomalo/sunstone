@@ -47,11 +47,11 @@ module ActiveRecord
           if record.new_record? || (autosave && record.changed_for_autosave?)
             if record.new_record?
               record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             else
               record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             end
           end
@@ -84,11 +84,11 @@ module ActiveRecord
 
             if record.new_record?
               record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             else
               record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             end
           end
@@ -115,11 +115,11 @@ module ActiveRecord
 
             if record.new_record?
               record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
               end
             else
               record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx)] = v
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
               end
             end
 
