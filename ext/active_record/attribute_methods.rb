@@ -110,7 +110,7 @@ module ActiveRecord
         autosave = reflection.options[:autosave]
         if records = associated_records_to_validate_or_save(association, @new_record_before_save, autosave)
 
-          records.each_with_index do |record, idx|
+          association.target.each_with_index do |record, idx|
             next if record.destroyed?
 
             if record.new_record?
