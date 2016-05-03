@@ -1,27 +1,33 @@
+require 'uri'
+require 'net/http'
+require 'net/https'
+
+require 'json'
 require 'msgpack'
-require 'wankel'
-require 'cookie_store'
-require 'active_record'
+require 'cookie_store' # optional
 
+require "active_record"
+# require "active_record/connection_adapters/abstract_adapter"
+# require "active_record/connection_adapters/statement_pool"
+
+# Adapter
 require File.expand_path(File.join(__FILE__, '../sunstone/version'))
-require File.expand_path(File.join(__FILE__, '../sunstone/connection'))
 require File.expand_path(File.join(__FILE__, '../sunstone/exception'))
-
-require File.expand_path(File.join(__FILE__, '../arel/visitors/sunstone'))
-require File.expand_path(File.join(__FILE__, '../arel/collectors/sunstone'))
-
+require File.expand_path(File.join(__FILE__, '../sunstone/connection'))
 require File.expand_path(File.join(__FILE__, '../active_record/connection_adapters/sunstone_adapter'))
 require File.expand_path(File.join(__FILE__, '../active_record/connection_adapters/sunstone/type_metadata'))
 
+# Arel Adapters
+require File.expand_path(File.join(__FILE__, '../arel/visitors/sunstone'))
+require File.expand_path(File.join(__FILE__, '../arel/collectors/sunstone'))
+
+# ActiveRecord Extensions
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/statement_cache'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/persistence'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/callbacks'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_methods'))
-# require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/predicate_builder'))
-# require File.expand_path(File.join(__FILE__, '../../ext/active_record/calculations'))
-require File.expand_path(File.join(__FILE__, '../../ext/active_record/query_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/collection_association'))
-# require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/builder/has_and_belongs_to_many'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))
 

@@ -1,29 +1,26 @@
-require 'uri'
-require 'net/http'
-require 'net/https'
-
 # _Sunstone_ is a low-level API. It provides basic HTTP #get, #post, #put, and
 # #delete calls to the Sunstone Server. It can also provides basic error
 # checking of responses.
 module Sunstone
   class Connection
 
-    # Set the User-Agent of the client. Will be joined with other User-Agent info
     attr_reader :api_key, :host, :port, :use_ssl
 
     # Initialize a connection a Sunstone API server.
     #
     # Options:
     #
-    # * <tt>:site</tt> - An optional url used to set the protocol, host, port,
+    # * <tt>:url</tt> - An optional url used to set the protocol, host, port,
     #   and api_key
     # * <tt>:host</tt> - The default is to connect to 127.0.0.1.
     # * <tt>:port</tt> - Defaults to 80.
     # * <tt>:use_ssl</tt> - Defaults to false.
     # * <tt>:api_key</tt> - An optional token to send in the `Api-Key` header
+    # * <tt>:user_agent</tt> - An optional string. Will be joined with other
+    #                          User-Agent info.
     def initialize(config)
-      if config[:site]
-        uri = URI.parse(config.delete(:site))
+      if config[:url]
+        uri = URI.parse(config.delete(:url))
         config[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
         config[:host]    ||= uri.host
         config[:port]    ||= uri.port
@@ -66,6 +63,10 @@ module Sunstone
         RUBY_PLATFORM
       ].compact.join(' ')
     end
+    
+    def url(path=nil)
+      "http#{use_ssl ? 's' : ''}://#{host}#{port != 80 ? (port == 443 && use_ssl ? '' : ":#{port}") : ''}#{path}"
+    end
 
     # Sends a Net::HTTPRequest to the server. The headers returned from
     # Sunestone#headers are automatically added to the request. The appropriate
@@ -103,7 +104,33 @@ module Sunstone
     #    end
     #  end
     def send_request(request, body=nil, &block)
-      request_uri = "http#{use_ssl ? 's' : ''}://#{host}#{port != 80 ? (port == 443 && use_ssl ? '' : ":#{port}") : ''}#{request.path}"
+      if request.method != 'GET' && Thread.current[:sunstone_transaction_count]
+        if Thread.current[:sunstone_transaction_count] == 1 && !Thread.current[:sunstone_request_sent]
+          Thread.current[:sunstone_request_sent] = request
+        elsif Thread.current[:sunstone_request_sent]
+          log_mess = request.path.split('?', 2)
+          log_mess += Thread.current[:sunstone_request_sent].path.split('?', 2)
+          raise <<~MSG
+            Cannot send multiple request in a transaction.
+            
+            Trying to send:
+              #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }
+            
+            Already sent:
+              #{Thread.current[:sunstone_request_sent].method} #{log_mess[2]} #{(log_mess[3] && !log_mess[3].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[3])) : '' }
+          MSG
+        else
+          log_mess = request.path.split('?', 2)
+          raise <<~MSG
+            Cannot send multiple request in a transaction.
+            
+            Trying to send:
+              #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }
+          MSG
+        end
+      end
+      
+      request_uri = url(request.path)
       request_headers.each { |k, v| request[k] = v }
       request['Content-Type'] ||= 'application/json'
       
@@ -117,15 +144,15 @@ module Sunstone
       elsif body.is_a?(String)
         request.body = body
       elsif body
-        request.body = Wankel.encode(body)
+        request.body = JSON.generate(body)
       end
 
       return_value = nil
       retry_count = 0
       begin
         @connection.request(request) do |response|
-          if response['API-Version-Deprecated']
-            logger.warn("DEPRECATION WARNING: API v#{API_VERSION} is being phased out")
+          if response['Deprecation-Notice']
+            ActiveSupport::Deprecation.warn(response['Deprecation-Notice'])
           end
 
           validate_response_code(response)
@@ -285,7 +312,7 @@ module Sunstone
     end
 
     def server_config
-      @server_config ||= Wankel.parse(get('/config').body, :symbolize_keys => true)
+      @server_config ||= JSON.parse(get('/config').body, symbolize_names: true)
     end
 
     private
@@ -348,6 +375,17 @@ module Sunstone
           raise Sunstone::Exception, response
         end
       end
+    end
+    
+    def self.use_cookie_store(store)
+      Thread.current[:sunstone_cookie_store] = store
+    end
+  
+    def self.with_cookie_store(store)
+      Thread.current[:sunstone_cookie_store] = store
+      yield
+    ensure
+      Thread.current[:sunstone_cookie_store] = nil
     end
 
   end

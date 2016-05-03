@@ -1,19 +1,24 @@
 require 'active_record/connection_adapters/abstract_adapter'
-require 'active_record/connection_adapters/statement_pool'
 
+
+#require 'active_record/connection_adapters/statement_pool'
 
 require 'active_record/connection_adapters/sunstone/database_statements'
 require 'active_record/connection_adapters/sunstone/schema_statements'
+require 'active_record/connection_adapters/sunstone/schema_dumper'
 require 'active_record/connection_adapters/sunstone/column'
 
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
-require 'active_record/connection_adapters/sunstone/type/ewkb'
+require 'active_record/connection_adapters/sunstone/type/uuid'
+if defined?(RGeo)
+  require 'active_record/connection_adapters/sunstone/type/ewkb'
+end
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
 
-    VALID_SUNSTONE_CONN_PARAMS = [:site, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
+    VALID_SUNSTONE_CONN_PARAMS = [:url, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
 
     # Establishes a connection to the database that's used by all Active Record
     # objects
@@ -25,8 +30,8 @@ module ActiveRecord
       # Map ActiveRecords param names to PGs.
       conn_params[:user] = conn_params.delete(:username) if conn_params[:username]
       conn_params[:dbname] = conn_params.delete(:database) if conn_params[:database]
-      if conn_params[:site]
-        uri = URI.parse(conn_params.delete(:site))
+      if conn_params[:url]
+        uri = URI.parse(conn_params.delete(:url))
         conn_params[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
         conn_params[:host]    ||= uri.host
         conn_params[:port]    ||= uri.port
@@ -67,7 +72,7 @@ module ActiveRecord
       # include PostgreSQL::ReferentialIntegrity
       include Sunstone::SchemaStatements
       include Sunstone::DatabaseStatements
-      # include PostgreSQL::ColumnDumper
+      include Sunstone::ColumnDumper
       # include Savepoints
       
       # Returns 'SunstoneAPI' as adapter name for identification purposes.
@@ -75,17 +80,11 @@ module ActiveRecord
         ADAPTER_NAME
       end
       
-      # Adds `:array` option to the default set provided by the AbstractAdapter
-      def prepare_column_options(column, types) # :nodoc:
-        spec = super
-        spec[:array] = 'true' if column.respond_to?(:array) && column.array
-        spec
-      end
-
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger, config)
 
+        @prepared_statements = false
         @visitor = Arel::Visitors::Sunstone.new
         @connection_parameters, @config = connection_parameters, config
 
@@ -151,7 +150,7 @@ module ActiveRecord
       end
 
       def server_config
-        Wankel.parse(@connection.get("/configuration").body)
+        JSON.parse(@connection.get("/configuration").body)
       end
       
       def lookup_cast_type_from_column(column) # :nodoc:
@@ -162,7 +161,45 @@ module ActiveRecord
         end
       end
       
+      def transaction(requires_new: nil, isolation: nil, joinable: true)
+        Thread.current[:sunstone_transaction_count] ||= 0
+        Thread.current[:sunstone_request_sent] = nil if Thread.current[:sunstone_transaction_count] == 0
+        Thread.current[:sunstone_transaction_count] += 1
+        begin
+          yield
+        ensure
+          Thread.current[:sunstone_transaction_count] -= 1
+          if Thread.current[:sunstone_transaction_count] == 0
+            Thread.current[:sunstone_transaction_count] = nil
+            Thread.current[:sunstone_request_sent] = nil
+          end
+        end
+      end
+      
+      def supports_json?
+        true
+      end
 
+      # Executes an INSERT query and returns the new record's ID
+      #
+      # +id_value+ will be returned unless the value is nil, in
+      # which case the database will attempt to calculate the last inserted
+      # id and return that value.
+      #
+      # If the next id was calculated in advance (as in Oracle), it should be
+      # passed in as +id_value+.
+      def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
+        sql, binds, pk, sequence_name = sql_for_insert(to_sql(arel, binds), pk, id_value, sequence_name, binds)
+        value = exec_insert(sql, name, binds, pk, sequence_name)
+      end
+      alias create insert
+      
+      # Should be the defuat insert, but rails escapes if for SQL so we'll just
+      # catch the string "DEFATUL VALUES" in the visitor
+      # def empty_insert_statement_value
+      #   {}
+      # end
+      
       private
 
         def initialize_type_map(m) # :nodoc:
@@ -173,21 +210,7 @@ module ActiveRecord
           m.register_type 'datetime',   Sunstone::Type::DateTime.new
           m.register_type 'json',       Type::Internal::AbstractJson.new
           m.register_type 'ewkb',       Sunstone::Type::EWKB.new
-        end
-
-        def exec(arel, name='SAR', binds=[])
-          # result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
-          #                                               exec_cache(sql, name, binds)
-          sar = to_sar(arel, binds)
-
-          log(sar.is_a?(String) ? sar : "#{sar.class} #{CGI.unescape(sar.path)}", name) {
-            response = @connection.send_request(sar)
-            if response.is_a?(Net::HTTPNoContent)
-              nil
-            else
-              Wankel.parse(response.body)
-            end
-          }
+          m.register_type 'uuid',       Sunstone::Type::Uuid.new
         end
 
         # Connects to a Sunstone API server and sets up the adapter depending on

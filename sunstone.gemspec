@@ -26,13 +26,14 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'factory_girl'
   s.add_development_dependency 'webmock'
   s.add_development_dependency 'sdoc-templates-42floors'
+  s.add_development_dependency 'rgeo'
+  s.add_development_dependency 'simplecov'
 
   # Runtime
   s.add_runtime_dependency 'msgpack'
-  s.add_runtime_dependency 'wankel'
   s.add_runtime_dependency 'cookie_store'
   s.add_runtime_dependency 'arel', '~> 7.0'
-  s.add_runtime_dependency 'activesupport', '>= 5.0.0.beta3'
-  s.add_runtime_dependency 'activemodel', '>= 5.0.0.beta3'
-  s.add_runtime_dependency 'activerecord', '>= 5.0.0.beta3'
+  s.add_runtime_dependency 'activesupport', '>= 5.0.0.beta4'
+  s.add_runtime_dependency 'activemodel', '>= 5.0.0.beta4'
+  s.add_runtime_dependency 'activerecord', '>= 5.0.0.beta4'
 end

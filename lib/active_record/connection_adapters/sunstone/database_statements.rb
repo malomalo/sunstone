@@ -15,7 +15,16 @@ module ActiveRecord
 
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
           sar = to_sar(arel, binds)
-          result = exec(sar, name)
+          
+          log_mess = sar.path.split('?', 2)
+          result = log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) {
+            response = @connection.send_request(sar)
+            if response.is_a?(Net::HTTPNoContent)
+              nil
+            else
+              JSON.parse(response.body)
+            end
+          }
 
           if sar.instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..

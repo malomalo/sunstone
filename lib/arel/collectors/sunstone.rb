@@ -89,12 +89,14 @@ module Arel
           path += "/#{get_params[:where]['id']}"
           get_params.delete(:where)
         end
-
         if get_params.size > 0
-          path += '?m=' + URI.escape(CGI.escape(MessagePack.pack(get_params)))
+          path += "?#{CGI.escape(MessagePack.pack(get_params))}"
         end
-
+        
         request = request_type.new(path)
+        if get_params.size > 0
+          request['Query-Encoding'] = 'application/msgpack'
+        end
         request.instance_variable_set(:@sunstone_calculation, true) if [:calculate, :update, :delete, :insert].include?(operation)
 
         if updates

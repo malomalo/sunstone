@@ -22,7 +22,7 @@ module ActiveRecord
           @values.compile(binds)
         else
           val = @values.dup
-          @indexes.each { |i| val[i] = connection.quote(*binds.shift.reverse) }
+          @indexes.each { |i| val[i] = connection.quote(binds.shift) }
           val.join
         end
       end
@@ -30,7 +30,8 @@ module ActiveRecord
 
     def self.partial_query(visitor, ast, collector)
       collected = visitor.accept(ast, collector)
-      PartialQuery.new(visitor.is_a?(Arel::Visitors::Sunstone) ? collected : collected.value, visitor.is_a?(Arel::Visitors::Sunstone))
+      collected = collected.value if !visitor.is_a?(Arel::Visitors::Sunstone)
+      PartialQuery.new(collected, visitor.is_a?(Arel::Visitors::Sunstone))
     end
 
   end
