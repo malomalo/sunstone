@@ -11,9 +11,7 @@ require 'active_record/connection_adapters/sunstone/column'
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
 require 'active_record/connection_adapters/sunstone/type/uuid'
-if defined?(RGeo)
-  require 'active_record/connection_adapters/sunstone/type/ewkb'
-end
+require 'active_record/connection_adapters/sunstone/type/ewkb'
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
