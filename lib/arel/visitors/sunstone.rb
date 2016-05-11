@@ -78,30 +78,35 @@ module Arel
         collector.operation     = :insert
         
         if o.values
-          keys = o.values.right.map { |x| visit(x, collector) }
-          values = o.values.left
-          collector.updates = {}
+          
+          if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
+            collector.updates = {}
+          else
+            keys = o.values.right.map { |x| visit(x, collector) }
+            values = o.values.left
+            collector.updates = {}
           
 
-          keys.each_with_index do |k, i|
-            if k.is_a?(Hash)
-              add_to_bottom_of_hash_or_array(k, values[i])
-              collector.updates.deep_merge!(k) { |key, v1, v2|
-                if (v1.is_a?(Array) && v2.is_a?(Array))
-                  v2.each_with_index do |v, i|
-                    if v1[i].nil?
-                      v1[i] = v2[i]
-                    else
-                      v1[i].deep_merge!(v2[i]) unless v2[i].nil?
+            keys.each_with_index do |k, i|
+              if k.is_a?(Hash)
+                add_to_bottom_of_hash_or_array(k, values[i])
+                collector.updates.deep_merge!(k) { |key, v1, v2|
+                  if (v1.is_a?(Array) && v2.is_a?(Array))
+                    v2.each_with_index do |v, j|
+                      if v1[j].nil?
+                        v1[j] = v2[j]
+                      else
+                        v1[j].deep_merge!(v2[j]) unless v2[j].nil?
+                      end
                     end
+                    v1
+                  else
+                    v2
                   end
-                  v1
-                else
-                  v2
-                end
-              }
-            else
-              collector.updates[k] = values[i]
+                }
+              else
+                collector.updates[k] = values[i]
+              end
             end
           end
         end
@@ -198,9 +203,9 @@ module Arel
             value.each do |key, v|
               if key.is_a?(Hash)
                 add_to_bottom_of_hash_or_array(key, v)
-                collector.updates.deep_merge!(key) { |key, v1, v2|
+                collector.updates.deep_merge!(key) { |k, v1, v2|
                   if (v1.is_a?(Array) && v2.is_a?(Array))
-                    v2.each_with_index do |v, i|
+                    v2.each_with_index do |v2k, i|
                       if v1[i].nil?
                         v1[i] = v2[i]
                       else

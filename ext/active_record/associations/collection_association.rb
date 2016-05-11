@@ -6,7 +6,7 @@ module ActiveRecord
         other_array.each { |val| raise_on_type_mismatch!(val) }
         original_target = load_target.dup
 
-        if owner.instance_variable_get(:@updateing)
+        if owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
           replace_common_records_in_memory(other_array, original_target)
           concat(other_array - original_target)
           other_array
@@ -32,7 +32,7 @@ module ActiveRecord
     # record, all wrapped in a transaction. If the object is invalid, the saving
     # will fail and false will be returned.
     def update(attributes)
-      @updateing = true
+      @updating = true
       # The following transaction covers any possible database side-effects of the
       # attributes assignment. For example, setting the IDs of a child collection.
       with_transaction_returning_status do
@@ -40,7 +40,7 @@ module ActiveRecord
         save
       end
     ensure
-      @updateing = false
+      @updating = false
     end
   end
 end

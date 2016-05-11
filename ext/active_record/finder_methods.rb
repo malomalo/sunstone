@@ -19,11 +19,13 @@ module ActiveRecord
       attributes.flat_map do |key, value|
         if value.is_a?(Hash)
           ka = associated_predicate_builder(key).expand_from_hash(value)
-          ka.each { |k|
-            if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
-              k.left = Arel::Attributes::Relation.new(k.left, key)
-            end
-          }
+          if self.table.instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+            ka.each { |k|
+              if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
+                k.left = Arel::Attributes::Relation.new(k.left, key)
+              end
+            }
+          end
           ka
         else
           expand(key, value)
@@ -56,7 +58,11 @@ module ActiveRecord
           []
         else
           arel = relation.arel
-          rows = connection.select_all(arel, 'SQL', arel.bind_values + relation.bound_attributes)
+          rows = if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+            connection.select_all(arel, 'SQL', arel.bind_values + relation.bound_attributes)
+          else
+            connection.select_all(arel, 'SQL', relation.bound_attributes)
+          end
           if join_dependency
             join_dependency.instantiate(rows, aliases)
           else
@@ -73,7 +79,7 @@ module ActiveRecord
         }
       }
 
-      model_cache = Hash.new { |h,klass| h[klass] = {} }
+      model_cache = Hash.new { |h,kklass| h[kklass] = {} }
       parents = model_cache[self.base_class]
 
       result_set.each { |row_hash|

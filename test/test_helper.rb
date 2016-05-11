@@ -2,13 +2,21 @@
 # installed gem
 $LOAD_PATH << File.expand_path('../lib', __FILE__)
 
-require 'sunstone'
+require 'simplecov'
+SimpleCov.start do
+  add_group 'lib', 'sunstone/lib'
+  add_group 'ext', 'sunstone/ext'
+end
+
+require 'rgeo'
 require "minitest/autorun"
 require 'minitest/unit'
 require 'minitest/reporters'
 require 'webmock/minitest'
+require 'mocha/mini_test'
 
-Dir.glob(File.expand_path('../models/**/*.rb', __FILE__), &method(:require))
+require 'sunstone'
+require File.expand_path('../models.rb', __FILE__)
 
 
 
@@ -33,6 +41,41 @@ class Minitest::Test
     else
       define_method(test_name) do
         flunk "No implementation provided for #{name}"
+      end
+    end
+  end
+  
+  def pack(data)
+    
+  end
+  
+  def unpack(data)
+    MessagePack.unpack(CGI::unescape(data))
+  end
+
+  def deep_transform_query(object)
+    case object
+    when Hash
+      object.each_with_object({}) do |(key, value), result|
+        result[key.to_s] = deep_transform_query(value)
+      end
+    when Array
+      object.map {|e| deep_transform_query(e) }
+    when Symbol
+      object.to_s
+    else
+      object
+    end
+  end
+  
+  def webmock(method, path, query=nil)
+    query = deep_transform_query(query) if query
+    
+    stub_request(method, /^#{ExampleRecord.connection.instance_variable_get(:@connection).url}/).with do |req|
+      if query
+        req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
+      else
+        req&.uri&.path == path && req.uri.query.nil?
       end
     end
   end

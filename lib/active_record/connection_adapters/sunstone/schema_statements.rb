@@ -25,13 +25,13 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          Wankel.parse(@connection.get("/#{table_name}/schema").body)
+          JSON.parse(@connection.get("/#{table_name}/schema").body)
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
         end
         
         def tables
-          Wankel.parse(@connection.get('/tables').body)
+          JSON.parse(@connection.get('/tables').body)
         end
         
         def views
