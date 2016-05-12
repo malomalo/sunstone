@@ -46,7 +46,7 @@ module ActiveRecord
           clear_transaction_record_state
           status = nil
         end
-
+        
         raise ActiveRecord::Rollback unless status
       end
       status

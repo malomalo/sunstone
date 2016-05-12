@@ -10,6 +10,19 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     end
   end
   
+  test '#create with errors' do
+    req_stub = webmock(:post, "/fleets").with(
+      body: { fleet: {} }.to_json
+    ).to_return(
+      status: 400,
+      body: {name: 'Armada Uno', errors: {name: 'is required'}}.to_json
+    )
+    
+    fleet = Fleet.create()
+    assert_equal ["is required"], fleet.errors[:name]
+    assert_requested req_stub
+  end
+  
   test '#save' do
     req_stub = webmock(:post, "/fleets").with(
       body: { fleet: {name: 'Armada Uno'} }.to_json

@@ -172,6 +172,8 @@ module ActiveRecord
             Thread.current[:sunstone_request_sent] = nil
           end
         end
+      rescue ActiveRecord::Rollback
+        # rollbacks are silently swallowed
       end
       
       def supports_json?

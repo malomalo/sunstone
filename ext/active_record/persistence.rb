@@ -23,7 +23,19 @@ module ActiveRecord
     def _create_record(attribute_names = self.attribute_names)
       attributes_values = arel_attributes_with_values_for_create(attribute_names)
       
-      new_id = self.class.unscoped.insert attributes_values
+      begin
+        new_id = self.class.unscoped.insert attributes_values
+      rescue Sunstone::Exception::BadRequest => e
+        JSON.parse(e.message)['errors'].each do |field, message|
+          if message.is_a?(Array)
+            message.each { |m| errors.add(field, m) }
+          else
+            errors.add(field, message)
+          end
+        end
+        raise ActiveRecord::RecordInvalid
+      end
+      
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         row_hash = new_id.rows.first
         # self.id ||= new_id['id'] if self.class.primary_key
