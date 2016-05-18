@@ -23,6 +23,17 @@ module ActiveRecord
       end
 
     end
+
+    class HasManyThroughAssociation
+      private
+      def save_through_record(record)
+        return if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        build_through_record(record).save!
+      ensure
+        @through_records.delete(record.object_id)
+      end
+    end
+
   end
 end
 
