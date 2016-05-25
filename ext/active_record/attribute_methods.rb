@@ -12,7 +12,7 @@ module ActiveRecord
       attribute_names.each do |name|
         attrs[arel_table[name]] = typecasted_attribute_value(name)
       end
-      
+
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         self.class.reflect_on_all_associations.each do |reflection|
           if reflection.belongs_to?

@@ -60,10 +60,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     req_stub = webmock(:post, '/ships', {include: :fleet}).with(
       body: {
         ship: {
-          name: 'Definant',
-          fleet_attributes: {
-            name: 'Armada Duo'
-          }
+          name: 'Definant', fleet_attributes: { name: 'Armada Duo' }
         }
       }.to_json
     ).to_return(
@@ -71,10 +68,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
         id: 2,
         fleet_id: 3,
         name: 'Definant 001',
-        fleet: {
-          id: 3,
-          name: 'Armada 2'
-        }
+        fleet: { id: 3, name: 'Armada 2' }
       }.to_json
     )
     
@@ -102,7 +96,6 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     Ship.find(1).update(name: 'Armada Trio') 
     
     assert_requested req_stub
-
   end
 
   test '#update habtm relationships' do
@@ -118,7 +111,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     req_stub = webmock(:patch, '/ships/1').with(
       body: {ship: {sailors_attributes: [{id: 1, name: "Captain"}]}}.to_json
     ).to_return(
-      body: [{id: 1, name: 'Armada Uno'}].to_json
+      body: {id: 1, name: 'Armada Uno'}.to_json
     )
 
 

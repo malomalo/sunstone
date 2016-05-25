@@ -6,8 +6,31 @@ module ActiveRecord
     def create_or_update(*args)
       raise ReadOnlyRecord, "#{self.class} is marked as readonly" if readonly?
       result = new_record? ? _create_record : _update_record(*args)
+
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        row_hash = result.rows.first
+
+        seen = Hash.new { |h, parent_klass|
+          h[parent_klass] = Hash.new { |i, parent_id|
+            i[parent_id] = Hash.new { |j, child_klass| j[child_klass] = {} }
+          }
+        }
+
+        model_cache = Hash.new { |h,klass| h[klass] = {} }
+        parents = model_cache[self.class.base_class]
+
+        self.assign_attributes(row_hash.select{|k,v| self.class.column_names.include?(k.to_s) })
+        row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }.each do |relation_name, value|
+          assc = association(relation_name.to_sym)
+          assc.reset if assc.reflection.collection?
+        end
+
+        construct(self, row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }, seen, model_cache)
+      end
+
       result != false
-    rescue Sunstone::Exception::BadRequest => e # TODO: perhaps this can go further down the stack?
+    # TODO: perhaps this can go further down the stack?
+    rescue Sunstone::Exception::BadRequest => e
       JSON.parse(e.message)['errors'].each do |field, message|
         if message.is_a?(Array)
           message.each { |m| errors.add(field, m) }
@@ -23,41 +46,16 @@ module ActiveRecord
     def _create_record(attribute_names = self.attribute_names)
       attributes_values = arel_attributes_with_values_for_create(attribute_names)
       
-      begin
-        new_id = self.class.unscoped.insert attributes_values
-      rescue Sunstone::Exception::BadRequest => e
-        JSON.parse(e.message)['errors'].each do |field, message|
-          if message.is_a?(Array)
-            message.each { |m| errors.add(field, m) }
-          else
-            errors.add(field, message)
-          end
-        end
-        raise ActiveRecord::RecordInvalid
-      end
-      
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        row_hash = new_id.rows.first
-        # self.id ||= new_id['id'] if self.class.primary_key
-        
-        
-        seen = Hash.new { |h, parent_klass|
-          h[parent_klass] = Hash.new { |i, parent_id|
-            i[parent_id] = Hash.new { |j, child_klass| j[child_klass] = {} }
-          }
-        }
-
-        model_cache = Hash.new { |h,klass| h[klass] = {} }
-        parents = model_cache[self.class.base_class]
-        
-        self.assign_attributes(row_hash.select{|k,v| self.class.column_names.include?(k.to_s) })
-        construct(self, row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }, seen, model_cache)
-      else
-        self.id ||= new_id if self.class.primary_key
-      end
+      new_id = self.class.unscoped.insert attributes_values
 
       @new_record = false
-      id
+      
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        new_id
+      else
+        self.id ||= new_id if self.class.primary_key
+        id
+      end
     end
     
     #!!!! TODO: I am duplicated from finder_methods.....

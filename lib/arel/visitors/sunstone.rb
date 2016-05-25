@@ -877,7 +877,7 @@ module Arel
           visit(o.relation, collector)
         end
         value = value.to_s.split('.').last if !value.is_a?(Hash)
-        
+
         if o.collection
           ary = []
           ary[o.collection] = value
