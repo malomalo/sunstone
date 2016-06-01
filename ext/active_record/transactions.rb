@@ -27,7 +27,7 @@ module ActiveRecord
     # end
 
     def with_transaction_returning_status
-      if @updating
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && @updating
         begin
           status = yield
         rescue ActiveRecord::Rollback
