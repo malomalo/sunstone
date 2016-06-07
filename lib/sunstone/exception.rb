@@ -11,6 +11,9 @@ module Sunstone
     class Unauthorized < Sunstone::Exception
     end
 
+    class Forbidden < Sunstone::Exception
+    end
+
     class NotFound < Sunstone::Exception
     end
 

@@ -72,6 +72,7 @@ class Sunstone::Connection::SendRequestTest < Minitest::Test
   test '#send_request(#<Net::HTTPRequest>) raises Sunstone::Exceptions on non-200 responses' do
     stub_request(:get, "http://testhost.com/400").to_return(status: 400)
     stub_request(:get, "http://testhost.com/401").to_return(status: 401)
+    stub_request(:get, "http://testhost.com/403").to_return(status: 403)
     stub_request(:get, "http://testhost.com/404").to_return(status: 404)
     stub_request(:get, "http://testhost.com/410").to_return(status: 410)
     stub_request(:get, "http://testhost.com/422").to_return(status: 422)
@@ -82,6 +83,7 @@ class Sunstone::Connection::SendRequestTest < Minitest::Test
     connection = Sunstone::Connection.new(url: "http://testhost.com")
     assert_raises(Sunstone::Exception::BadRequest)   { connection.send_request(Net::HTTP::Get.new('/400')) }
     assert_raises(Sunstone::Exception::Unauthorized) { connection.send_request(Net::HTTP::Get.new('/401')) }
+    assert_raises(Sunstone::Exception::Forbidden) { connection.send_request(Net::HTTP::Get.new('/403')) }
     assert_raises(Sunstone::Exception::NotFound)     { connection.send_request(Net::HTTP::Get.new('/404')) }
     assert_raises(Sunstone::Exception::Gone)         { connection.send_request(Net::HTTP::Get.new('/410')) }
     assert_raises(Sunstone::Exception::ApiVersionUnsupported) { connection.send_request(Net::HTTP::Get.new('/422')) }

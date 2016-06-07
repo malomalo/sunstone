@@ -356,23 +356,25 @@ module Sunstone
         when 400
           raise Sunstone::Exception::BadRequest, response.body
         when 401
-          raise Sunstone::Exception::Unauthorized, response
+          raise Sunstone::Exception::Unauthorized, response.body
+        when 403
+          raise Sunstone::Exception::Forbidden, response.body
         when 404
-          raise Sunstone::Exception::NotFound, response
+          raise Sunstone::Exception::NotFound, response.body
         when 410
-          raise Sunstone::Exception::Gone, response
+          raise Sunstone::Exception::Gone, response.body
         when 422
-          raise Sunstone::Exception::ApiVersionUnsupported, response
+          raise Sunstone::Exception::ApiVersionUnsupported, response.body
         when 503
-          raise Sunstone::Exception::ServiceUnavailable, response
+          raise Sunstone::Exception::ServiceUnavailable, response.body
         when 301
-          raise Sunstone::Exception::MovedPermanently, response
+          raise Sunstone::Exception::MovedPermanently, response.body
         when 502
-          raise ActiveRecord::ConnectionNotEstablished, response
+          raise ActiveRecord::ConnectionNotEstablished, response.body
         when 300..599
-          raise Sunstone::Exception, response
+          raise Sunstone::Exception, response.body
         else
-          raise Sunstone::Exception, response
+          raise Sunstone::Exception, response.body
         end
       end
     end

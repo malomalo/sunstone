@@ -30,7 +30,7 @@ module ActiveRecord
 
       result != false
     # TODO: perhaps this can go further down the stack?
-    rescue Sunstone::Exception::BadRequest => e
+    rescue Sunstone::Exception::BadRequest, Sunstone::Exception::Forbidden => e
       JSON.parse(e.message)['errors'].each do |field, message|
         if message.is_a?(Array)
           message.each { |m| errors.add(field, m) }
