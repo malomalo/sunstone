@@ -23,7 +23,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     assert_requested req_stub
   end
   
-  test '#save' do
+  test '#create' do
     req_stub = webmock(:post, "/fleets").with(
       body: { fleet: {name: 'Armada Uno'} }.to_json
     ).to_return(
@@ -35,6 +35,20 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     assert_requested req_stub
   end
   
+  test '#save w/o changes' do
+    webmock(:get, '/fleets', where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, name: 'Armada Duo'}].to_json
+    )
+
+    fleet = Fleet.find(1)
+    fleet.save
+
+    assert fleet.save
+    assert_equal 1, fleet.id
+    assert_equal 'Armada Duo', fleet.name
+  end
+
+
   test '#save attempts another request while in transaction' do
     webmock(:get, '/test_model_bs/schema').to_return(
       body: {

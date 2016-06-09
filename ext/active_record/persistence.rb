@@ -7,7 +7,7 @@ module ActiveRecord
       raise ReadOnlyRecord, "#{self.class} is marked as readonly" if readonly?
       result = new_record? ? _create_record : _update_record(*args)
 
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && result != 0
         row_hash = result.rows.first
 
         seen = Hash.new { |h, parent_klass|
