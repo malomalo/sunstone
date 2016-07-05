@@ -29,8 +29,10 @@ module ActiveRecord
           if sar.instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
             ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
-          else
+          elsif result.is_a?(Array)
             ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
+          else
+            ActiveRecord::Result.new(result.keys, [result])
           end
         end
         

@@ -16,7 +16,11 @@ module ActiveRecord
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         self.class.reflect_on_all_associations.each do |reflection|
           if reflection.belongs_to?
-            add_attributes_for_belongs_to_association(reflection, attrs)
+            if association(reflection.name).loaded? && association(reflection.name).target == $updating_model
+              attrs.delete(arel_table[reflection.foreign_key])
+            else
+              add_attributes_for_belongs_to_association(reflection, attrs)
+            end
           elsif reflection.has_one?
             add_attributes_for_has_one_association(reflection, attrs)
           elsif reflection.collection?
@@ -29,7 +33,7 @@ module ActiveRecord
     end
     
     def add_attributes_for_belongs_to_association(reflection, attrs)
-      key = :"add_attributes_for_belongs_to_association#{reflection.name}"
+      key = :"add_attributes_for_belongs_to_association_#{reflection.name}"
       @_already_called ||= {}
       return if @_already_called[key]
       @_already_called[key]=true

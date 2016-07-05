@@ -2,12 +2,34 @@ require 'test_helper'
 
 class ActiveRecord::Associations::HasManyTest < Minitest::Test
 
-  test 'x' do
+  test '#create with has_many_ids=' do
+    webmock(:get, "/ships", where: {id: 2}).to_return(body: [{id: 2, fleet_id: nil, name: 'Duo'}].to_json)
+    webmock(:post, "/fleets").with(
+      body: {
+        fleet: {
+          name: 'Spanish Armada',
+          ships_attributes: [{id: 2, name: 'Duo'}]
+        }
+      }
+    ).to_return(body: {id: 42, name: "Spanish Armada"}.to_json)
+
+    Fleet.create(name: 'Spanish Armada', ship_ids: [2])
+  end
+
+
+  test '#update with has_many_ids=' do
     webmock(:get, "/fleets", where: {id: 42}, limit: 1).to_return(body: [{id: 42, name: "Spanish Armada"}].to_json)
     webmock(:get, "/ships", where: {fleet_id: 42}).to_return(body: [].to_json)
+    webmock(:get, "/ships", where: {id: 2}).to_return(body: [{id: 2, fleet_id: nil, name: 'Duo'}].to_json)
 
-    Fleet.find(42).ships << Ship.new(name: 'São Martinho')
-    assert_equal 42, 12
+    webmock(:patch, "/fleets/42").with(
+      body: {
+        fleet: {
+          ships_attributes: [{id: 2, name: 'Duo'}]
+        }
+    }).to_return(body: {id: 42, name: "Spanish Armada"}.to_json)
+
+    Fleet.find(42).update(ship_ids: ["2"])
   end
 
   test '#save includes modified has_many associations' do
@@ -24,7 +46,7 @@ class ActiveRecord::Associations::HasManyTest < Minitest::Test
     req_stub = webmock(:patch, '/fleets/1').with(
       body: {
         fleet: {
-          ships_attributes: [{ fleet_id: nil, name: 'Voyager' }]
+          ships_attributes: [{ name: 'Voyager' }]
         }
       }.to_json
     ).to_return(

@@ -65,11 +65,14 @@ end
 
 module ActiveRecord
   module Persistence
+    
     # Updates the attributes of the model from the passed-in hash and saves the
     # record, all wrapped in a transaction. If the object is invalid, the saving
     # will fail and false will be returned.
     def update(attributes)
-      @updating = true
+      @updating = :updating
+      $updating_model = self
+      
       # The following transaction covers any possible database side-effects of the
       # attributes assignment. For example, setting the IDs of a child collection.
       with_transaction_returning_status do
@@ -78,6 +81,8 @@ module ActiveRecord
       end
     ensure
       @updating = false
+      $updating_model = nil
     end
+    
   end
 end

@@ -12,7 +12,6 @@ module ActiveRecord
     # end
     #
     # def save(*) #:nodoc:
-    #   puts @updating
     #   rollback_active_record_state! do
     #     with_transaction_returning_status { super }
     #   end

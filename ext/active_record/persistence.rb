@@ -4,6 +4,9 @@ module ActiveRecord
     private
 
     def create_or_update(*args)
+      @updating = new_record? ? :creating : :updating
+      $updating_model = self
+
       raise ReadOnlyRecord, "#{self.class} is marked as readonly" if readonly?
       result = new_record? ? _create_record : _update_record(*args)
 
@@ -18,7 +21,7 @@ module ActiveRecord
 
         model_cache = Hash.new { |h,klass| h[klass] = {} }
         parents = model_cache[self.class.base_class]
-
+        
         self.assign_attributes(row_hash.select{|k,v| self.class.column_names.include?(k.to_s) })
         row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }.each do |relation_name, value|
           assc = association(relation_name.to_sym)
@@ -39,6 +42,9 @@ module ActiveRecord
         end
       end
       raise ActiveRecord::RecordInvalid
+    ensure
+      @updating = false
+      $updating_model = nil
     end
     
     # Creates a record with values matching those of the instance attributes

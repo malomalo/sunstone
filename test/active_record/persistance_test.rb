@@ -17,24 +17,24 @@ class ActiveRecord::PersistanceTest < Minitest::Test
       status: 400,
       body: {name: 'Armada Uno', errors: {name: 'is required'}}.to_json
     )
-    
+
     fleet = Fleet.create()
     assert_equal ["is required"], fleet.errors[:name]
     assert_requested req_stub
   end
-  
+
   test '#create' do
     req_stub = webmock(:post, "/fleets").with(
       body: { fleet: {name: 'Armada Uno'} }.to_json
     ).to_return(
       body: {id: 1, name: 'Armada Uno'}.to_json
     )
-    
+
     Fleet.create(name: 'Armada Uno')
-    
+
     assert_requested req_stub
   end
-  
+
   test '#save w/o changes' do
     webmock(:get, '/fleets', where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Armada Duo'}].to_json
@@ -62,7 +62,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
         name: {type: 'string', primary_key: false, null: true, array: false}
       }.to_json
     )
-    
+
     assert_raises ActiveRecord::StatementInvalid do
       TestModelB.create
     end
@@ -98,23 +98,23 @@ class ActiveRecord::PersistanceTest < Minitest::Test
   
   test '#update' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
-      body: [{id: 1, name: 'Armada Uno'}].to_json
+      body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
     )
     req_stub = webmock(:patch, "/ships").with(
       body: { ship: { name: 'Armada Trio' } }.to_json
     ).to_return(
       body: {id: 1, name: 'Armada Trio'}.to_json
     )
-    
-    
-    Ship.find(1).update(name: 'Armada Trio') 
-    
+
+
+    Ship.find(1).update(name: 'Armada Trio')
+
     assert_requested req_stub
   end
 
   test '#update habtm relationships' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
-      body: [{id: 1, name: 'Armada Uno'}].to_json
+      body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
     )
     webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Captain'}].to_json

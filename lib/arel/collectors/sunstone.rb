@@ -97,7 +97,7 @@ module Arel
         if get_params.size > 0
           request['Query-Encoding'] = 'application/msgpack'
         end
-        request.instance_variable_set(:@sunstone_calculation, true) if [:calculate, :update, :delete, :insert].include?(operation)
+        request.instance_variable_set(:@sunstone_calculation, true) if [:calculate].include?(operation)
 
         if updates
           request.body = body
