@@ -694,18 +694,13 @@ module Arel
           visit(o.left, collector) => {in: visit(o.right, collector)}
         }
       end
-      #
-      # def visit_Arel_Nodes_NotIn o, collector
-      #   if Array === o.right && o.right.empty?
-      #     collector << '1=1'
-      #   else
-      #     collector = visit o.left, collector
-      #     collector << " NOT IN ("
-      #     collector = visit o.right, collector
-      #     collector << ")"
-      #   end
-      # end
-      #
+      
+      def visit_Arel_Nodes_NotIn o, collector
+        {
+          visit(o.left, collector) => {not_in: visit(o.right, collector)}
+        }
+      end
+      
       def visit_Arel_Nodes_And o, collector
         ors = []
         ors << o.children.inject({}) do |c, x|
