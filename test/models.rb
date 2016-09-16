@@ -36,6 +36,21 @@ WebMock::StubRegistry.instance.global_stubs.push(
       sailor_id: {type: 'integer', primary_key: false, null: false, array: false},
       ship_id: {type: 'integer', primary_key: false, null: true, array: false}
     }.to_json
+  ),
+  
+  WebMock::RequestStub.new(:get, "http://example.com/countries/schema").to_return(
+    body: {
+      id: {type: 'integer', primary_key: true, null: false, array: false},
+      name: {type: 'string', primary_key: false, null: true, array: false}
+    }.to_json
+  ),
+  
+  WebMock::RequestStub.new(:get, "http://example.com/ownerships/schema").to_return(
+    body: {
+      country_id: {type: 'integer', primary_key: false, null: false, array: false},
+      asset_type: {type: 'string', primary_key: false, null: false, array: false},
+      asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
+    }.to_json
   )
 )
 
@@ -56,8 +71,21 @@ class Ship < ExampleRecord
   belongs_to :fleet
   
   has_and_belongs_to_many :sailors
+  
+  has_many :ownerships, as: :asset
+  has_many :nations, through: :ownerships, source: :country, inverse_of: :ships
 end
 
 class Sailor < ExampleRecord
-  has_and_belongs_to_many :sailors
+  has_and_belongs_to_many :ships
+end
+
+class Country < ExampleRecord
+  has_many :ownerships
+  has_many :fleets, through: :ownerships
+end
+
+class Ownership < ExampleRecord
+  belongs_to :country
+  belongs_to :asset, polymorphic: true
 end

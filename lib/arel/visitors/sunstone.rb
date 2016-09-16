@@ -893,6 +893,10 @@ module Arel
           end
         end
       end
+
+      def visit_Arel_Attributes_EmptyRelation o, collector, top=true
+        o.for_write ? "#{o.name}_attributes" : o.name
+      end
       
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name

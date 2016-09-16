@@ -56,6 +56,14 @@ class ActiveRecord::QueryTest < Minitest::Test
     assert_equal [], Ship.where(:sailors => {id: 1}).to_a
   end
   
+  # Polymorphic
+  test '::where on a has_many throught a polymorphic source' do
+    webmock(:get, "/ships", where: { nations: { id: {eq: 1} } }, limit: 10).to_return(body: [].to_json)
+    
+    assert_equal [], Ship.where(nations: {id: 1}).limit(10).to_a
+  end
+  ### end polymorphic test
+  
   test '::count' do
     webmock(:get, "/ships/calculate", select: [{count: "*"}]).to_return(body: [10].to_json)
     

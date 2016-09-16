@@ -24,7 +24,7 @@ module ActiveRecord
           elsif reflection.has_one?
             add_attributes_for_has_one_association(reflection, attrs)
           elsif reflection.collection?
-            add_attributes_for_collection_association(reflection, attrs)
+            add_attributes_for_collection_association(reflection, attrs, arel_table)
           end
         end
       end
@@ -100,7 +100,7 @@ module ActiveRecord
       end
     end
     
-    def add_attributes_for_collection_association(reflection, attrs)
+    def add_attributes_for_collection_association(reflection, attrs, arel_table=nil)
       key = :"add_attributes_for_collection_association#{reflection.name}"
       @_already_called ||= {}
       return if @_already_called[key]
@@ -112,22 +112,22 @@ module ActiveRecord
       
       if association = association_instance_get(reflection.name)
         autosave = reflection.options[:autosave]
-        if records = associated_records_to_validate_or_save(association, @new_record_before_save, autosave)
 
-          association.target.each_with_index do |record, idx|
-            next if record.destroyed?
+        attrs[Arel::Attributes::EmptyRelation.new(arel_table, reflection.name, true, true)] = [] if association.target.empty?
+        
+        association.target.each_with_index do |record, idx|
+          next if record.destroyed?
 
-            if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
-              end
-            else
-              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
-              end
+          if record.new_record?
+            record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+              attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
             end
-
+          else
+            record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
+              attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
+            end
           end
+
         end
 
         # reconstruct the scope now that we know the owner's id

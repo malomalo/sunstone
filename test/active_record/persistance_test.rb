@@ -42,13 +42,13 @@ class ActiveRecord::PersistanceTest < Minitest::Test
 
     fleet = Fleet.find(1)
     fleet.save
-
+    
     assert fleet.save
     assert_equal 1, fleet.id
     assert_equal 'Armada Duo', fleet.name
   end
 
-
+  
   test '#save attempts another request while in transaction' do
     webmock(:get, '/test_model_bs/schema').to_return(
       body: {
@@ -96,6 +96,22 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     assert_requested req_stub
   end
   
+  
+  test '#update clears belongs_to relationship' do
+    webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, fleet_id: 1, name: 'Armada Uno'}].to_json
+    )
+    req_stub = webmock(:patch, '/ships/1').with(
+      body: {ship: {fleet_id: nil}}.to_json
+    ).to_return(
+      body: {id: 1, name: 'Armada Uno'}.to_json
+    )
+
+    ship = Ship.find(1)
+    assert ship.update(fleet: nil)
+    assert_requested req_stub
+  end
+  
   test '#update' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
@@ -105,7 +121,6 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     ).to_return(
       body: {id: 1, name: 'Armada Trio'}.to_json
     )
-
 
     Ship.find(1).update(name: 'Armada Trio')
 
@@ -128,10 +143,48 @@ class ActiveRecord::PersistanceTest < Minitest::Test
       body: {id: 1, name: 'Armada Uno'}.to_json
     )
 
-
     ship = Ship.find(1)
     assert ship.update(sailors: [Sailor.find(1)])
+    assert_requested req_stub
+  end
+  
+  test '#update clears habtm relationship' do
+    webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
+    )
+    webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, name: 'Captain'}].to_json
+    )
+    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}).to_return(
+      body: [{id: 1, name: 'Captain'}].to_json
+    )
+    req_stub = webmock(:patch, '/ships/1').with(
+      body: {ship: {sailors_attributes: []}}.to_json
+    ).to_return(
+      body: {id: 1, name: 'Armada Uno'}.to_json
+    )
 
+    ship = Ship.find(1)
+    assert ship.update(sailors: [])
+    assert_requested req_stub
   end
 
+  test '#update clears has_many relationship' do
+    webmock(:get, "/fleets", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, name: 'Armada Uno'}].to_json
+    )
+    webmock(:get, "/ships", where: {fleet_id: 1}).to_return(
+      body: [{id: 1, name: 'Saucer Trio'}].to_json
+    )
+    req_stub = webmock(:patch, '/fleets/1').with(
+      body: {fleet: {ships_attributes: []}}.to_json
+    ).to_return(
+      body: {id: 1, name: 'Armada Uno'}.to_json
+    )
+
+    fleet = Fleet.find(1)
+    assert fleet.update(ships: [])
+    assert_requested req_stub
+  end
+  
 end
