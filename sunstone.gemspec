@@ -33,7 +33,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'msgpack'
   s.add_runtime_dependency 'cookie_store'
   s.add_runtime_dependency 'arel', '~> 7.0'
-  s.add_runtime_dependency 'activesupport', '>= 5.0.0.beta4'
-  s.add_runtime_dependency 'activemodel', '>= 5.0.0.beta4'
-  s.add_runtime_dependency 'activerecord', '>= 5.0.0.beta4'
+  s.add_runtime_dependency 'activerecord', '5.0.0.1'
 end

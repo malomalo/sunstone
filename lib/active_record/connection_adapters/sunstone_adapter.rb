@@ -1,6 +1,5 @@
 require 'active_record/connection_adapters/abstract_adapter'
 
-
 #require 'active_record/connection_adapters/statement_pool'
 
 require 'active_record/connection_adapters/sunstone/database_statements'
@@ -11,7 +10,6 @@ require 'active_record/connection_adapters/sunstone/column'
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
 require 'active_record/connection_adapters/sunstone/type/uuid'
-require 'active_record/connection_adapters/sunstone/type/ewkb'
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
@@ -209,8 +207,11 @@ module ActiveRecord
           m.register_type 'decimal',    Type::Decimal.new
           m.register_type 'datetime',   Sunstone::Type::DateTime.new
           m.register_type 'json',       Type::Internal::AbstractJson.new
-          m.register_type 'ewkb',       Sunstone::Type::EWKB.new
           m.register_type 'uuid',       Sunstone::Type::Uuid.new
+          
+          if defined?(Sunstone::Type::EWKB)
+            m.register_type 'ewkb',       Sunstone::Type::EWKB.new
+          end
         end
 
         # Connects to a Sunstone API server and sets up the adapter depending on

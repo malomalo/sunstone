@@ -7,8 +7,6 @@ require 'msgpack'
 require 'cookie_store' # optional
 
 require "active_record"
-# require "active_record/connection_adapters/abstract_adapter"
-# require "active_record/connection_adapters/statement_pool"
 
 # Adapter
 require File.expand_path(File.join(__FILE__, '../sunstone/version'))
