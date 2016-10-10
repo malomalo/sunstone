@@ -840,13 +840,7 @@ module Arel
       end
       
       def visit_Arel_Attributes_Cast(o, collector)
-        key = visit(o.relation, collector)
-        value = { :cast => o.name }
-        if key.is_a?(Hash)
-          add_to_bottom_of_hash(key, value)
-        else
-          { key => value }
-        end
+        visit(o.relation, collector) # No casting yet
       end
       
       def visit_Arel_Attributes_Key o, collector
