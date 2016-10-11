@@ -10,6 +10,7 @@ require 'active_record/connection_adapters/sunstone/column'
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
 require 'active_record/connection_adapters/sunstone/type/uuid'
+require 'active_record/connection_adapters/sunstone/type/json'
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
@@ -206,7 +207,7 @@ module ActiveRecord
           m.register_type 'integer',    Type::Integer.new
           m.register_type 'decimal',    Type::Decimal.new
           m.register_type 'datetime',   Sunstone::Type::DateTime.new
-          m.register_type 'json',       Type::Internal::AbstractJson.new
+          m.register_type 'json',       Sunstone::Type::Json.new
           m.register_type 'uuid',       Sunstone::Type::Uuid.new
           
           if defined?(Sunstone::Type::EWKB)
