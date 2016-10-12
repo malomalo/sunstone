@@ -6,7 +6,7 @@ module ActiveRecord
 
 
           def deserialize(value)
-            value.dup
+            value.nil? ? nil : value.dup
           end
           
           def serialize(value)
