@@ -42,15 +42,33 @@ module Sunstone
     end
 
     # Ping the Sunstone. If everything is configured and operating correctly
-    # <tt>"pong"</tt> will be returned. Otherwise and Sunstone::Exception should be
-    # thrown.
+    # <tt>"pong"</tt> will be returned. Otherwise and Sunstone::Exception should
+    # be thrown.
     #
     #  #!ruby
     #  Sunstone.ping # => "pong"
     #
-    #  Sunstone.ping # raises Sunstone::Exception::ServiceUnavailable if a 503 is returned
+    #  Sunstone.ping # raises Sunstone::Exception::ServiceUnavailable if a
+    #  503 is returned
     def ping
       get('/ping').body
+    end
+    
+    def connect!
+      @connection.start
+    end
+    
+    def active?
+      @connection.active?
+    end
+    
+    def reconnect!
+      disconnect!
+      connect!
+    end
+    
+    def disconnect!
+      @connection.finish if @connection.active?
     end
 
     # Returns the User-Agent of the client. Defaults to:

@@ -21,12 +21,8 @@ module ActiveRecord
     # objects
     def sunstone_connection(config)
       conn_params = config.symbolize_keys
-
       conn_params.delete_if { |_, v| v.nil? }
 
-      # Map ActiveRecords param names to PGs.
-      conn_params[:user] = conn_params.delete(:username) if conn_params[:username]
-      conn_params[:dbname] = conn_params.delete(:database) if conn_params[:database]
       if conn_params[:url]
         uri = URI.parse(conn_params.delete(:url))
         conn_params[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
@@ -35,12 +31,11 @@ module ActiveRecord
         conn_params[:use_ssl] ||= (uri.scheme == 'https')
       end
       
-      # Forward only valid config params to PGconn.connect.
+      # Forward only valid config params to Sunstone::Connection
       conn_params.slice!(*VALID_SUNSTONE_CONN_PARAMS)
 
-      # The postgres drivers don't allow the creation of an unconnected PGconn object,
-      # so just pass a nil connection object for the time being.
-      ConnectionAdapters::SunstoneAPIAdapter.new(nil, logger, conn_params, config)
+      client = ::Sunstone::Connection.new(conn_params)
+      ConnectionAdapters::SunstoneAPIAdapter.new(client, logger, conn_params, config)
     end
   end
 
@@ -72,58 +67,35 @@ module ActiveRecord
       include Sunstone::ColumnDumper
       # include Savepoints
       
-      # Returns 'SunstoneAPI' as adapter name for identification purposes.
-      def adapter_name
-        ADAPTER_NAME
-      end
-      
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger, config)
 
         @prepared_statements = false
-        @visitor = Arel::Visitors::Sunstone.new
-        @connection_parameters, @config = connection_parameters, config
+        @connection_parameters = connection_parameters
 
-        connect
-
-        @type_map = Type::HashLookupTypeMap.new
-        initialize_type_map(type_map)
+        # @type_map = Type::HashLookupTypeMap.new
+        # initialize_type_map(type_map)
       end
 
-      # Is this connection alive and ready for queries?
       def active?
-        @connection.ping
-        true
-      rescue Net::HTTPExceptions
-        false
+        @connection.active?
       end
 
-      # TODO: this doesn't work yet
-      # Close then reopen the connection.
       def reconnect!
         super
-        @connection.reset
-        # configure_connection
+        @connection.reconnect!
       end
-
-      # TODO don't know about this yet
-      def reset!
-        # configure_connection
+      
+      def disconnect!
+        super
+        @connection.disconnect!
       end
       
       # Executes the delete statement and returns the number of rows affected.
       def delete(arel, name = nil, binds = [])
         r = exec_delete(to_sql(arel, binds), name, binds)
         r.rows.first.to_i
-      end
-
-      # TODO: deal with connection.close
-      # Disconnects from the database if already connected. Otherwise, this
-      # method does nothing.
-      def disconnect!
-        super
-        @connection.close rescue nil
       end
 
       def native_database_types #:nodoc:
@@ -141,7 +113,11 @@ module ActiveRecord
       def update_table_definition(table_name, base) #:nodoc:
         SunstoneAPI::Table.new(table_name, base)
       end
-
+      
+      def arel_visitor
+        Arel::Visitors::Sunstone.new
+      end
+      
       def collector
         Arel::Collectors::Sunstone.new
       end
@@ -213,12 +189,6 @@ module ActiveRecord
           if defined?(Sunstone::Type::EWKB)
             m.register_type 'ewkb',       Sunstone::Type::EWKB.new
           end
-        end
-
-        # Connects to a Sunstone API server and sets up the adapter depending on
-        # the connected server's characteristics.
-        def connect
-          @connection = ::Sunstone::Connection.new(@connection_parameters)
         end
 
         def create_table_definition(name, temporary, options, as = nil) # :nodoc:
