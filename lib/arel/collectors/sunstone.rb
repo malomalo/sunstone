@@ -2,6 +2,8 @@ module Arel
   module Collectors
     class Sunstone < Arel::Collectors::Bind
 
+      MAX_URI_LENGTH = 2083
+
       attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id
 
       def cast_attribute(v)
@@ -58,49 +60,65 @@ module Arel
 
       def compile bvs, conn = nil
         path = "/#{table}"
+        headers = {}
+        request_type_override = nil
 
+        body = nil
         if updates
-          body = {table.singularize => substitute_binds(updates.clone, bvs)}.to_json
+          body = {
+            table.singularize => substitute_binds(updates.clone, bvs)
+          }
         end
 
-        get_params = {}
+        params = {}
         if where
-          get_params[:where] = substitute_binds(where.clone, bvs)
-          if get_params[:where].size == 1
-            get_params[:where] = get_params[:where].pop
+          params[:where] = substitute_binds(where.clone, bvs)
+          if params[:where].size == 1
+            params[:where] = params[:where].pop
           end
         end
         
         if eager_loads
-          get_params[:include] = eager_loads.clone
+          params[:include] = eager_loads.clone
         end
 
-        get_params[:limit] = substitute_binds(limit, bvs) if limit
-        get_params[:offset] = substitute_binds(offset, bvs) if offset
-        get_params[:order] = substitute_binds(order, bvs) if order
+        params[:limit]  = substitute_binds(limit, bvs)  if limit
+        params[:offset] = substitute_binds(offset, bvs) if offset
+        params[:order]  = substitute_binds(order, bvs)  if order
 
         case operation
         when :count
           path += "/#{operation}"
         when :calculate
           path += "/calculate"
-          get_params[:select] = columns
+          params[:select] = columns
         when :update, :delete
-          path += "/#{get_params[:where]['id']}"
-          get_params.delete(:where)
-        end
-        if get_params.size > 0
-          path += "?#{CGI.escape(MessagePack.pack(get_params))}"
+          path += "/#{params[:where]['id']}"
+          params.delete(:where)
         end
         
-        request = request_type.new(path)
-        if get_params.size > 0
-          request['Query-Encoding'] = 'application/msgpack'
+        if params.size > 0 && request_type == Net::HTTP::Get
+          newpath = path + "?#{CGI.escape(MessagePack.pack(params))}"
+          if newpath.length > MAX_URI_LENGTH
+            request_type_override = Net::HTTP::Post
+            headers['X-Http-Method-Override'] = 'GET'
+            if body
+              body.merge!(params)
+            else
+              body = params
+            end
+          else
+            path = newpath
+            headers['Query-Encoding'] = 'application/msgpack'
+          end
         end
+
+        request = (request_type_override || request_type).new(path)
+        headers.each { |k,v| request[k] = v }
         request.instance_variable_set(:@sunstone_calculation, true) if [:calculate, :delete].include?(operation)
 
-        if updates
-          request.body = body
+        if body
+          request.body = body.to_json
         end
 
         request

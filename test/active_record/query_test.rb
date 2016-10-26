@@ -82,6 +82,16 @@ class ActiveRecord::QueryTest < Minitest::Test
     assert_equal 10, Ship.sum(:weight)
   end
   
+  test '::where(....big get request turns into post...)' do
+    name = 'q' * 3000
+    webmock(:post, "/ships").with(
+      headers: {'X-Http-Method-Override' => 'GET'},
+      body: {where: {name: name}}.to_json
+    ).to_return(body: [{id: 42}].to_json)
+
+    assert_equal 42, Ship.where(name: name)[0].id
+  end
+
   # Relation test
   
   test '#to_sql' do
