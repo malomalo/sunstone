@@ -177,8 +177,13 @@ module Sunstone
 
           # Get the cookies
           response.each_header do |key, value|
-            if key.downcase == 'set-cookie' && Thread.current[:sunstone_cookie_store]
-              Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
+            case key.downcase
+            when 'set-cookie'
+              if Thread.current[:sunstone_cookie_store]
+                Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
+              end
+            when 'connection'
+              @connection.finish if value == 'close'
             end
           end
 
@@ -340,6 +345,7 @@ module Sunstone
       headers['Accept'] = 'application/json'
       headers['User-Agent'] = user_agent
       headers['Api-Version'] = '0.1.0'
+      headers['Connection'] = 'keep-alive'
       
       request_api_key = Thread.current[:sunstone_api_key] || api_key
       headers['Api-Key'] = request_api_key if request_api_key
