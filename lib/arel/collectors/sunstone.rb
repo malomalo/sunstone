@@ -4,7 +4,7 @@ module Arel
 
       MAX_URI_LENGTH = 2083
 
-      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id
+      attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id, :distinct, :distinct_on
 
       def cast_attribute(v)
         if (v.is_a?(ActiveRecord::Attribute))
@@ -82,9 +82,14 @@ module Arel
           params[:include] = eager_loads.clone
         end
 
-        params[:limit]  = substitute_binds(limit, bvs)  if limit
-        params[:offset] = substitute_binds(offset, bvs) if offset
-        params[:order]  = substitute_binds(order, bvs)  if order
+        if distinct_on
+          params[:distinct_on] = distinct_on
+        elsif distinct
+          params[:distinct] = true 
+        end
+        params[:limit]    = substitute_binds(limit, bvs)  if limit
+        params[:offset]   = substitute_binds(offset, bvs) if offset
+        params[:order]    = substitute_binds(order, bvs)  if order
 
         case operation
         when :count

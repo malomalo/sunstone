@@ -55,6 +55,8 @@ module Arel
           collector.operation = :select
         end
 
+        collector = maybe_visit o.set_quantifier, collector
+
         if o.source && !o.source.empty?
           collector.table = o.source.left.name
         end
@@ -296,13 +298,15 @@ module Arel
       #   visit o.expr, collector
       # end
       #
-      # def visit_Arel_Nodes_Distinct o, collector
-      #   collector << DISTINCT
-      # end
-      #
-      # def visit_Arel_Nodes_DistinctOn o, collector
-      #   raise NotImplementedError, 'DISTINCT ON not implemented for this db'
-      # end
+      def visit_Arel_Nodes_Distinct o, collector
+        collector.distinct = true
+        collector
+      end
+
+      def visit_Arel_Nodes_DistinctOn o, collector
+        collector.distinct_on = o.expr.map(&:name)
+        collector
+      end
       #
       # def visit_Arel_Nodes_With o, collector
       #   collector << "WITH "

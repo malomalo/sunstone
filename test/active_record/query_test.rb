@@ -63,6 +63,20 @@ class ActiveRecord::QueryTest < Minitest::Test
     assert_equal [], Ship.where(nations: {id: 1}).limit(10).to_a
   end
   ### end polymorphic test
+
+  # Distinct
+  test '::distinct query' do
+    webmock(:get, "/ships", distinct: true).to_return(body: [].to_json)
+
+    assert_equal [], Ship.distinct
+  end
+
+  # TODO: i need arel-extensions....
+  # test '::distinct_on query' do
+  #   webmock(:get, "/ships", distinct_on: ['id']).to_return(body: [].to_json)
+  #
+  #   assert_equal [], Ship.distinct_on(:id)
+  # end
   
   test '::count' do
     webmock(:get, "/ships/calculate", select: [{count: "*"}]).to_return(body: [10].to_json)
