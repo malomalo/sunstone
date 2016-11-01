@@ -168,6 +168,7 @@ module Sunstone
       return_value = nil
       retry_count = 0
       begin
+        close_connection = false
         @connection.request(request) do |response|
           if response['Deprecation-Notice']
             ActiveSupport::Deprecation.warn(response['Deprecation-Notice'])
@@ -183,16 +184,17 @@ module Sunstone
                 Thread.current[:sunstone_cookie_store].set_cookie(request_uri, value)
               end
             when 'connection'
-              @connection.finish if value == 'close'
+              close_connection = (value == 'close')
             end
           end
 
           if block_given?
-            return_value =yield(response)
+            return_value = yield(response)
           else
-            return_value =response
+            return_value = response
           end
         end
+        @connection.finish if close_connection
       rescue ActiveRecord::ConnectionNotEstablished
         retry_count += 1
         retry_count == 1 ? retry : raise
