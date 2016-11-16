@@ -9,6 +9,7 @@ SimpleCov.start do
 end
 
 require 'rgeo'
+require 'byebug'
 require "minitest/autorun"
 require 'minitest/unit'
 require 'minitest/reporters'

@@ -1,4 +1,3 @@
-require 'byebug'
 module ActiveRecord
   module ConnectionAdapters
     module Sunstone
