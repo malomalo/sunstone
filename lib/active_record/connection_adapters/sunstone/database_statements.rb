@@ -1,3 +1,4 @@
+require 'byebug'
 module ActiveRecord
   module ConnectionAdapters
     module Sunstone
@@ -13,20 +14,57 @@ module ActiveRecord
           end
         end
 
+        # Returns an ActiveRecord::Result instance.
+        def select_all(arel, name = nil, binds = [], preparable: nil)
+          arel, binds = binds_from_relation arel, binds
+          select(arel, name, binds)
+        end
+
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
-          sar = to_sar(arel, binds)
-          
-          log_mess = sar.path.split('?', 2)
-          result = log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) {
-            response = @connection.send_request(sar)
-            if response.is_a?(Net::HTTPNoContent)
-              nil
-            else
-              JSON.parse(response.body)
+
+          sars = []
+          multiple_requests = arel.is_a?(Arel::SelectManager) && arel&.limit
+
+          if multiple_requests
+            allowed_limit = limit_definition(arel.source.left.name)
+            requested_limit = binds.find { |x| x.name == 'LIMIT' }.value
+            multiple_requests = requested_limit > allowed_limit
+          end
+
+          send_request = lambda { |req_arel|
+            sar = to_sar(req_arel, binds)
+            sars.push(sar)
+            log_mess = sar.path.split('?', 2)
+            log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) do
+              response = @connection.send_request(sar)
+              if response.is_a?(Net::HTTPNoContent)
+                nil
+              else
+                JSON.parse(response.body)
+              end
             end
           }
 
-          if sar.instance_variable_get(:@sunstone_calculation)
+          result = if multiple_requests
+            bind = binds.find { |x| x.name == 'LIMIT' }
+            binds.delete(bind)
+
+            limit, offset, results = allowed_limit, 0, []
+            while offset < requested_limit
+              split_arel = arel.clone
+              split_arel.limit = limit
+              split_arel.offset = offset
+              request_results = send_request.call(split_arel)
+              results = results + request_results
+              break if request_results.size < limit
+              offset = offset + limit
+            end
+            results
+          else
+            send_request.call(arel)
+          end
+
+          if !multiple_requests && sars[0].instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
             ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
           elsif result.is_a?(Array)
@@ -35,7 +73,7 @@ module ActiveRecord
             ActiveRecord::Result.new(result.keys, [result])
           end
         end
-        
+
         def last_inserted_id(result)
           row = result.rows.first
           row && row['id']
@@ -45,8 +83,4 @@ module ActiveRecord
     end
   end
 end
-
-
-
-
 

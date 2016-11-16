@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'sdoc-templates-42floors'
   s.add_development_dependency 'rgeo'
   s.add_development_dependency 'simplecov'
+  s.add_development_dependency 'byebug'
 
   # Runtime
   s.add_runtime_dependency 'msgpack'

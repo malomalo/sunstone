@@ -75,8 +75,19 @@ module Arel
           get_params[:include] = eager_loads.clone
         end
 
-        get_params[:limit] = substitute_binds(limit, bvs) if limit
-        get_params[:offset] = substitute_binds(offset, bvs) if offset
+
+        if limit.is_a?(Arel::Nodes::BindParam)
+          get_params[:limit] = substitute_binds(limit, bvs)
+        elsif limit
+          get_params[:limit] = limit
+        end
+
+        if offset.is_a?(Arel::Nodes::BindParam)
+          get_params[:offset] = substitute_binds(offset, bvs)
+        elsif offset
+          get_params[:offset] = offset
+        end
+
         get_params[:order] = substitute_binds(order, bvs) if order
 
         case operation

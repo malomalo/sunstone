@@ -908,7 +908,7 @@ module Arel
       end
 
       def literal(o, collector)
-        o.to_s;
+        o
       end
       alias :visit_Arel_Nodes_SqlLiteral :literal
       alias :visit_Bignum                :literal

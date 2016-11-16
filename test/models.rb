@@ -11,45 +11,63 @@ WebMock::StubRegistry.instance.global_stubs.push(
   
   WebMock::RequestStub.new(:get, "http://example.com/ships/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      fleet_id: {type: 'integer', primary_key: false, null: true, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        fleet_id: {type: 'integer', primary_key: false, null: true, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/fleets/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors_ships/schema").to_return(
     body: {
-      sailor_id: {type: 'integer', primary_key: false, null: false, array: false},
-      ship_id: {type: 'integer', primary_key: false, null: true, array: false}
+      columns: {
+        sailor_id: {type: 'integer', primary_key: false, null: false, array: false},
+        ship_id: {type: 'integer', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/countries/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/ownerships/schema").to_return(
     body: {
-      country_id: {type: 'integer', primary_key: false, null: false, array: false},
-      asset_type: {type: 'string', primary_key: false, null: false, array: false},
-      asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
+      columns: {
+        country_id: {type: 'integer', primary_key: false, null: false, array: false},
+        asset_type: {type: 'string', primary_key: false, null: false, array: false},
+        asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
+      },
+      limit: 100
     }.to_json
   )
 )

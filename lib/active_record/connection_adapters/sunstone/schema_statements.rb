@@ -19,17 +19,27 @@ module ActiveRecord
           end
         end
 
+        def definition(table_name)
+          JSON.parse(@connection.get("/#{table_name}/schema").body)
+        rescue ::Sunstone::Exception::NotFound
+          raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
+        end
+
         # Returns the list of a table's column names, data types, and default values.
         #
         # Query implementation notes:
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          JSON.parse(@connection.get("/#{table_name}/schema").body)
-        rescue ::Sunstone::Exception::NotFound
-          raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
+          definition(table_name)['columns']
         end
-        
+
+        # Returns the limit definition of the table (the maximum limit that can
+        # be used).
+        def limit_definition(table_name)
+          definition(table_name)['limit']
+        end
+
         def tables
           JSON.parse(@connection.get('/tables').body)
         end

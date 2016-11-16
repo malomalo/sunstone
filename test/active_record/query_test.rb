@@ -21,7 +21,8 @@ class ActiveRecord::QueryTest < Minitest::Test
   end
   
   test '::find_each' do
-    webmock(:get, "/ships", { limit: 1000, order: [{id: :asc}] }).to_return(body: [].to_json)
+    webmock(:get, "/ships", { limit: 100, offset: 0, order: [{id: :asc}] }).to_return(body: Array.new(100, { id:  1 }).to_json)
+    webmock(:get, "/ships", { limit: 100, offset: 100, order: [{id: :asc}] }).to_return(body: Array.new(10, { id: 2 }).to_json)
     
     assert_nil Ship.find_each { |s| s }
   end
