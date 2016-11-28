@@ -2,9 +2,31 @@ require 'test_helper'
 
 class ActiveRecord::QueryTest < Minitest::Test
 
+  test '::find w/ old schema definition' do
+    replaced_stub = WebMock::StubRegistry.instance.global_stubs.find { |x|
+      x.request_pattern.uri_pattern.to_s == 'http://example.com/ships/schema'
+    }
+    WebMock::StubRegistry.instance.global_stubs.delete(replaced_stub)
+
+    new_stub = WebMock::API.stub_request(:get, "http://example.com/ships/schema").to_return(
+      body: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        fleet_id: {type: 'integer', primary_key: false, null: true, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      }.to_json
+    )
+
+    webmock(:get, "/ships", { where: {id: 42}, limit: 1 }).to_return(body: [{id: 42}].to_json)
+
+    assert_equal 42, Ship.find(42).id
+    
+    WebMock::API.remove_request_stub(new_stub)
+    WebMock::StubRegistry.instance.global_stubs.push(replaced_stub)
+  end
+
   test '::find' do
     webmock(:get, "/ships", { where: {id: 42}, limit: 1 }).to_return(body: [{id: 42}].to_json)
-    
+
     assert_equal 42, Ship.find(42).id
   end
   
@@ -21,7 +43,8 @@ class ActiveRecord::QueryTest < Minitest::Test
   end
   
   test '::find_each' do
-    webmock(:get, "/ships", { limit: 1000, order: [{id: :asc}] }).to_return(body: [].to_json)
+    webmock(:get, "/ships", { limit: 100, offset: 0, order: [{id: :asc}] }).to_return(body: Array.new(100, { id:  1 }).to_json)
+    webmock(:get, "/ships", { limit: 100, offset: 100, order: [{id: :asc}] }).to_return(body: Array.new(10, { id: 2 }).to_json)
     
     assert_nil Ship.find_each { |s| s }
   end

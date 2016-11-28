@@ -1,56 +1,80 @@
-
-
 WebMock::StubRegistry.instance.global_stubs.push(
   WebMock::RequestStub.new(:get, "http://example.com/ping").to_return(
-    body: "pong"
+    body: "pong",
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/tables").to_return(
-    body: %w(ships fleets sailors).to_json
+    body: %w(ships fleets sailors).to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/ships/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      fleet_id: {type: 'integer', primary_key: false, null: true, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        fleet_id: {type: 'integer', primary_key: false, null: true, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/fleets/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors_ships/schema").to_return(
     body: {
-      sailor_id: {type: 'integer', primary_key: false, null: false, array: false},
-      ship_id: {type: 'integer', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        sailor_id: {type: 'integer', primary_key: false, null: false, array: false},
+        ship_id: {type: 'integer', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/countries/schema").to_return(
     body: {
-      id: {type: 'integer', primary_key: true, null: false, array: false},
-      name: {type: 'string', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        id: {type: 'integer', primary_key: true, null: false, array: false},
+        name: {type: 'string', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/ownerships/schema").to_return(
     body: {
-      country_id: {type: 'integer', primary_key: false, null: false, array: false},
-      asset_type: {type: 'string', primary_key: false, null: false, array: false},
-      asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
-    }.to_json
+      columns: {
+        country_id: {type: 'integer', primary_key: false, null: false, array: false},
+        asset_type: {type: 'string', primary_key: false, null: false, array: false},
+        asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
+      },
+      limit: 100
+    }.to_json,
+    headers: { 'StandardAPI-Version' => '5.0.0.5' }
   )
 )
 

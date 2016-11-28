@@ -52,15 +52,23 @@ class ActiveRecord::PersistanceTest < Minitest::Test
   test '#save attempts another request while in transaction' do
     webmock(:get, '/test_model_bs/schema').to_return(
       body: {
-        id: {type: 'integer', primary_key: true, null: false, array: false},
-        name: {type: 'string', primary_key: false, null: true, array: false}
-      }.to_json
+        columns: {
+          id: {type: 'integer', primary_key: true, null: false, array: false},
+          name: {type: 'string', primary_key: false, null: true, array: false}
+        },
+        limit: 100
+      }.to_json,
+      headers: { 'StandardAPI-Version' => '5.0.0.5' }
     )
     webmock(:get, '/test_model_as/schema').to_return(
       body: {
-        id: {type: 'integer', primary_key: true, null: false, array: false},
-        name: {type: 'string', primary_key: false, null: true, array: false}
-      }.to_json
+        columns: {
+          id: {type: 'integer', primary_key: true, null: false, array: false},
+          name: {type: 'string', primary_key: false, null: true, array: false}
+        },
+        limit: 100
+      }.to_json,
+      headers: { 'StandardAPI-Version' => '5.0.0.5' }
     )
 
     assert_raises ActiveRecord::StatementInvalid do

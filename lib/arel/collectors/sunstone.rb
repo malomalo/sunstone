@@ -87,9 +87,20 @@ module Arel
         elsif distinct
           params[:distinct] = true 
         end
-        params[:limit]    = substitute_binds(limit, bvs)  if limit
-        params[:offset]   = substitute_binds(offset, bvs) if offset
-        params[:order]    = substitute_binds(order, bvs)  if order
+
+        if limit.is_a?(Arel::Nodes::BindParam)
+          params[:limit] = substitute_binds(limit, bvs)
+        elsif limit
+          params[:limit] = limit
+        end
+
+        if offset.is_a?(Arel::Nodes::BindParam)
+          params[:offset] = substitute_binds(offset, bvs)
+        elsif offset
+          params[:offset] = offset
+        end
+
+        params[:order] = substitute_binds(order, bvs) if order
 
         case operation
         when :count

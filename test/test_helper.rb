@@ -9,6 +9,7 @@ SimpleCov.start do
 end
 
 require 'rgeo'
+require 'byebug'
 require "minitest/autorun"
 require 'minitest/unit'
 require 'minitest/reporters'
@@ -17,13 +18,6 @@ require 'mocha/mini_test'
 
 require 'sunstone'
 require File.expand_path('../models.rb', __FILE__)
-
-
-
-# require 'faker'
-# require "mocha"
-# require "mocha/mini_test"
-# require 'active_support/testing/time_helpers'
 
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
@@ -70,7 +64,7 @@ class Minitest::Test
   
   def webmock(method, path, query=nil)
     query = deep_transform_query(query) if query
-    
+
     stub_request(method, /^#{ExampleRecord.connection.instance_variable_get(:@connection).url}/).with do |req|
       if query
         req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
