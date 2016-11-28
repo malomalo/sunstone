@@ -19,13 +19,6 @@ require 'mocha/mini_test'
 require 'sunstone'
 require File.expand_path('../models.rb', __FILE__)
 
-
-
-# require 'faker'
-# require "mocha"
-# require "mocha/mini_test"
-# require 'active_support/testing/time_helpers'
-
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
 # File 'lib/active_support/testing/declarative.rb', somewhere in rails....

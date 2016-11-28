@@ -1,12 +1,12 @@
-
-
 WebMock::StubRegistry.instance.global_stubs.push(
   WebMock::RequestStub.new(:get, "http://example.com/ping").to_return(
-    body: "pong"
+    body: "pong",
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/tables").to_return(
-    body: %w(ships fleets sailors).to_json
+    body: %w(ships fleets sailors).to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/ships/schema").to_return(
@@ -17,7 +17,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         name: {type: 'string', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/fleets/schema").to_return(
@@ -27,7 +28,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         name: {type: 'string', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors/schema").to_return(
@@ -37,7 +39,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         name: {type: 'string', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/sailors_ships/schema").to_return(
@@ -47,7 +50,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         ship_id: {type: 'integer', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/countries/schema").to_return(
@@ -57,7 +61,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         name: {type: 'string', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   ),
   
   WebMock::RequestStub.new(:get, "http://example.com/ownerships/schema").to_return(
@@ -68,7 +73,8 @@ WebMock::StubRegistry.instance.global_stubs.push(
         asset_id:   {type: 'integer', primary_key: false, null: true, array: false}
       },
       limit: 100
-    }.to_json
+    }.to_json,
+    headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
   )
 )
 

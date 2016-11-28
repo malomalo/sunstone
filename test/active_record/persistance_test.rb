@@ -57,7 +57,8 @@ class ActiveRecord::PersistanceTest < Minitest::Test
           name: {type: 'string', primary_key: false, null: true, array: false}
         },
         limit: 100
-      }.to_json
+      }.to_json,
+      headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
     )
     webmock(:get, '/test_model_as/schema').to_return(
       body: {
@@ -66,7 +67,8 @@ class ActiveRecord::PersistanceTest < Minitest::Test
           name: {type: 'string', primary_key: false, null: true, array: false}
         },
         limit: 100
-      }.to_json
+      }.to_json,
+      headers: { 'X-StandardAPI-Version' => '5.0.0.5' }
     )
 
     assert_raises ActiveRecord::StatementInvalid do

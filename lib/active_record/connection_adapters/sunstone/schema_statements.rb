@@ -20,7 +20,15 @@ module ActiveRecord
         end
 
         def definition(table_name)
-          JSON.parse(@connection.get("/#{table_name}/schema").body)
+          response = @connection.get("/#{table_name}/schema")
+
+          version = Gem::Version.create(response['X-StandardAPI-Version'] || '5.0.0.4')
+
+          if (version >= Gem::Version.create('5.0.0.5'))
+            JSON.parse(response.body)
+          else
+            { 'columns' => JSON.parse(response.body), 'limit' => nil }
+          end
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
         end
@@ -37,7 +45,7 @@ module ActiveRecord
         # Returns the limit definition of the table (the maximum limit that can
         # be used).
         def limit_definition(table_name)
-          definition(table_name)['limit']
+          definition(table_name)['limit'] || Float::INFINITY
         end
 
         def tables
