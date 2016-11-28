@@ -22,7 +22,7 @@ module ActiveRecord
         def definition(table_name)
           response = @connection.get("/#{table_name}/schema")
 
-          version = Gem::Version.create(response['X-StandardAPI-Version'] || '5.0.0.4')
+          version = Gem::Version.create(response['StandardAPI-Version'] || '5.0.0.4')
 
           if (version >= Gem::Version.create('5.0.0.5'))
             JSON.parse(response.body)
