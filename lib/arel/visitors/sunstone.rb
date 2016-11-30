@@ -58,7 +58,7 @@ module Arel
         collector = maybe_visit o.set_quantifier, collector
 
         if o.source && !o.source.empty?
-          collector.table = o.source.left.name
+          collector = visit o.source, collector
         end
 
         if !o.wheres.empty?
@@ -628,11 +628,14 @@ module Arel
       #
       def visit_Arel_Nodes_JoinSource o, collector
         if o.left
-          collector = visit o.left, collector
+          collector.table = o.left.name
         end
         if o.right.any?
-          collector << " " if o.left
-          collector = inject_join o.right, collector, ' '
+          # We need to visit the right to get remove bind values, but we don't
+          # add it to the collector
+          # collector << " " if o.left
+          # collector = inject_join o.right, collector, ' '
+          collector.join_source = inject_join(o.right, Arel::Collectors::Sunstone.new, ' ')
         end
         collector
       end
@@ -663,23 +666,20 @@ module Arel
       # def visit_Arel_Nodes_RightOuterJoin o
       #   "RIGHT OUTER JOIN #{visit o.left} #{visit o.right}"
       # end
-      #
-      # def visit_Arel_Nodes_InnerJoin o, collector
-      #   collector << "INNER JOIN "
-      #   collector = visit o.left, collector
-      #   if o.right
-      #     collector << SPACE
-      #     visit(o.right, collector)
-      #   else
-      #     collector
-      #   end
-      # end
-      #
-      # def visit_Arel_Nodes_On o, collector
-      #   collector << "ON "
-      #   visit o.expr, collector
-      # end
-      #
+
+      def visit_Arel_Nodes_InnerJoin o, collector
+        collector = visit o.left, collector
+        if o.right
+          visit(o.right, collector)
+        else
+          collector
+        end
+      end
+
+      def visit_Arel_Nodes_On o, collector
+        visit o.expr, collector
+      end
+
       # def visit_Arel_Nodes_Not o, collector
       #   collector << "NOT ("
       #   visit(o.expr, collector) << ")"

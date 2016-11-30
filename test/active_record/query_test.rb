@@ -35,7 +35,7 @@ class ActiveRecord::QueryTest < Minitest::Test
     
     assert_nil Ship.first
   end
-  
+
   test '::last' do
     webmock(:get, "/ships", { limit: 1, order: [{id: :desc}] }).to_return(body: [].to_json)
     
@@ -134,5 +134,19 @@ class ActiveRecord::QueryTest < Minitest::Test
   test '#to_sql' do
     assert_equal "SELECT ships.* FROM ships WHERE ships.id = 10", Ship.where(:id => 10).to_sql
   end
-  
+
+  test '#to_sql binds correctly when joining' do
+    assert_equal 'SELECT ships.* FROM ships INNER JOIN ownerships ON ownerships.asset_id = ships.id AND ownerships.asset_type = \'Ship\' WHERE ownerships.id = 1', Ship.joins(:ownerships).where({ ownerships: { id: 1 } }).to_sql
+  end
+
+  test '#to_sar' do
+    assert_equal "/ships?%81%A5where%81%A2id%A210", Ship.where(:id => 10).to_sar.path
+  end
+
+  test 'bind params get eaten when joining' do
+    uri = URI(Ship.joins(:ownerships).where({ ownerships: { id: 1 } }).to_sar.path)
+    query = MessagePack.unpack(CGI.unescape(uri.query))
+    assert_equal({"where"=>{"ownerships"=>{"id"=>{"eq"=>"1"}}}}, query)
+  end
+
 end

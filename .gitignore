@@ -28,3 +28,4 @@ Gemfile.lock
 
 # Text Editor scraps
 *~
+.byebug_history

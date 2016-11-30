@@ -6,6 +6,9 @@ module Arel
 
       attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id, :distinct, :distinct_on
 
+      # This is used to removed an bind values. It is not used in the request
+      attr_accessor :join_source
+
       def cast_attribute(v)
         if (v.is_a?(ActiveRecord::Attribute))
           v.value_for_database
@@ -70,6 +73,10 @@ module Arel
           }
         end
 
+        if join_source
+          substitute_binds(join_source.clone, bvs)
+        end
+
         params = {}
         if where
           params[:where] = substitute_binds(where.clone, bvs)
@@ -77,7 +84,7 @@ module Arel
             params[:where] = params[:where].pop
           end
         end
-        
+
         if eager_loads
           params[:include] = eager_loads.clone
         end
@@ -94,13 +101,13 @@ module Arel
           params[:limit] = limit
         end
 
+        params[:order] = substitute_binds(order, bvs) if order
+
         if offset.is_a?(Arel::Nodes::BindParam)
           params[:offset] = substitute_binds(offset, bvs)
         elsif offset
           params[:offset] = offset
         end
-
-        params[:order] = substitute_binds(order, bvs) if order
 
         case operation
         when :count
@@ -143,6 +150,3 @@ module Arel
     end
   end
 end
-
-
-
