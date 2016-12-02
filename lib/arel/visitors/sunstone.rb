@@ -194,7 +194,7 @@ module Arel
           raise 'Upsupported'
         end
         if !collector.where.first['id']
-          collector.table = collector.where.first.keys.first
+          collector.table = collector.where.first.keys.first if collector.is_a?(Arel::Collectors::Sunstone)
           collector.where[0] = {'id' => collector.where.first.values.first.values.first}
         end
         
@@ -628,7 +628,7 @@ module Arel
       #
       def visit_Arel_Nodes_JoinSource o, collector
         if o.left
-          collector.table = o.left.name
+          collector.table = o.left.name if collector.is_a?(Arel::Collectors::Sunstone)
         end
         if o.right.any?
           # We need to visit the right to get remove bind values, but we don't
@@ -636,6 +636,7 @@ module Arel
           # collector << " " if o.left
           # collector = inject_join o.right, collector, ' '
           collector.join_source = inject_join(o.right, Arel::Collectors::Sunstone.new, ' ')
+          # collector.join_source = Arel::Visitors::PostgreSQL.new(Arel::Collectors::SQLString.new).send(:inject_join, o.right, Arel::Collectors::SQLString.new, ' ')
         end
         collector
       end
@@ -655,14 +656,12 @@ module Arel
       # def visit_Arel_Nodes_FullOuterJoin o
       #   "FULL OUTER JOIN #{visit o.left} #{visit o.right}"
       # end
-      #
-      # def visit_Arel_Nodes_OuterJoin o, collector
-      #   collector << "LEFT OUTER JOIN "
-      #   collector = visit o.left, collector
-      #   collector << " "
-      #   visit o.right, collector
-      # end
-      #
+
+      def visit_Arel_Nodes_OuterJoin o, collector
+        collector = visit o.left, collector
+        visit o.right, collector
+      end
+
       # def visit_Arel_Nodes_RightOuterJoin o
       #   "RIGHT OUTER JOIN #{visit o.left} #{visit o.right}"
       # end
@@ -687,10 +686,11 @@ module Arel
       #
       def visit_Arel_Table o, collector
         if o.table_alias
-          collector << "#{o.name} #{o.table_alias}"
+          collector.table = o.table_alias if collector.is_a?(Arel::Collectors::Sunstone)
         else
-          collector << o.name
+          collector.table = o.name if collector.is_a?(Arel::Collectors::Sunstone)
         end
+        collector
       end
 
       def visit_Arel_Nodes_In o, collector
@@ -898,7 +898,7 @@ module Arel
       
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
-        collector.table == join_name ? o.name : "#{join_name}.#{o.name}"
+        collector.table == join_name ? o.name : "#{join_name}.#{o.name}" if collector.is_a?(Arel::Collectors::Sunstone)
       end
       alias :visit_Arel_Attributes_Integer :visit_Arel_Attributes_Attribute
       alias :visit_Arel_Attributes_Float :visit_Arel_Attributes_Attribute
@@ -975,18 +975,14 @@ module Arel
       #   collector << " "
       #   visit thing, collector
       # end
-      #
+
       def inject_join list, collector, join_str
         len = list.length - 1
         list.each_with_index.inject(collector) { |c, (x,i)|
-          if i == len
-            visit x, c
-          else
-            visit(x, c) << join_str
-          end
+          visit x, c
         }
       end
-      #
+
       # def infix_value o, collector, value
       #   collector = visit o.left, collector
       #   collector << value
@@ -998,7 +994,7 @@ module Arel
         if o.distinct
           collector << "DISTINCT "
         end
-        collector = inject_join(o.expressions, collector, ", ") << ")"
+        collector = inject_join(o.expressions, Arel::Collectors::Sunstone.new, ", ")# << ")"
         if o.alias
           collector << " AS "
           visit o.alias, collector
