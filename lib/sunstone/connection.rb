@@ -343,7 +343,7 @@ module Sunstone
     private
 
     def request_headers
-      headers = Thread.current[:sunstone_headers] || {}
+      headers = Thread.current[:sunstone_headers]&.clone || {}
       headers['Accept'] = 'application/json'
       headers['User-Agent'] = user_agent
       headers['Api-Version'] = '0.1.0'
