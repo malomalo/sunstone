@@ -602,7 +602,7 @@ module Arel
 
       def visit_Arel_Nodes_LessThan o, collector
         key = visit(o.left, collector)
-        value = { :lte => visit(o.right, collector) }
+        value = { :lt => visit(o.right, collector) }
         if key.is_a?(Hash)
           if o.left.is_a?(Arel::Attributes::Cast)
             merge_to_bottom_hash(key, value)
