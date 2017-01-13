@@ -6,7 +6,7 @@ rvm:
 env:
   - RAILS_VERSION=v5.0.0
   - RAILS_VERSION=v5.0.0.1
-  - RAILS_VERSION=v5.0.1.rc2
+  - RAILS_VERSION=v5.0.1
 
 cache:
   bundler: true
