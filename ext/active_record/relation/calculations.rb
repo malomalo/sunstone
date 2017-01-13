@@ -3,14 +3,14 @@ module ActiveRecord
     
     def pluck(*column_names)
       if loaded? && (column_names.map(&:to_s) - @klass.attribute_names - @klass.attribute_aliases.keys).empty?
-        return @records.pluck(*column_names)
+        return records.pluck(*column_names)
       end
 
       if has_include?(column_names.first)
         construct_relation_for_association_calculations.pluck(*column_names)
       elsif klass.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         load
-        return @records.pluck(*column_names.map{|n| n.sub(/^#{klass.table_name}\./, "")})
+        return records.pluck(*column_names.map{|n| n.sub(/^#{klass.table_name}\./, "")})
       else
         relation = spawn
         relation.select_values = column_names.map { |cn|
