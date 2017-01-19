@@ -122,7 +122,7 @@ class Minitest::Test
       self.class.log_all << sql
       unless ignore =~ sql
         if $debugging
-        puts caller#.select { |l| l.starts_with?(File.expand_path('../../lib', __FILE__)) }
+        puts caller.select { |l| l.starts_with?(File.expand_path('../../lib', __FILE__)) }
         puts "\n\n" 
         end
       end

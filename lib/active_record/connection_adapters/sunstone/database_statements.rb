@@ -24,7 +24,7 @@ module ActiveRecord
 
           sars = []
           multiple_requests = arel.is_a?(Arel::SelectManager)
-          # puts arel.class
+
           if multiple_requests
             allowed_limit = limit_definition(arel.source.left.name)
             requested_limit = binds.find { |x| x.name == 'LIMIT' }&.value
