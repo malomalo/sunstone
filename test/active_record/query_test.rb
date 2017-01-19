@@ -19,9 +19,22 @@ class ActiveRecord::QueryTest < Minitest::Test
     webmock(:get, "/ships", { where: {id: 42}, limit: 1 }).to_return(body: [{id: 42}].to_json)
 
     assert_equal 42, Ship.find(42).id
-    
+
     WebMock::API.remove_request_stub(new_stub)
     WebMock::StubRegistry.instance.global_stubs.push(replaced_stub)
+  end
+
+  test '::all' do
+    ships = []
+    101.times { |i| ships << Ship.new(id: i) }
+    webmock(:get, "/ships", { limit: 100, offset: 0 }).to_return(body: ships[0..100].to_json)
+    webmock(:get, "/ships", { limit: 100, offset: 100 }).to_return(body: ships[101..-1].to_json)
+    assert_equal ships, Ship.all
+  end
+
+  test '::all w/o resource_limit' do
+    webmock(:get, "/fleets").to_return(body: [{id: 42}].to_json)
+    assert_equal [Fleet.new(id: 42)], Fleet.all
   end
 
   test '::find' do
@@ -29,67 +42,67 @@ class ActiveRecord::QueryTest < Minitest::Test
 
     assert_equal 42, Ship.find(42).id
   end
-  
+
   test '::first' do
     webmock(:get, "/ships", { limit: 1, order: [{id: :asc}] }).to_return(body: [].to_json)
-    
+
     assert_nil Ship.first
   end
 
   test '::last' do
     webmock(:get, "/ships", { limit: 1, order: [{id: :desc}] }).to_return(body: [].to_json)
-    
+
     assert_nil Ship.last
   end
-  
+
   test '::find_each' do
     webmock(:get, "/ships", { limit: 100, offset: 0, order: [{id: :asc}] }).to_return(body: Array.new(100, { id:  1 }).to_json)
     webmock(:get, "/ships", { limit: 100, offset: 100, order: [{id: :asc}] }).to_return(body: Array.new(10, { id: 2 }).to_json)
-    
+
     assert_nil Ship.find_each { |s| s }
   end
-  
+
   test '::where on columns' do
-    webmock(:get, "/ships", { where: {id: 10} }).to_return(body: [].to_json)
-    
+    webmock(:get, "/ships", { where: { id: 10 }, limit: 100, offset: 0 }).to_return(body: [].to_json)
+
     assert_equal [], Ship.where(:id => 10).to_a
   end
-  
+
   test '::where column is nil' do
-    webmock(:get, "/ships", { where: {leased_at: nil} }).to_return(body: [].to_json)
+    webmock(:get, "/ships", { where: { leased_at: nil }, limit: 100, offset: 0 }).to_return(body: [].to_json)
 
     assert_equal [], Ship.where(:leased_at => nil).to_a
   end
-  
+
   test '::where on belongs_to relation' do
-    webmock(:get, "/ships", where: {fleet: { id: {eq: 1} } }).to_return(body: [].to_json)
+    webmock(:get, "/ships", where: {fleet: { id: {eq: 1} } }, limit: 100, offset: 0).to_return(body: [].to_json)
 
     assert_equal [], Ship.where(:fleet => {id: 1}).to_a
   end
-  
+
   test '::where on has_many relation' do
     webmock(:get, "/fleets", where: {ships: { id: {eq: 1} } }).to_return(body: [].to_json)
 
     assert_equal [], Fleet.where(:ships => {id: 1}).to_a
   end
-  
+
   test '::where on has_and_belongs_to_many relation' do
-    webmock(:get, "/ships", where: {sailors: { id: {eq: 1} } }).to_return(body: [].to_json)
+    webmock(:get, "/ships", where: {sailors: { id: {eq: 1} } }, limit: 100, offset: 0).to_return(body: [].to_json)
 
     assert_equal [], Ship.where(:sailors => {id: 1}).to_a
   end
-  
+
   # Polymorphic
   test '::where on a has_many throught a polymorphic source' do
     webmock(:get, "/ships", where: { nations: { id: {eq: 1} } }, limit: 10).to_return(body: [].to_json)
-    
+
     assert_equal [], Ship.where(nations: {id: 1}).limit(10).to_a
   end
   ### end polymorphic test
 
   # Distinct
   test '::distinct query' do
-    webmock(:get, "/ships", distinct: true).to_return(body: [].to_json)
+    webmock(:get, "/ships", distinct: true, limit: 100, offset: 0).to_return(body: [].to_json)
 
     assert_equal [], Ship.distinct
   end
@@ -100,37 +113,37 @@ class ActiveRecord::QueryTest < Minitest::Test
   #
   #   assert_equal [], Ship.distinct_on(:id)
   # end
-  
+
   test '::count' do
-    webmock(:get, "/ships/calculate", select: [{count: "*"}]).to_return(body: [10].to_json)
-    
+    webmock(:get, "/ships/calculate", select: [{count: "*"}], limit: 100, offset: 0).to_return(body: [10].to_json)
+
     assert_equal 10, Ship.count
   end
-  
+
   test '::count(:column)' do
-    webmock(:get, "/ships/calculate", select: [{count: "id"}]).to_return(body: [10].to_json)
-    
+    webmock(:get, "/ships/calculate", select: [{count: "id"}], limit: 100, offset: 0).to_return(body: [10].to_json)
+
     assert_equal 10, Ship.count(:id)
   end
-  
+
   test '::sum(:column)' do
-    webmock(:get, "/ships/calculate", select: [{sum: "weight"}]).to_return(body: [10].to_json)
-    
+    webmock(:get, "/ships/calculate", select: [{sum: "weight"}], limit: 100, offset: 0).to_return(body: [10].to_json)
+
     assert_equal 10, Ship.sum(:weight)
   end
-  
+
   test '::where(....big get request turns into post...)' do
     name = 'q' * 3000
     webmock(:post, "/ships").with(
       headers: {'X-Http-Method-Override' => 'GET'},
-      body: {where: {name: name}}.to_json
+      body: {where: { name: name }, limit: 100, offset: 0 }.to_json
     ).to_return(body: [{id: 42}].to_json)
 
     assert_equal 42, Ship.where(name: name)[0].id
   end
 
   # Relation test
-  
+
   test '#to_sql' do
     assert_equal "SELECT ships.* FROM ships WHERE ships.id = 10", Ship.where(:id => 10).to_sql
   end

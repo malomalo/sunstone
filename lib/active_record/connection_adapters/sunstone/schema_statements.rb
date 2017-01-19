@@ -45,7 +45,7 @@ module ActiveRecord
         # Returns the limit definition of the table (the maximum limit that can
         # be used).
         def limit_definition(table_name)
-          definition(table_name)['limit'] || Float::INFINITY
+          definition(table_name)['limit'] || nil
         end
 
         def tables
