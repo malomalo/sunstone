@@ -66,7 +66,11 @@ module ActiveRecord
       include Sunstone::DatabaseStatements
       include Sunstone::ColumnDumper
       # include Savepoints
-      
+
+      def supports_statement_cache?
+        false
+      end
+
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger, config)
@@ -177,26 +181,26 @@ module ActiveRecord
       
       private
 
-        def initialize_type_map(m) # :nodoc:
-          m.register_type 'boolean',    Type::Boolean.new
-          m.register_type 'string',     Type::String.new
-          m.register_type 'integer',    Type::Integer.new
-          m.register_type 'decimal',    Type::Decimal.new
-          m.register_type 'datetime',   Sunstone::Type::DateTime.new
-          m.register_type 'json',       Sunstone::Type::Json.new
-          m.register_type 'uuid',       Sunstone::Type::Uuid.new
+      def initialize_type_map(m) # :nodoc:
+        m.register_type 'boolean',    Type::Boolean.new
+        m.register_type 'string',     Type::String.new
+        m.register_type 'integer',    Type::Integer.new
+        m.register_type 'decimal',    Type::Decimal.new
+        m.register_type 'datetime',   Sunstone::Type::DateTime.new
+        m.register_type 'json',       Sunstone::Type::Json.new
+        m.register_type 'uuid',       Sunstone::Type::Uuid.new
           
-          if defined?(Sunstone::Type::EWKB)
-            m.register_type 'ewkb',       Sunstone::Type::EWKB.new
-          end
+        if defined?(Sunstone::Type::EWKB)
+          m.register_type 'ewkb',       Sunstone::Type::EWKB.new
         end
+      end
 
-        def create_table_definition(name, temporary, options, as = nil) # :nodoc:
-          SunstoneAPI::TableDefinition.new native_database_types, name, temporary, options, as
-        end
+      def create_table_definition(name, temporary, options, as = nil) # :nodoc:
+        SunstoneAPI::TableDefinition.new native_database_types, name, temporary, options, as
+      end
         
-        ActiveRecord::Type.add_modifier({ array: true }, Sunstone::Type::Array, adapter: :sunstone)
-        # ActiveRecord::Type.add_modifier({ range: true }, OID::Range, adapter: :postgresql)
+      ActiveRecord::Type.add_modifier({ array: true }, Sunstone::Type::Array, adapter: :sunstone)
+      # ActiveRecord::Type.add_modifier({ range: true }, OID::Range, adapter: :postgresql)
     end
   end
 end

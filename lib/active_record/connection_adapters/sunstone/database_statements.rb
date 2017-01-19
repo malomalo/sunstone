@@ -15,6 +15,7 @@ module ActiveRecord
 
         # Returns an ActiveRecord::Result instance.
         def select_all(arel, name = nil, binds = [], preparable: nil)
+
           arel, binds = binds_from_relation arel, binds
           select(arel, name, binds)
         end
@@ -22,12 +23,19 @@ module ActiveRecord
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
 
           sars = []
-          multiple_requests = arel.is_a?(Arel::SelectManager) && arel&.limit
-
+          multiple_requests = arel.is_a?(Arel::SelectManager)
+          # puts arel.class
           if multiple_requests
             allowed_limit = limit_definition(arel.source.left.name)
-            requested_limit = binds.find { |x| x.name == 'LIMIT' }.value
-            multiple_requests = requested_limit > allowed_limit
+            requested_limit = binds.find { |x| x.name == 'LIMIT' }&.value
+
+            if allowed_limit.nil?
+              multiple_requests = false
+            elsif requested_limit && requested_limit <= allowed_limit
+              multiple_requests = false
+            else
+              multiple_requests = true
+            end
           end
 
           send_request = lambda { |req_arel|
@@ -49,7 +57,7 @@ module ActiveRecord
             binds.delete(bind)
 
             limit, offset, results = allowed_limit, 0, []
-            while offset < requested_limit
+            while requested_limit ? offset < requested_limit : true
               split_arel = arel.clone
               split_arel.limit = limit
               split_arel.offset = offset
@@ -63,7 +71,7 @@ module ActiveRecord
             send_request.call(arel)
           end
 
-          if !multiple_requests && sars[0].instance_variable_get(:@sunstone_calculation)
+          if sars[0].instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
             ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
           elsif result.is_a?(Array)

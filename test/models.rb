@@ -27,7 +27,7 @@ WebMock::StubRegistry.instance.global_stubs.push(
         id: {type: 'integer', primary_key: true, null: false, array: false},
         name: {type: 'string', primary_key: false, null: true, array: false}
       },
-      limit: 100
+      limit: nil
     }.to_json,
     headers: { 'StandardAPI-Version' => '5.0.0.5' }
   ),
