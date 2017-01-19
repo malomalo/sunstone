@@ -3,7 +3,7 @@ module ActiveRecord
     class Association #:nodoc:
 
       def skip_statement_cache?
-        return false if !klass.connection.supports_statement_cache?
+        return true if !klass.connection.supports_statement_cache?
         
         reflection.has_scope? ||
           scope.eager_loading? ||
