@@ -142,7 +142,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
-    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}).to_return(
+    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}, limit: 100, offset: 0).to_return(
       body: [].to_json
     )
     req_stub = webmock(:patch, '/ships/1').with(
@@ -163,7 +163,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
-    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}).to_return(
+    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}, limit: 100, offset: 0).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
     req_stub = webmock(:patch, '/ships/1').with(
@@ -181,7 +181,7 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     webmock(:get, "/fleets", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Armada Uno'}].to_json
     )
-    webmock(:get, "/ships", where: {fleet_id: 1}).to_return(
+    webmock(:get, "/ships", where: {fleet_id: 1}, limit: 100, offset: 0).to_return(
       body: [{id: 1, name: 'Saucer Trio'}].to_json
     )
     req_stub = webmock(:patch, '/fleets/1').with(

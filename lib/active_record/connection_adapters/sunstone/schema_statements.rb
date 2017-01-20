@@ -20,11 +20,17 @@ module ActiveRecord
         end
 
         def definition(table_name)
+          @definitions = {} if !defined?(@definitions)
+
+          if @definitions[table_name]
+            return @definitions[table_name]
+          end
+
           response = @connection.get("/#{table_name}/schema")
 
           version = Gem::Version.create(response['StandardAPI-Version'] || '5.0.0.4')
 
-          if (version >= Gem::Version.create('5.0.0.5'))
+          @definitions[table_name] = if (version >= Gem::Version.create('5.0.0.5'))
             JSON.parse(response.body)
           else
             { 'columns' => JSON.parse(response.body), 'limit' => nil }
