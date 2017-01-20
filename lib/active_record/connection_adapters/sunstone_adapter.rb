@@ -71,6 +71,11 @@ module ActiveRecord
         false
       end
 
+      def clear_cache!
+        # TODO move @definitions to using @schema_cache
+        @definitions = {}
+      end
+
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger, config)

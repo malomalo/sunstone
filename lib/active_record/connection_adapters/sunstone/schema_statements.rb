@@ -20,6 +20,7 @@ module ActiveRecord
         end
 
         def definition(table_name)
+          # TODO move @definitions to using @schema_cache
           @definitions = {} if !defined?(@definitions)
 
           if @definitions[table_name]
