@@ -707,17 +707,22 @@ module Arel
       
       def visit_Arel_Nodes_And o, collector
         ors = []
-        ors << o.children.inject({}) do |c, x|
-          value = visit(x, collector)
-          if value.is_a?(Hash)
-            c.deep_merge!(value)
-          elsif value.is_a?(Array)
+        ands = {}
+
+        o.children.each do |x|
+          value = visit x, collector
+          case value
+          when Hash
+            ands.deep_merge!(value)
+          when Array
             value.size == 1 ? ors << value : ors += value
           end
-          c
         end
+        ors << ands
+
         ors
       end
+
       
       def visit_Arel_Nodes_Or o, collector
         ors = []
