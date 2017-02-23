@@ -195,4 +195,17 @@ class ActiveRecord::PersistanceTest < Minitest::Test
     assert_requested req_stub
   end
   
+  test "#destroy with habtm relationship" do
+    webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
+    )
+    req_stub = webmock(:delete, '/ships/1').to_return(
+      status: 204
+    )
+
+    ship = Ship.find(1)
+    assert ship.destroy
+    assert_requested req_stub
+  end
+  
 end
