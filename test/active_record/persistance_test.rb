@@ -134,6 +134,21 @@ class ActiveRecord::PersistanceTest < Minitest::Test
 
     assert_requested req_stub
   end
+  
+  test '#update!' do
+    webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
+    )
+    req_stub = webmock(:patch, "/ships").with(
+      body: { ship: { name: 'Armada Trio' } }.to_json
+    ).to_return(
+      body: {id: 1, name: 'Armada Trio'}.to_json
+    )
+
+    Ship.find(1).update!(name: 'Armada Trio')
+
+    assert_requested req_stub
+  end
 
   test '#update habtm relationships' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(

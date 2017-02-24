@@ -1,3 +1,6 @@
+require 'active_record'
+require 'active_record/transactions'
+
 module ActiveRecord
   # See ActiveRecord::Transactions::ClassMethods for documentation.
   module Transactions
@@ -17,9 +20,14 @@ module ActiveRecord
     #   end
     # end
     #
-    # def save!(*) #:nodoc:
-    #   with_transaction_returning_status { super }
-    # end
+    def save!(*) #:nodoc:
+      if @no_save_transaction
+        super
+      else
+        with_transaction_returning_status { super }
+      end
+    end
+    
     #
     # def touch(*) #:nodoc:
     #   with_transaction_returning_status { super }

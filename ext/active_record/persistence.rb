@@ -1,6 +1,17 @@
 module ActiveRecord
   # = Active Record \Persistence
   module Persistence
+    
+    def update!(attributes)
+      @no_save_transaction = true
+      with_transaction_returning_status do
+        assign_attributes(attributes)
+        save!
+      end
+    ensure
+      @no_save_transaction = false
+    end
+    
     private
 
     def create_or_update(*args)
