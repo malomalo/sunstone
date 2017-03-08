@@ -36,6 +36,33 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
     assert_nil Ship.last
   end
+  
+  test '::where(AND CONDITION)' do
+    webmock(:get, "/ships", { where: {id: 10, name: 'name'}, limit: 1, order: [{id: :asc}] }).to_return({
+      body: [{id: 42}].to_json
+    })
+    puts unpack('%83%A5where%80%A5limit%01%A5order%91%81%A2id%A3asc')
+    arel_table = Ship.arel_table
+    assert_equal 42, Ship.where(arel_table[:id].eq(10).and(arel_table[:name].eq('name'))).first.id
+  end
+  
+  test '::where(OR CONDITION)' do
+    webmock(:get, "/ships", { where: [{id: 10}, 'OR', {name: 'name'}], limit: 1, order: [{id: :asc}] }).to_return({
+      body: [{id: 42}].to_json
+    })
+
+    arel_table = Ship.arel_table
+    assert_equal 42, Ship.where(arel_table[:id].eq(10).or(arel_table[:name].eq('name'))).first.id
+  end
+
+  test '::where(AND & OR CONDITION)' do
+    webmock(:get, "/ships", { where: [{id: 10}, 'AND', [{id: 10}, 'OR', {name: 'name'}]], limit: 1, order: [{id: :asc}] }).to_return({
+      body: [{id: 42}].to_json
+    })
+
+    arel_table = Ship.arel_table
+    assert_equal 42, Ship.where(arel_table[:id].eq(10).and(arel_table[:id].eq(10).or(arel_table[:name].eq('name')))).first.id
+  end
 
   test '::where(....big get request turns into post...)' do
     name = 'q' * 3000

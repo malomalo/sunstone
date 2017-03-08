@@ -38,8 +38,8 @@ class ActiveRecord::Associations::HasManyTest < ActiveSupport::TestCase
 
   test '#update with has_many_ids=' do
     webmock(:get, "/fleets", where: {id: 42}, limit: 1).to_return(body: [{id: 42, name: "Spanish Armada"}].to_json)
-    webmock(:get, "/ships", where: {id: 2}).to_return(body: [{id: 2, fleet_id: nil, name: 'Duo'}].to_json)
-    webmock(:get, "/ships", where: {fleet_id: 42}).to_return(body: [].to_json)
+    webmock(:get, "/ships", where:  {id: 2}).to_return(body: [{id: 2, fleet_id: nil, name: 'Duo'}].to_json)
+    webmock(:get, "/ships", where:  {fleet_id: 42}).to_return(body: [].to_json)
 
     webmock(:patch, "/fleets/42").with(
       body: {

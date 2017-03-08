@@ -707,25 +707,30 @@ module Arel
       
       def visit_Arel_Nodes_And o, collector
         ors = []
-        ors << o.children.inject({}) do |c, x|
-          value = visit(x, collector)
-          if value.is_a?(Hash)
-            c.deep_merge!(value)
-          elsif value.is_a?(Array)
-            value.size == 1 ? ors << value : ors += value
+        
+        o.children.each do |child, i|
+          while child.is_a?(Arel::Nodes::Grouping)
+            child = child.expr
           end
-          c
+          value = visit(child, collector)
+          if value.is_a?(Hash) && ors.last.is_a?(Hash) && !(value.keys - ors.last.keys).empty?
+            ors.last.deep_merge!(value)
+          else
+            ors << value
+          end
         end
-        ors
+        
+        result = []
+        ors.each_with_index do |c, i|
+          result << c
+          result << 'AND' if ors.size != i + 1
+        end
+        
+        result.size == 1 ? result.first : result
       end
       
       def visit_Arel_Nodes_Or o, collector
-        ors = []
-        [o.left, o.right].each do |x|
-          value = visit(x, collector)
-          value.is_a?(Array) ? ors += value : ors << value
-        end
-        ors
+        [visit(o.left, collector), 'OR', visit(o.right, collector)]
       end
 
       def visit_Arel_Nodes_Assignment o, collector
