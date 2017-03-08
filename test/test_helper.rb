@@ -17,15 +17,15 @@ require 'webmock/minitest'
 require 'mocha/mini_test'
 
 require 'sunstone'
-require File.expand_path('../models.rb', __FILE__)
+require File.expand_path('../schema_mock.rb', __FILE__)
 
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
 # File 'lib/active_support/testing/declarative.rb', somewhere in rails....
-class Minitest::Test
+class ActiveSupport::TestCase
+  include WebMock::API
   
 #  include ActiveSupport::Testing::TimeHelpers
-  
   def self.test(name, &block)
     test_name = "test_#{name.gsub(/\s+/,'_')}".to_sym
     defined = instance_method(test_name) rescue false
@@ -65,7 +65,7 @@ class Minitest::Test
   def webmock(method, path, query=nil)
     query = deep_transform_query(query) if query
 
-    stub_request(method, /^#{ExampleRecord.connection.instance_variable_get(:@connection).url}/).with do |req|
+    stub_request(method, /^#{ActiveRecord::Base.connection.instance_variable_get(:@connection).url}/).with do |req|
       if query
         req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
       else

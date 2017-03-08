@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ActiveRecord::PersistanceTest < Minitest::Test
+class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
   
   class TestModelA < ExampleRecord
   end

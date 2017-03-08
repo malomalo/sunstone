@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ActiveRecord::EagerLoadingTest < Minitest::Test
+class ActiveRecord::EagerLoadingTest < ActiveSupport::TestCase
 
   test '#eager_load' do
     webmock(:get, "/fleets", include: [{:ships => :sailors}]).to_return(body: [{

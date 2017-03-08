@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ActiveRecord::QueryTest < Minitest::Test
+class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
   test '::find w/ old schema definition' do
     replaced_stub = WebMock::StubRegistry.instance.global_stubs.find { |x|
@@ -22,19 +22,6 @@ class ActiveRecord::QueryTest < Minitest::Test
 
     WebMock::API.remove_request_stub(new_stub)
     WebMock::StubRegistry.instance.global_stubs.push(replaced_stub)
-  end
-
-  test '::all' do
-    ships = []
-    101.times { |i| ships << Ship.new(id: i) }
-    webmock(:get, "/ships", { limit: 100, offset: 0 }).to_return(body: ships[0..100].to_json)
-    webmock(:get, "/ships", { limit: 100, offset: 100 }).to_return(body: ships[101..-1].to_json)
-    assert_equal ships, Ship.all
-  end
-
-  test '::all w/o resource_limit' do
-    webmock(:get, "/fleets").to_return(body: [{id: 42}].to_json)
-    assert_equal [Fleet.new(id: 42)], Fleet.all
   end
 
   test '::find' do

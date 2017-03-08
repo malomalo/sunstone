@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Sunstone::Connection::SendRequestTest < Minitest::Test
+class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
 
   test '#send_request(#<Net::HTTPRequest>) includes the api-key header when present' do
     connection = Sunstone::Connection.new(url: "http://my_api_key@example.com")

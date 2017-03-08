@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ActiveRecord::Associations::HasAndBelongsToManyTest < Minitest::Test
+class ActiveRecord::Associations::HasAndBelongsToManyTest < ActiveSupport::TestCase
 
   test '#relation_ids' do
     webmock(:get, "/ships", where: {id: 42}, limit: 1).to_return(body: [{id: 42, name: "The Niña"}].to_json)

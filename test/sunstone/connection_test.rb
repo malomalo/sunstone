@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Sunstone::ConnectionTest < Minitest::Test
+class Sunstone::ConnectionTest < ActiveSupport::TestCase
 
   # #ping =====================================================================
 

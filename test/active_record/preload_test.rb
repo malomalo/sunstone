@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ActiveRecord::PreloadTest < Minitest::Test
+class ActiveRecord::PreloadTest < ActiveSupport::TestCase
   
   test '#preload' do
     webmock(:get, "/fleets").to_return(body: [{id: 1}].to_json)
