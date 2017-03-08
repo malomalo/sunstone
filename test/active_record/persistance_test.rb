@@ -1,10 +1,46 @@
 require 'test_helper'
 
 class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
-  
-  class TestModelA < ExampleRecord
+
+  schema do
+    create_table "ships" do |t|
+      t.string   "name",                    limit: 255
+      t.integer  "fleet_id"
+    end
+
+    create_table "fleets" do |t|
+      t.string   "name",                    limit: 255
+    end
+    
+    create_table "sailors" do |t|
+      t.string   "name",                    limit: 255
+    end
+
+    create_table "sailors_ships", id: false do |t|
+      t.integer  "ship_id",                 null: false
+      t.integer  "sailor_id",               null: false
+    end
+
   end
-  class TestModelB < ExampleRecord
+  
+  class Fleet < ActiveRecord::Base
+    has_many :ships
+  end
+
+  class Ship < ActiveRecord::Base
+    belongs_to :fleet
+
+    has_and_belongs_to_many :sailors
+  end
+
+  class Sailor < ActiveRecord::Base
+    has_and_belongs_to_many :ships
+  end
+  
+  class TestModelA < ActiveRecord::Base
+  end
+  
+  class TestModelB < ActiveRecord::Base
     before_save do
       TestModelA.create
     end
@@ -55,8 +91,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
         columns: {
           id: {type: 'integer', primary_key: true, null: false, array: false},
           name: {type: 'string', primary_key: false, null: true, array: false}
-        },
-        limit: 100
+        }
       }.to_json,
       headers: { 'StandardAPI-Version' => '5.0.0.5' }
     )
@@ -65,8 +100,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
         columns: {
           id: {type: 'integer', primary_key: true, null: false, array: false},
           name: {type: 'string', primary_key: false, null: true, array: false}
-        },
-        limit: 100
+        }
       }.to_json,
       headers: { 'StandardAPI-Version' => '5.0.0.5' }
     )
@@ -157,7 +191,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
-    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}, limit: 100, offset: 0).to_return(
+    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}).to_return(
       body: [].to_json
     )
     req_stub = webmock(:patch, '/ships/1').with(
@@ -178,7 +212,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
-    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}, limit: 100, offset: 0).to_return(
+    webmock(:get, "/sailors", where: {sailors_ships: {ship_id: {eq: 1}}}).to_return(
       body: [{id: 1, name: 'Captain'}].to_json
     )
     req_stub = webmock(:patch, '/ships/1').with(
@@ -196,7 +230,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     webmock(:get, "/fleets", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Armada Uno'}].to_json
     )
-    webmock(:get, "/ships", where: {fleet_id: 1}, limit: 100, offset: 0).to_return(
+    webmock(:get, "/ships", where: {fleet_id: 1}).to_return(
       body: [{id: 1, name: 'Saucer Trio'}].to_json
     )
     req_stub = webmock(:patch, '/fleets/1').with(

@@ -22,7 +22,12 @@ class ActiveSupport::TestCase
         @name = name
         @options = options
         @columns = {}
-        integer('id', primary_key: true, null: false)
+        case options[:id]
+        when false
+        else
+          integer('id', primary_key: true, null: false)
+        end
+
         block.call(self)
       end
     

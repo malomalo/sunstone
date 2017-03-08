@@ -3,7 +3,7 @@ require 'test_helper'
 class ActiveRecord::QueryAllTest < ActiveSupport::TestCase
   schema do
     create_table "ships" do |t|
-      t.string   "name",                    limit: 255
+      t.string   "name",                limit: 255
     end
     
     create_table "cars", limit: 100 do |t|
