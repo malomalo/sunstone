@@ -21,7 +21,6 @@ module ActiveRecord
         end
 
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
-
           sars = []
           multiple_requests = arel.is_a?(Arel::SelectManager)
 

@@ -41,7 +41,7 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
     webmock(:get, "/ships", { where: {id: 10, name: 'name'}, limit: 1, order: [{id: :asc}] }).to_return({
       body: [{id: 42}].to_json
     })
-    puts unpack('%83%A5where%80%A5limit%01%A5order%91%81%A2id%A3asc')
+    
     arel_table = Ship.arel_table
     assert_equal 42, Ship.where(arel_table[:id].eq(10).and(arel_table[:name].eq('name'))).first.id
   end
@@ -72,6 +72,15 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
     ).to_return(body: [{id: 42}].to_json)
 
     assert_equal 42, Ship.where(name: name)[0].id
+  end
+  
+  test '::where with JOIN' do
+    webmock(:get, "/ships", {where: { ownerships: {id: {eq: 1}} }, limit: 100, offset: 0 }).to_return({
+      body: [{id: 42}].to_json
+    })
+
+    arel = Ownership.arel_table[:id].eq(1)
+    assert_equal 42, Ship.joins(:ownerships).where(arel)[0].id
   end
 
   # Relation test

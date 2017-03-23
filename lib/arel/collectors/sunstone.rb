@@ -8,6 +8,11 @@ module Arel
 
       # This is used to removed an bind values. It is not used in the request
       attr_accessor :join_source
+      
+      def initialize
+        @join_source = []
+        super
+      end
 
       def cast_attribute(v)
         if (v.is_a?(ActiveRecord::Attribute))
@@ -42,6 +47,8 @@ module Arel
             end
           end
           newhash
+        elsif hash.is_a?(Arel::Nodes::BindParam)
+          cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
         else
           cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
         end
@@ -73,7 +80,7 @@ module Arel
           }
         end
 
-        if join_source
+        if !join_source.empty?
           substitute_binds(join_source.clone, bvs)
         end
 
