@@ -62,10 +62,10 @@ module Arel
           collector = visit o.source, collector
         end
 
-        if !o.wheres.empty?
-          collector.where = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
-            w.is_a?(Array) ? c += w : c << w
-          }
+        if o.wheres.size == 1
+          collector.where = visit(o.wheres.first, collector)
+        elsif o.wheres.size > 1
+          collector.where = visit(Arel::Nodes::And.new(o.wheres), collector)
         end
 
         collector
@@ -162,7 +162,7 @@ module Arel
         if wheres.size != 1 && wheres.first.size != 1 && !wheres['id']
           raise 'Upsupported'
         else
-          collector.where = wheres
+          collector.where = wheres.first
         end
 
         collector
@@ -197,9 +197,10 @@ module Arel
           raise 'Upsupported'
         end
         
-        if !collector.where.first['id']
-          collector.table = collector.where.first.keys.first if collector.is_a?(Arel::Collectors::Sunstone)
-          collector.where[0] = {'id' => collector.where.first.values.first.values.first}
+        collector.where = collector.where.first
+        if !collector.where['id']
+          collector.table = collector.where.keys.first if collector.is_a?(Arel::Collectors::Sunstone)
+          collector.where = {'id' => collector.where.values.first.values.first}
         end
         
         if o.values
@@ -735,7 +736,7 @@ module Arel
       
       def visit_Arel_Nodes_And o, collector
         ors = []
-        
+
         o.children.each do |child, i|
           while child.is_a?(Arel::Nodes::Grouping)
             child = child.expr

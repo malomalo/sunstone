@@ -85,12 +85,7 @@ module Arel
         end
 
         params = {}
-        if where
-          params[:where] = substitute_binds(where.clone, bvs)
-          if params[:where].size == 1
-            params[:where] = params[:where].pop
-          end
-        end
+        params[:where] = substitute_binds(where.clone, bvs) if where
 
         if eager_loads
           params[:include] = eager_loads.clone
