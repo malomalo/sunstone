@@ -884,19 +884,19 @@ module Arel
 
       def visit_Arel_Attributes_Relation o, collector, top=true
         value = if o.relation.is_a?(Arel::Attributes::Relation)
-          visit_Arel_Attributes_Relation(o.relation, collector, false)
+          { o.name => visit_Arel_Attributes_Relation(o.relation, collector, false) }
         else
           visit(o.relation, collector)
         end
-        value = value.to_s.split('.').last if !value.is_a?(Hash)
+        # value = value.to_s.split('.').last if !value.is_a?(Hash)
 
         if o.collection
           ary = []
-          ary[o.collection] = value
+          ary[o.collection] = value.values.first
           if top && o.name == collector.table
             ary
           elsif o.for_write
-            {"#{o.name}_attributes" => ary.map{|i| i.values.first }}
+            { "#{o.name}_attributes" => ary }
           else
             ary
           end
@@ -904,7 +904,7 @@ module Arel
           if top && o.name == collector.table
             value
           elsif o.for_write
-            {"#{o.name}_attributes" => value.values.first}
+            { "#{o.name}_attributes" => value.values.first }
           else
             value
           end

@@ -11,6 +11,11 @@ class ActiveRecord::QueryWhereTest < ActiveSupport::TestCase
       t.string   "name",                    limit: 255
       t.integer  "fleet_id"
     end
+    
+    create_table "sailors" do |t|
+      t.string   "name",                    limit: 255
+      t.integer  "ship_id"
+    end
   end
 
   class Fleet < ActiveRecord::Base
@@ -19,8 +24,13 @@ class ActiveRecord::QueryWhereTest < ActiveSupport::TestCase
   
   class Ship < ActiveRecord::Base
     belongs_to :fleet
+    has_many :sailors
   end
 
+  class Sailor < ActiveRecord::Base
+    belongs_to :ship
+  end
+  
   test '::where on columns' do
     webmock(:get, "/ships", { where: { id: 10 }, limit: 100, offset: 0 }).to_return(body: [].to_json)
 
@@ -58,6 +68,12 @@ class ActiveRecord::QueryWhereTest < ActiveSupport::TestCase
     assert_equal [], Ship.where(nations: {id: 1}).limit(10).to_a
   end
   ### end polymorphic test
+  
+  test '::where on nested relationship' do
+    webmock(:get, "/fleets", where: { ships: {sailors: { id: {eq: 1} } } }, limit: 10).to_return(body: [].to_json)
+
+    assert_equal [], Fleet.where(ships: {sailors: {id: 1}}).limit(10).to_a
+  end
   
 
 end
