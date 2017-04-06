@@ -805,6 +805,8 @@ module Arel
 
         if key.is_a?(Hash)
           add_to_bottom_of_hash(key, {eq: value})
+        elsif o.left.class.name == 'Arel::Attributes::Key'
+          { key => {eq: value} }
         else
           { key => value }
         end
@@ -877,19 +879,7 @@ module Arel
       end
       
       def visit_Arel_Attributes_Key o, collector
-        key = visit(o.relation, collector)
-        if key.is_a?(Hash)
-          okey = key
-          while okey.values.first.is_a?(Hash)
-            okey = okey.values.first
-          end
-          nkey = okey.keys.first
-          value = okey.values.first
-          okey[nkey] = {value => o.name}
-          key
-        else
-          { key => o.name }
-        end
+        "#{visit(o.relation, collector)}.#{o.name}"
       end
 
       def visit_Arel_Attributes_Relation o, collector, top=true
