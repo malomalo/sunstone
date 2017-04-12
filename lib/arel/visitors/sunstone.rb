@@ -470,7 +470,13 @@ module Arel
       #   visit o.expr, collector
       # end
       #
-      # def visit_Arel_Nodes_NamedFunction o, collector
+      def visit_Arel_Nodes_NamedFunction o, collector
+        case o.name
+        when 'ST_Within'
+          { visit(o.expressions.first, collector) => { within: o.expressions.last.expressions.map(&:expr)[0...4].reverse } }
+        else
+          raise 'xxx'
+        end
       #   collector << o.name
       #   collector << "("
       #   collector << "DISTINCT " if o.distinct
@@ -481,7 +487,7 @@ module Arel
       #   else
       #     collector
       #   end
-      # end
+      end
       #
       # def visit_Arel_Nodes_Extract o, collector
       #   collector << "EXTRACT(#{o.field.to_s.upcase} FROM "
