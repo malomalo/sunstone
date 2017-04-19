@@ -198,10 +198,6 @@ module Arel
         end
         
         collector.where = collector.where.first
-        if !collector.where['id']
-          collector.table = collector.where.keys.first if collector.is_a?(Arel::Collectors::Sunstone)
-          collector.where = {'id' => collector.where.values.first.values.first}
-        end
         
         if o.values
           collector.updates = {}

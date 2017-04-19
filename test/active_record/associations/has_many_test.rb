@@ -87,5 +87,10 @@ class ActiveRecord::Associations::HasManyTest < ActiveSupport::TestCase
 
     assert_requested req_stub
   end
+  
+  # test 'relation#delete_all' do
+  #   webmock(:get, "/fleets", where: {id: 42}, limit: 1).to_return(body: [{id: 42, name: "Spanish Armada"}].to_json)
+  #   Fleet.find(42).ships.delete_all
+  # end
 
 end

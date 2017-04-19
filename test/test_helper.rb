@@ -21,6 +21,8 @@ require File.expand_path('../schema_mock.rb', __FILE__)
 
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
+$debugging = false
+
 # File 'lib/active_support/testing/declarative.rb', somewhere in rails....
 class ActiveSupport::TestCase
   include WebMock::API
