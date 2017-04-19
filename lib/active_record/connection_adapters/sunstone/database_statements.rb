@@ -70,7 +70,7 @@ module ActiveRecord
             send_request.call(arel)
           end
 
-          if sars[0].instance_variable_get(:@sunstone_calculation)
+          if sars[0].instance_variable_defined?(:@sunstone_calculation) && sars[0].instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
             ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
           elsif result.is_a?(Array)

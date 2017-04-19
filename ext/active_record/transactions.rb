@@ -21,7 +21,7 @@ module ActiveRecord
     # end
     #
     def save!(*) #:nodoc:
-      if @no_save_transaction
+      if instance_variable_defined?(:@no_save_transaction) && @no_save_transaction
         super
       else
         with_transaction_returning_status { super }
@@ -34,7 +34,7 @@ module ActiveRecord
     # end
 
     def with_transaction_returning_status
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && @updating
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && instance_variable_defined?(:@updating) && @updating
         begin
           status = yield
         rescue ActiveRecord::Rollback
