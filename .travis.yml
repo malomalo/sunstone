@@ -10,15 +10,16 @@ rvm:
   - 2.4.0
 
 env:
-  - RAILS_VERSION=v5.0.0 GEM=ar:mysql2
-  - RAILS_VERSION=v5.0.0 GEM=ar:sqlite3
-  - RAILS_VERSION=v5.0.0 GEM=ar:postgresql
-  - RAILS_VERSION=v5.0.1 GEM=ar:mysql2
-  - RAILS_VERSION=v5.0.1 GEM=ar:sqlite3
-  - RAILS_VERSION=v5.0.1 GEM=ar:postgresql
-  - RAILS_VERSION=v5.0.2 GEM=ar:mysql2
-  - RAILS_VERSION=v5.0.2 GEM=ar:sqlite3
-  - RAILS_VERSION=v5.0.2 GEM=ar:postgresql
+  matrix:
+    - RAILS_VERSION=v5.0.0 GEM=ar:mysql2
+    - RAILS_VERSION=v5.0.0 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.0.0 GEM=ar:postgresql
+    - RAILS_VERSION=v5.0.1 GEM=ar:mysql2
+    - RAILS_VERSION=v5.0.1 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.0.1 GEM=ar:postgresql
+    - RAILS_VERSION=v5.0.2 GEM=ar:mysql2
+    - RAILS_VERSION=v5.0.2 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.0.2 GEM=ar:postgresql
 
 addons:
   postgresql: "9.4"
@@ -35,21 +36,17 @@ install:
   - git clone https://github.com/rails/rails.git ~/build/rails
 
 before_script:
+  - sed -i "s/t.warning = true/t.warning = false/g" Rakefile
   - pushd ~/build/rails
   - git checkout $RAILS_VERSION
+  - sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/build/rails/activerecord/Rakefile
+  - sed -i "s/t.warning = true/t.warning = false/g" ~/build/rails/activerecord/Rakefile
   - sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('~\/build\/malomalo\/sunstone\/lib'\)\)\nrequire 'sunstone'" ~/build/rails/activerecord/test/cases/helper.rb
   - cat ~/build/rails/Gemfile
   - "sed -i \"/group :db do/a gem 'sunstone', path: File.expand_path\\('~\\/build\\/malomalo\\/sunstone'\\)\" ~/build/rails/Gemfile"
   - cat ~/build/rails/Gemfile
-  - bundle install --jobs=3 --retry=3
-  - bundle update
-  - createdb activerecord_unittest
-  - createdb activerecord_unittest2
-  - mysql -e "create database IF NOT EXISTS activerecord_unittest DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_unicode_ci;"
-  - mysql -e "create database IF NOT EXISTS activerecord_unittest2 DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_unicode_ci;"
-  - gem environment gempath
+  - bundle update --jobs=3 --retry=3
   - popd
   - bundle install --jobs=3 --retry=3
-  - gem environment gempath
 
 script: bundle exec rake test && cd ~/build/rails && bundle exec ruby ci/travis.rb
