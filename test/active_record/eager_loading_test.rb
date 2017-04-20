@@ -1,6 +1,41 @@
 require 'test_helper'
 
-class ActiveRecord::EagerLoadingTest < Minitest::Test
+class ActiveRecord::EagerLoadingTest < ActiveSupport::TestCase
+
+  schema do
+    create_table "ships" do |t|
+      t.string   "name",                    limit: 255
+      t.integer  "fleet_id"
+    end
+
+    create_table "fleets" do |t|
+      t.string   "name",                    limit: 255
+    end
+    
+    create_table "sailors" do |t|
+      t.string   "name",                    limit: 255
+    end
+    
+    create_table "sailors_ships", id: false do |t|
+      t.integer  "ship_id",                 null: false
+      t.integer  "sailor_id",               null: false
+    end
+    
+  end
+  
+  class Fleet < ActiveRecord::Base
+    has_many :ships
+  end
+
+  class Ship < ActiveRecord::Base
+    belongs_to :fleet
+  
+    has_and_belongs_to_many :sailors
+  end
+
+  class Sailor < ActiveRecord::Base
+    has_and_belongs_to_many :ships
+  end
 
   test '#eager_load' do
     webmock(:get, "/fleets", include: [{:ships => :sailors}]).to_return(body: [{

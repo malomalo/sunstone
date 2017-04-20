@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Sunstone::Connection::RequestHelpersTest < Minitest::Test
+class Sunstone::Connection::RequestHelpersTest < ActiveSupport::TestCase
 
   # Sunstone.get ==============================================================
 

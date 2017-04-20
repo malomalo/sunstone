@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Sunstone::Connection::CookieStoreTest < Minitest::Test
+class Sunstone::Connection::CookieStoreTest < ActiveSupport::TestCase
 
   test '#send_request(#<Net::HTTPRequest) adds cookies to the cookie store if present' do
     store = CookieStore::HashStore.new

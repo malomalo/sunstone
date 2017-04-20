@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Sunstone::Connection::ConfigurationTest < Minitest::Test
+class Sunstone::Connection::ConfigurationTest < ActiveSupport::TestCase
 
   test "setting the url sets the api_key" do
     connection = Sunstone::Connection.new(url: 'http://my_api_key@localhost')
