@@ -7,23 +7,17 @@ cache:
     - /home/travis/.rvm/gems
 
 rvm:
-  - 2.3.1
-  - 2.4.0
+  - 2.3.4
+  - 2.4.1
 
 env:
   matrix:
-    - RAILS_VERSION=v5.0.2 GEM=ar:mysql2
-    - RAILS_VERSION=v5.0.2 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.0.2 GEM=ar:postgresql
     - RAILS_VERSION=v5.1.0.rc2 GEM=ar:mysql2
     - RAILS_VERSION=v5.1.0.rc2 GEM=ar:sqlite3
     - RAILS_VERSION=v5.1.0.rc2 GEM=ar:postgresql
 
 addons:
   postgresql: "9.4"
-  apt:
-    packages:
-      - postgresql-9.4
 
 before_install:
   - unset BUNDLE_GEMFILE
@@ -31,17 +25,18 @@ before_install:
   - gem update bundler
 
 install:
-  - git clone https://github.com/rails/rails.git ~/build/rails
+  - git clone --branch $RAILS_VERSION https://github.com/rails/rails.git ~/build/rails
 
 before_script:
   - sed -i "s/t.warning = true/t.warning = false/g" Rakefile
   - pushd ~/build/rails
-  - git checkout $RAILS_VERSION
+  - git status
   - sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/build/rails/activerecord/Rakefile
   - sed -i "s/t.warning = true/t.warning = false/g" ~/build/rails/activerecord/Rakefile
   - sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('~\/build\/malomalo\/sunstone\/lib'\)\)\nrequire 'sunstone'" ~/build/rails/activerecord/test/cases/helper.rb
   - cat ~/build/rails/Gemfile
-  - "sed -i \"/group :db do/a gem 'sunstone', path: File.expand_path\\('~\\/build\\/malomalo\\/sunstone'\\)\" ~/build/rails/Gemfile"
+  - rm ~/build/rails/Gemfile.lock
+  - "sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('~\\/build\\/malomalo\\/sunstone'\\)\" ~/build/rails/Gemfile"
   - cat ~/build/rails/Gemfile
   - bundle update --jobs=3 --retry=3
   - popd
