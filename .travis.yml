@@ -12,12 +12,6 @@ rvm:
 
 env:
   matrix:
-    - RAILS_VERSION=v5.0.0 GEM=ar:mysql2
-    - RAILS_VERSION=v5.0.0 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.0.0 GEM=ar:postgresql
-    - RAILS_VERSION=v5.0.1 GEM=ar:mysql2
-    - RAILS_VERSION=v5.0.1 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.0.1 GEM=ar:postgresql
     - RAILS_VERSION=v5.0.2 GEM=ar:mysql2
     - RAILS_VERSION=v5.0.2 GEM=ar:sqlite3
     - RAILS_VERSION=v5.0.2 GEM=ar:postgresql
