@@ -4,34 +4,29 @@ module ActiveRecord
 
       def initialize(values, sunstone=false)
         @values = values
-        if sunstone
-          @indexes = values.value.find_all { |thing|
+        @indexes = if sunstone
+          values.value.find_all { |thing|
             Arel::Nodes::BindParam === thing
           }
         else
-          @indexes = values.each_with_index.find_all { |thing,i|
+          values.each_with_index.find_all { |thing,i|
             Arel::Nodes::BindParam === thing
           }.map(&:last)
         end
       end
 
       def sql_for(binds, connection)
-        binds = connection.prepare_binds_for_database(binds)
+        casted_binds = binds.map(&:value_for_database)
         
         if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
           @values.compile(binds)
         else
           val = @values.dup
-          @indexes.each { |i| val[i] = connection.quote(binds.shift) }
+          @indexes.each { |i| val[i] = connection.quote(casted_binds.shift) }
           val.join
         end
       end
-    end
 
-    def self.partial_query(visitor, ast, collector)
-      collected = visitor.accept(ast, collector)
-      collected = collected.value if !visitor.is_a?(Arel::Visitors::Sunstone)
-      PartialQuery.new(collected, visitor.is_a?(Arel::Visitors::Sunstone))
     end
 
   end

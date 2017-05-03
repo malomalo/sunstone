@@ -103,7 +103,7 @@ module ActiveRecord
       
       # Executes the delete statement and returns the number of rows affected.
       def delete(arel, name = nil, binds = [])
-        r = exec_delete(to_sql(arel, binds), name, binds)
+        r = exec_delete(arel, name, binds)
         r.rows.first.to_i
       end
 
@@ -173,7 +173,7 @@ module ActiveRecord
       # If the next id was calculated in advance (as in Oracle), it should be
       # passed in as +id_value+.
       def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-        sql, binds, pk, sequence_name = sql_for_insert(to_sql(arel, binds), pk, id_value, sequence_name, binds)
+        sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
         value = exec_insert(sql, name, binds, pk, sequence_name)
       end
       alias create insert

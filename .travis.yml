@@ -12,9 +12,9 @@ rvm:
 
 env:
   matrix:
-    - RAILS_VERSION=v5.1.0.rc2 GEM=ar:mysql2
-    - RAILS_VERSION=v5.1.0.rc2 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.1.0.rc2 GEM=ar:postgresql
+    - RAILS_VERSION=v5.1.0 GEM=ar:mysql2
+    - RAILS_VERSION=v5.1.0 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.1.0 GEM=ar:postgresql
 
 addons:
   postgresql: "9.4"

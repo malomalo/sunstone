@@ -28,6 +28,16 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
     assert_nil Ship.first
   end
+  
+  test '::first!' do
+    webmock(:get, "/ships", { limit: 1, order: [{id: :asc}] }).to_return({
+      body: [].to_json
+    })
+
+    assert_raises ActiveRecord::RecordNotFound do
+      Ship.first!
+    end
+  end
 
   test '::last' do
     webmock(:get, "/ships", { limit: 1, order: [{id: :desc}] }).to_return({
@@ -94,13 +104,13 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
   end
 
   test '#to_sar' do
-    assert_equal "/ships?%81%A5where%81%A2id%A210", Ship.where(:id => 10).to_sar.path
+    assert_equal "/ships?%81%A5where%81%A2id%0A", Ship.where(:id => 10).to_sar.path
   end
 
   test 'bind params get eaten when joining' do
     uri = URI(Ship.joins(:ownerships).where({ ownerships: { id: 1 } }).to_sar.path)
     query = MessagePack.unpack(CGI.unescape(uri.query))
-    assert_equal({"where"=>{"ownerships"=>{"id"=>{"eq"=>"1"}}}}, query)
+    assert_equal({"where"=>{"ownerships"=>{"id"=>{"eq"=>1}}}}, query)
   end
 
 end
