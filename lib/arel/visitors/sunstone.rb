@@ -1004,7 +1004,7 @@ module Arel
       # end
 
       def inject_join list, collector, join_str
-        list.each_with_index.inject([]) { |c, (x,i)|
+        list.each_with_index.inject([]) { |c, (x,_)|
           c + [visit(x, collector)]
         }
       end

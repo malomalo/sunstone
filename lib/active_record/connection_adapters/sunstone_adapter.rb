@@ -174,7 +174,7 @@ module ActiveRecord
       # passed in as +id_value+.
       def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
         sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
-        value = exec_insert(sql, name, binds, pk, sequence_name)
+        exec_insert(sql, name, binds, pk, sequence_name)
       end
       alias create insert
       
