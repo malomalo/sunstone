@@ -128,7 +128,7 @@ module Sunstone
         elsif Thread.current[:sunstone_request_sent]
           log_mess = request.path.split('?', 2)
           log_mess += Thread.current[:sunstone_request_sent].path.split('?', 2)
-          raise <<~MSG
+          raise ActiveRecord::StatementInvalid, <<~MSG
             Cannot send multiple request in a transaction.
             
             Trying to send:
@@ -139,7 +139,7 @@ module Sunstone
           MSG
         else
           log_mess = request.path.split('?', 2)
-          raise <<~MSG
+          raise ActiveRecord::StatementInvalid, <<~MSG
             Cannot send multiple request in a transaction.
             
             Trying to send:

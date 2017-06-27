@@ -28,7 +28,7 @@ module ActiveRecord
           end
           ka
         else
-          expand(key, value)
+          build(table.arel_attribute(key), value)
         end
       end
     end

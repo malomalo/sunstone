@@ -1,8 +1,19 @@
+require "arel/collectors/sql_string"
+
 module ActiveRecord
   module ConnectionAdapters
     module Sunstone
       module DatabaseStatements
 
+        def to_sql(arel, binds = [])
+          if arel.respond_to?(:ast)
+            collected = Arel::Visitors::ToSql.new(self).accept(arel.ast, prepared_statements ? AbstractAdapter::SQLString.new : AbstractAdapter::BindCollector.new)
+            collected.compile(binds, self).freeze
+          else
+            arel.dup.freeze
+          end
+        end
+        
         # Converts an arel AST to a Sunstone API Request
         def to_sar(arel, bvs = [])
           if arel.respond_to?(:ast)
@@ -12,10 +23,22 @@ module ActiveRecord
             arel
           end
         end
+        
+        def cacheable_query(klass, arel) # :nodoc:
+          collected = visitor.accept(arel.ast, collector)
+          if prepared_statements
+            klass.query(collected.value)
+          else
+            if self.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+              StatementCache::PartialQuery.new(collected, true)
+            else
+              StatementCache::PartialQuery.new(collected.value, false)
+            end
+          end
+        end
 
         # Returns an ActiveRecord::Result instance.
         def select_all(arel, name = nil, binds = [], preparable: nil)
-
           arel, binds = binds_from_relation arel, binds
           select(arel, name, binds)
         end
@@ -69,7 +92,7 @@ module ActiveRecord
           else
             send_request.call(arel)
           end
-
+          
           if sars[0].instance_variable_defined?(:@sunstone_calculation) && sars[0].instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
             ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer')})
@@ -78,6 +101,19 @@ module ActiveRecord
           else
             ActiveRecord::Result.new(result.keys, [result])
           end
+        end
+        
+        def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
+          value = exec_insert(arel, name, binds, pk, sequence_name)
+          id_value || last_inserted_id(value)
+        end
+        
+        def update(arel, name = nil, binds = [])
+          exec_update(arel, name, binds)
+        end
+        
+        def delete(arel, name = nil, binds = [])
+          exec_delete(arel, name, binds)
         end
 
         def last_inserted_id(result)
