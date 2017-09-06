@@ -461,6 +461,10 @@ module Arel
       def visit_Arel_Nodes_Descending o, collector
         { visit(o.expr, collector) => :desc }
       end
+      
+      def visit_Arel_Nodes_RandomOrdering o, collector
+        :random
+      end
       #
       # def visit_Arel_Nodes_Group o, collector
       #   visit o.expr, collector
