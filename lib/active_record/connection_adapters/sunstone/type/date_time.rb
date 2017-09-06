@@ -5,7 +5,7 @@ module ActiveRecord
         class DateTime < ActiveRecord::Type::DateTime
           
           def serialize(value)
-            super(value).iso8601(3) if value
+            super(value).iso8601(ActiveSupport::JSON::Encoding.time_precision) if value
           end
           
           def cast_value(string)
