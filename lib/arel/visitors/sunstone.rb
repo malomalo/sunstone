@@ -728,7 +728,8 @@ module Arel
       def mergeable?(hash_a, hash_b)
         
         hash_a.each do |key, value_a|
-          if hash_b.has_key?(key)
+          #TODO: one day maybe just use symbols for all keys?
+          if hash_b.has_key?(key.to_sym) || hash_b.has_key?(key.to_s)
             value_b = hash_b[key]
             if value_a.is_a?(Hash) && value_b.is_a?(Hash)
               return false if !mergeable?(value_a, value_b)
