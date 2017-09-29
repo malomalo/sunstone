@@ -635,11 +635,20 @@ module Arel
         end
       end
 
-      # def visit_Arel_Nodes_Matches o, collector
-      #   collector = visit o.left, collector
-      #   collector << " LIKE "
-      #   visit o.right, collector
-      # end
+      def visit_Arel_Nodes_Matches o, collector
+        key = visit(o.left, collector)
+        value = { like: visit(o.right, collector) }
+
+        if key.is_a?(Hash)
+          if o.left.is_a?(Arel::Attributes::Cast)
+            merge_to_bottom_hash(key, value)
+          else
+            add_to_bottom_of_hash(key, value)
+          end
+        else
+          { key => value }
+        end
+      end
       #
       # def visit_Arel_Nodes_DoesNotMatch o, collector
       #   collector = visit o.left, collector
