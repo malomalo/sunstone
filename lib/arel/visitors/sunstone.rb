@@ -34,7 +34,7 @@ module Arel
         if !o.orders.empty?
           collector.order = o.orders.map { |x| visit(x, collector) }
         end
-
+        
         collector = maybe_visit o.limit, collector
         collector = maybe_visit o.offset, collector
         collector = maybe_visit o.eager_load, collector

@@ -9,6 +9,7 @@ module ActiveRecord
         if owner.new_record?
           replace_records(other_array, original_target)
         elsif owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
+          self.instance_variable_set(:@sunstone_changed, true)
           replace_common_records_in_memory(other_array, original_target)
 
           # Remove from target
@@ -71,7 +72,7 @@ module ActiveRecord
     # will fail and false will be returned.
     def update(attributes)
       @updating = :updating
-      $updating_model = self
+      Thread.current[:sunstone_updating_model] = self
       
       # The following transaction covers any possible database side-effects of the
       # attributes assignment. For example, setting the IDs of a child collection.
@@ -81,7 +82,7 @@ module ActiveRecord
       end
     ensure
       @updating = false
-      $updating_model = nil
+      Thread.current[:sunstone_updating_model] = nil
     end
     
   end

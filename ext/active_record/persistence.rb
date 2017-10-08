@@ -16,7 +16,7 @@ module ActiveRecord
 
     def create_or_update(*args)
       @updating = new_record? ? :creating : :updating
-      $updating_model = self
+      Thread.current[:sunstone_updating_model] = self
 
       raise ReadOnlyRecord, "#{self.class} is marked as readonly" if readonly?
       result = new_record? ? _create_record : _update_record(*args)
@@ -55,7 +55,7 @@ module ActiveRecord
       raise ActiveRecord::RecordInvalid
     ensure
       @updating = false
-      $updating_model = nil
+      Thread.current[:sunstone_updating_model] = nil
     end
     
     # Creates a record with values matching those of the instance attributes

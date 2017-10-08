@@ -16,7 +16,7 @@ module ActiveRecord
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         self.class.reflect_on_all_associations.each do |reflection|
           if reflection.belongs_to?
-            if association(reflection.name).loaded? && association(reflection.name).target == $updating_model
+            if association(reflection.name).loaded? && association(reflection.name).target == Thread.current[:sunstone_updating_model]
               attrs.delete(arel_table[reflection.foreign_key])
             else
               add_attributes_for_belongs_to_association(reflection, attrs)
@@ -109,25 +109,25 @@ module ActiveRecord
       if reflection.is_a?(ActiveRecord::Reflection::HasAndBelongsToManyReflection)
         @_already_called[:"autosave_associated_records_for_#{self.class.name.downcase.pluralize}_#{reflection.name}"] = true
       end
-      
+
       if association = association_instance_get(reflection.name)
-        autosave = reflection.options[:autosave]
-
-        attrs[Arel::Attributes::EmptyRelation.new(arel_table, reflection.name, true, true)] = [] if association.target.empty?
+        if new_record? || (association.instance_variable_defined?(:@sunstone_changed) && association.instance_variable_get(:@sunstone_changed)) || reflection.options[:autosave] || association.target.any?(&:changed_for_autosave?) || association.target.any?(&:new_record?)
+          attrs[Arel::Attributes::EmptyRelation.new(arel_table, reflection.name, true, true)] = [] if association.target.empty?
         
-        association.target.each_with_index do |record, idx|
-          next if record.destroyed?
+          association.target.each_with_index do |record, idx|
+            next if record.destroyed?
 
-          if record.new_record?
-            record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-              attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
-            end
-          else
-            record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-              attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
+            if record.new_record?
+              record.send(:arel_attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
+              end
+            else
+              record.send(:arel_attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
+                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
+              end
             end
           end
-
+          association.instance_variable_set(:@sunstone_changed, false)
         end
 
         # reconstruct the scope now that we know the owner's id
