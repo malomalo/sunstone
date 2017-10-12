@@ -111,7 +111,7 @@ module ActiveRecord
       end
 
       if association = association_instance_get(reflection.name)
-        if new_record? || (association.instance_variable_defined?(:@sunstone_changed) && association.instance_variable_get(:@sunstone_changed)) || reflection.options[:autosave] || association.target.any?(&:changed_for_autosave?) || association.target.any?(&:new_record?)
+        if new_record? || (association.instance_variable_defined?(:@sunstone_changed) && association.instance_variable_get(:@sunstone_changed)) || association.target.any?(&:changed_for_autosave?) || association.target.any?(&:new_record?)
           attrs[Arel::Attributes::EmptyRelation.new(arel_table, reflection.name, true, true)] = [] if association.target.empty?
         
           association.target.each_with_index do |record, idx|

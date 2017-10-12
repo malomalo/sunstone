@@ -187,6 +187,36 @@ class ActiveRecord::Associations::HasManyTest < ActiveSupport::TestCase
     assert_requested req_stub
   end
   
+  test '#update persisted record doesnt include any unchanged associations' do
+    webmock(:get, '/fleets', where: {id: 1}, limit: 1, include: [:ships]).to_return({
+      body: [{
+        id: 1,
+        name: 'Armada Trio',
+        ships: [
+          {id: 2, fleet_id: 1, name: 'Definant'}, {id: 3, fleet_id: 1, name: 'Enterprise'}
+        ]
+      }].to_json
+    })
+    
+    req_stub = webmock(:patch, '/fleets/1').with(
+      body: { fleet: { name: 'New NAME!!' } }.to_json
+    ).to_return(
+      body: {
+        id: 1,
+        name: 'New NAME!!'
+      }.to_json
+    )
+
+    # fleet.ships = [ship]
+    fleet = Fleet.eager_load(:ships).find(1)
+    assert fleet.ships.loaded?
+    #[{id: 2, fleet_id: 1, name: 'Definant'}, {id: 3, fleet_id: 1, name: 'Enterprise'}]
+    fleet.update(name: 'New NAME!!', ships: fleet.ships)
+    fleet.save
+
+    assert_requested req_stub
+  end
+  
   # Clearing the relationship =================================================
 
   test '#update clears has_many relationship' do

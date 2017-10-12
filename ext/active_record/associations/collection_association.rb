@@ -9,17 +9,24 @@ module ActiveRecord
         if owner.new_record?
           replace_records(other_array, original_target)
         elsif owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
-          self.instance_variable_set(:@sunstone_changed, true)
           replace_common_records_in_memory(other_array, original_target)
 
           # Remove from target
-          (original_target - other_array).each { |record| callback(:before_remove, record) }
-          (original_target - other_array).each { |record| target.delete(record) }
-          (original_target - other_array).each { |record| callback(:after_remove, record) }
+          records_for_removal = (original_target - other_array)
+          if !records_for_removal.empty?
+            self.instance_variable_set(:@sunstone_changed, true)
+            records_for_removal.each { |record| callback(:before_remove, record) }
+            records_for_removal.each { |record| target.delete(record) }
+            records_for_removal.each { |record| callback(:after_remove, record) }
+          end
 
           # Add to target
-          (other_array - original_target).each do |record|
-            add_to_target(record)
+          records_for_addition = (other_array - original_target)
+          if !records_for_addition.empty?
+            self.instance_variable_set(:@sunstone_changed, true)
+            (other_array - original_target).each do |record|
+              add_to_target(record)
+            end
           end
 
           other_array
