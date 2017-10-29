@@ -1,6 +1,6 @@
 module Sunstone
   
-  class Exception < ::Exception
+  class Exception < ::StandardError
     
     class UnexpectedResponse < Sunstone::Exception
     end
