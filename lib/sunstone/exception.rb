@@ -1,6 +1,10 @@
 module Sunstone
   
-  class Exception < ::StandardError
+  # RuntimeErrors don't get translated by Rails into
+  # ActiveRecord::StatementInvalid which StandardError do. Would rather
+  # use StandardError, but it's usefull with Sunstone to know when something
+  # raises a Sunstone::Exception::NotFound or Forbidden
+  class Exception < ::RuntimeError
     
     class UnexpectedResponse < Sunstone::Exception
     end
