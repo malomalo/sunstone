@@ -116,7 +116,6 @@ class ActiveRecord::Associations::HasManyTest < ActiveSupport::TestCase
       }.to_json
     )
 
-    # fleet.ships = [ship]
     fleet = Fleet.eager_load(:ships).find(1)
     assert fleet.update(ships: [Ship.new(name: 'Voyager')])
     assert_equal 1, fleet.id
@@ -150,7 +149,6 @@ class ActiveRecord::Associations::HasManyTest < ActiveSupport::TestCase
       }.to_json
     )
 
-    # fleet.ships = [ship]
     fleet = Fleet.eager_load(:ships).find(1)
     fleet.ships.first.name = 'Voyager'
     fleet.save

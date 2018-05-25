@@ -89,7 +89,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
     assert_raises(Sunstone::Exception::ApiVersionUnsupported) { connection.send_request(Net::HTTP::Get.new('/422')) }
     assert_raises(Sunstone::Exception)               { connection.send_request(Net::HTTP::Get.new('/450')) }
     assert_raises(Sunstone::Exception::ServiceUnavailable)    { connection.send_request(Net::HTTP::Get.new('/503')) }
-    assert_raises(Sunstone::Exception)               { connection.send_request(Net::HTTP::Get.new('/550')) }
+    assert_raises(Sunstone::ServerError)               { connection.send_request(Net::HTTP::Get.new('/550')) }
   end
 
   test '#send_request(#<Net::HTTPRequest>, &block) returns value returned from &block' do

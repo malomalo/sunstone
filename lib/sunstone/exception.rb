@@ -1,5 +1,8 @@
 module Sunstone
   
+  class ServerError < ::RuntimeError
+  end
+
   # RuntimeErrors don't get translated by Rails into
   # ActiveRecord::StatementInvalid which StandardError do. Would rather
   # use StandardError, but it's usefull with Sunstone to know when something

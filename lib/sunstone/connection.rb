@@ -397,8 +397,8 @@ module Sunstone
           raise Sunstone::Exception::MovedPermanently, response.body
         when 502
           raise ActiveRecord::ConnectionNotEstablished, response.body
-        when 300..599
-          raise Sunstone::Exception, response.body
+        when 500..599
+          raise Sunstone::ServerError, response.body
         else
           raise Sunstone::Exception, response.body
         end
