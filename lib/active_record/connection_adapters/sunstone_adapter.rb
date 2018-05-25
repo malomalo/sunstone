@@ -128,8 +128,26 @@ module ActiveRecord
       end
       
       def collector
-        Arel::Collectors::Sunstone.new
+        # SubstituteBinds.new(
+          # self,
+          Arel::Collectors::Sunstone.new
+        # )
       end
+      
+      # class SubstituteBinds
+      #   delegate_missing_to :@collector
+      #
+      #   def initialize(quoter, collector)
+      #     @quoter = quoter
+      #     @collector = collector
+      #   end
+      #
+      #   def add_bind(obj)
+      #     # puts @quoter.quote(obj).inspect
+      #     @collector.add_bind(obj.value_for_database)
+      #   end
+      # end
+      
 
       def server_config
         JSON.parse(@connection.get("/configuration").body)
@@ -173,8 +191,14 @@ module ActiveRecord
       # If the next id was calculated in advance (as in Oracle), it should be
       # passed in as +id_value+.
       def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-        sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
-        exec_insert(sql, name, binds, pk, sequence_name)
+        sar, binds = to_sar_and_binds(arel, binds)
+                # byebug
+        value = exec_insert(sar, name, binds, pk, sequence_name)
+
+        id_value || last_inserted_id(value)
+        
+        # sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
+        # exec_insert(sql, name, binds, pk, sequence_name)
       end
       alias create insert
       

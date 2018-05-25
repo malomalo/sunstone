@@ -14,7 +14,7 @@ require "minitest/autorun"
 require 'minitest/unit'
 require 'minitest/reporters'
 require 'webmock/minitest'
-require 'mocha/mini_test'
+require 'mocha/minitest'
 
 require 'sunstone'
 require File.expand_path('../schema_mock.rb', __FILE__)
@@ -69,6 +69,10 @@ class ActiveSupport::TestCase
 
     stub_request(method, /^#{ActiveRecord::Base.connection.instance_variable_get(:@connection).url}/).with do |req|
       if query
+            puts '~~~~~'
+            puts unpack(req.uri.query.sub(/=true$/, '')) if req&.uri&.path == path && req.uri.query
+            puts query.inspect
+            puts '~~~~~'
         req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
       else
         req&.uri&.path == path && req.uri.query.nil?

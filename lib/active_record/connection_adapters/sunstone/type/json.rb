@@ -2,7 +2,7 @@ module ActiveRecord
   module ConnectionAdapters
     module Sunstone
       module Type
-        class Json < ActiveRecord::Type::Internal::AbstractJson
+        class Json < ActiveRecord::Type::Json
 
 
           def deserialize(value)

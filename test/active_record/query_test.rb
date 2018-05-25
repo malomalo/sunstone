@@ -28,7 +28,7 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
     assert_nil Ship.first
   end
-  
+
   test '::first!' do
     webmock(:get, "/ships", { limit: 1, order: [{id: :asc}] }).to_return({
       body: [].to_json
@@ -46,23 +46,23 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
     assert_nil Ship.last
   end
-  
+
   test '::where on the same column multiple times with symbols and strings' do
     webmock(:get, "/ships", { where: [{ id: {gt: 10} }, 'AND', {id: {gt: 11}}], limit: 100, offset: 0 }).to_return(body: [].to_json)
 
     arel_table = Ship.arel_table
     assert_equal [], Ship.where(arel_table[:id].gt(10)).where(arel_table['id'].gt(11)).to_a
   end
-  
+
   test '::where(AND CONDITION)' do
     webmock(:get, "/ships", { where: {id: 10, name: 'name'}, limit: 1, order: [{id: :asc}] }).to_return({
       body: [{id: 42}].to_json
     })
-    
+
     arel_table = Ship.arel_table
     assert_equal 42, Ship.where(arel_table[:id].eq(10).and(arel_table[:name].eq('name'))).first.id
   end
-  
+
   test '::where(OR CONDITION)' do
     webmock(:get, "/ships", { where: [{id: 10}, 'OR', {name: 'name'}], limit: 1, order: [{id: :asc}] }).to_return({
       body: [{id: 42}].to_json
@@ -90,7 +90,7 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
 
     assert_equal 42, Ship.where(name: name)[0].id
   end
-  
+
   test '::where with JOIN' do
     webmock(:get, "/ships", {where: { ownerships: {id: {eq: 1}} }, limit: 100, offset: 0 }).to_return({
       body: [{id: 42}].to_json

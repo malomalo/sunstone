@@ -50,11 +50,11 @@ module ActiveRecord
         elsif autosave != false
           if record.new_record? || (autosave && record.changed_for_autosave?)
             if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+              record.send(:attributes_with_values_for_create, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             else
-              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
+              record.send(:attributes_with_values_for_update, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             end
@@ -87,11 +87,11 @@ module ActiveRecord
             end
 
             if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
+              record.send(:attributes_with_values_for_create, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             else
-              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
+              record.send(:attributes_with_values_for_update, record.attribute_names).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
               end
             end
@@ -118,11 +118,11 @@ module ActiveRecord
             next if record.destroyed?
 
             if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
+              record.send(:attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
               end
             else
-              record.send(:arel_attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
+              record.send(:attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
                 attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
               end
             end
