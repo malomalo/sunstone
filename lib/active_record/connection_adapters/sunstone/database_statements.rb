@@ -98,7 +98,6 @@ module ActiveRecord
             else
               arel.limit&.value&.value_for_database
             end
-            puts [allowed_limit, multiple_requests, requested_limit, 'limit'].inspect
 
             if allowed_limit.nil?
               multiple_requests = false

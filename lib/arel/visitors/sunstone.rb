@@ -77,7 +77,6 @@ module Arel
         collector.operation     = :insert
         
         if o.values
-          
           if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
             collector.updates = {}
           else
@@ -104,7 +103,7 @@ module Arel
                   end
                 }
               else
-                collector.updates[k] = values[i]
+                collector.updates[k] = visit(values[i], collector)
               end
             end
           end
@@ -944,7 +943,6 @@ module Arel
       alias :visit_Arel_Attributes_Boolean :visit_Arel_Attributes_Attribute
 
       def visit_Arel_Nodes_BindParam o, collector
-        puts '!!!', o.inspect
         a = collector.add_bind(o.value)
         o.is_a?(Arel::Nodes::BindParam) ? o : a
       end

@@ -36,8 +36,7 @@ module Arel
           newhash = {}
           hash.each do |k, v|
             if v.is_a?(Arel::Nodes::BindParam)
-              bind = v
-              newhash[k] = bvs.shift#.value_for_database
+              newhash[k] = bvs.shift || v.value.value_for_database
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
             elsif v.is_a?(Array)
@@ -48,9 +47,9 @@ module Arel
           end
           newhash
         elsif hash.is_a?(Arel::Nodes::BindParam)
-          bvs.shift#.value_for_database
+          bvs.shift || hash.value.value_for_database
         else
-          bvs.shift#.value_for_database
+          bvs.shift || hash.value.value_for_database
         end
       end
 
@@ -120,7 +119,7 @@ module Arel
         if distinct_on
           params[:distinct_on] = distinct_on
         elsif distinct
-          params[:distinct] = true 
+          params[:distinct] = true
         end
 
         if limit.is_a?(Arel::Nodes::BindParam)
@@ -136,7 +135,7 @@ module Arel
         elsif offset
           params[:offset] = offset
         end
-          byebug
+        
         case operation
         when :count
           path += "/#{operation}"
