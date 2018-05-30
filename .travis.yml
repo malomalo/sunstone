@@ -7,22 +7,14 @@ cache:
     - /home/travis/.rvm/gems
 
 rvm:
-  - 2.4.1
+  - 2.4.4
+  - 2.5.1
 
 env:
   matrix:
-    - RAILS_VERSION=v5.1.0 GEM=ar:mysql2
-    - RAILS_VERSION=v5.1.0 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.1.0 GEM=ar:postgresql
-    - RAILS_VERSION=v5.1.1 GEM=ar:mysql2
-    - RAILS_VERSION=v5.1.1 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.1.1 GEM=ar:postgresql
-    - RAILS_VERSION=v5.1.2 GEM=ar:mysql2
-    - RAILS_VERSION=v5.1.2 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.1.2 GEM=ar:postgresql
-    - RAILS_VERSION=v5.1.3 GEM=ar:mysql2
-    - RAILS_VERSION=v5.1.3 GEM=ar:sqlite3
-    - RAILS_VERSION=v5.1.3 GEM=ar:postgresql
+    - RAILS_VERSION=v5.2.0 GEM=ar:mysql2
+    - RAILS_VERSION=v5.2.0 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.2.0 GEM=ar:postgresql
 
 addons:
   postgresql: "9.4"
