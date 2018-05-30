@@ -4,24 +4,38 @@ module Arel
 
       attr_accessor :eager_load
 
-      def initialize_with_eager_load cores = [SelectCore.new]
-        initialize_without_eager_load
-        @eager_load = nil
+      def initialize cores = [SelectCore.new]
+        super()
+        @cores          = cores
+        @orders         = []
+        @limit          = nil
+        @lock           = nil
+        @offset         = nil
+        @with           = nil
+        @eager_load     = nil
       end
-
-      alias_method :initialize_without_eager_load, :initialize
-      alias_method :initialize, :initialize_with_eager_load
-
+      
+      def initialize_copy other
+        super
+        @cores  = @cores.map { |x| x.clone }
+        @orders = @orders.map { |x| x.clone }
+        @eager_load = @eager_load.map { |x| x.clone }
+      end
+      
       def hash
         [@cores, @orders, @limit, @lock, @offset, @with, @eager_load].hash
       end
 
-      def eql_with_eager_load? other
-        eql_without_eager_load?(other) && self.eager_load == other.eager_load
+      def eql? other
+        self.class == other.class &&
+          self.cores == other.cores &&
+          self.orders == other.orders &&
+          self.limit == other.limit &&
+          self.lock == other.lock &&
+          self.offset == other.offset &&
+          self.with == other.with &&
+          self.eager_load == other.eager_load
       end
-      alias_method :eql_without_eager_load?, :eql?
-      alias_method :eql?, :eql_with_eager_load?
-      alias_method :==, :eql?
 
     end
   end

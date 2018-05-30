@@ -111,7 +111,7 @@ module Arel
 
         params = {}
         params[:where] = substitute_binds(where.clone, bvs) if where
-        
+
         if eager_loads
           params[:include] = eager_loads.clone
         end
@@ -119,7 +119,7 @@ module Arel
         if distinct_on
           params[:distinct_on] = distinct_on
         elsif distinct
-          params[:distinct] = true
+          params[:distinct] = true 
         end
 
         if limit.is_a?(Arel::Nodes::BindParam)

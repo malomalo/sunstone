@@ -191,14 +191,7 @@ module ActiveRecord
       # If the next id was calculated in advance (as in Oracle), it should be
       # passed in as +id_value+.
       def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-        sar, binds = to_sar_and_binds(arel, binds)
-                # byebug
-        value = exec_insert(sar, name, binds, pk, sequence_name)
-
-        id_value || last_inserted_id(value)
-        
-        # sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
-        # exec_insert(sql, name, binds, pk, sequence_name)
+        exec_insert(arel, name, binds, pk, sequence_name)
       end
       alias create insert
       
