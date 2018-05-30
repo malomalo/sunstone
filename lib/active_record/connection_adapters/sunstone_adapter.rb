@@ -128,27 +128,9 @@ module ActiveRecord
       end
       
       def collector
-        # SubstituteBinds.new(
-          # self,
-          Arel::Collectors::Sunstone.new
-        # )
+        Arel::Collectors::Sunstone.new
       end
       
-      # class SubstituteBinds
-      #   delegate_missing_to :@collector
-      #
-      #   def initialize(quoter, collector)
-      #     @quoter = quoter
-      #     @collector = collector
-      #   end
-      #
-      #   def add_bind(obj)
-      #     # puts @quoter.quote(obj).inspect
-      #     @collector.add_bind(obj.value_for_database)
-      #   end
-      # end
-      
-
       def server_config
         JSON.parse(@connection.get("/configuration").body)
       end

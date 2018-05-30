@@ -53,10 +53,6 @@ module Arel
         end
       end
 
-      # def value
-      #   flatten_nested(where).flatten
-      # end
-      #
       def flatten_nested(obj)
         if obj.is_a?(Array)
           obj.map { |w| flatten_nested(w) }
@@ -69,25 +65,6 @@ module Arel
 
       def value
         self
-        # sar = StandardAPIRequest.new
-        # sar.table = table
-        # sar.updates = updates
-        # sar.join_source = join_source
-        # sar.where = where.clone if where
-        # sar.eager_loads = eager_loads.clone if eager_loads
-        #
-        # if distinct_on
-        #   sar.distinct_on = distinct_on
-        # elsif distinct
-        #   sar.distinct = true
-        # end
-        #
-        # sar.limit = limit
-        # sar.order = order
-        # sar.offest = offest
-        # sar.operation = operation
-        #
-        # sar
       end
       
       def sql_for(bvs, conn = nil)
