@@ -28,7 +28,6 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/persistenc
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/callbacks'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/transactions'))
-require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/association'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/collection_association'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))
