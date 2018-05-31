@@ -33,7 +33,7 @@ class ActiveRecord::QueryCountTest < ActiveSupport::TestCase
   end
 
   test '::count with eager_load' do
-    webmock(:get, "/ships/calculate", select: [{count: "*"}], limit: 100, offset: 0).to_return({
+    webmock(:get, "/ships/calculate", select: [{count: "id"}], limit: 100, offset: 0).to_return({
       body: [10].to_json
     })
 

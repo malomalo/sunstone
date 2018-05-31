@@ -24,6 +24,7 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/statement_
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/calculations'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/query_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/persistence'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/callbacks'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_methods'))
