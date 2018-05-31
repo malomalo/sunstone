@@ -8,7 +8,12 @@ class ActiveRecord::QueryCountTest < ActiveSupport::TestCase
     end
   end
   
+  class Fleet < ActiveRecord::Base
+    has_many :ships
+  end
+
   class Ship < ActiveRecord::Base
+    belongs_to :fleet
   end
 
   test '::count' do
@@ -25,6 +30,14 @@ class ActiveRecord::QueryCountTest < ActiveSupport::TestCase
     })
 
     assert_equal 10, Ship.count(:id)
+  end
+
+  test '::count with eager_load' do
+    webmock(:get, "/ships/calculate", select: [{count: "*"}], limit: 100, offset: 0).to_return({
+      body: [10].to_json
+    })
+
+    assert_equal 10, Ship.eager_load(:fleet).count
   end
 
   test '::sum(:column)' do
