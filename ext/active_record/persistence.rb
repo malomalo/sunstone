@@ -14,12 +14,14 @@ module ActiveRecord
     
     private
 
-    def create_or_update(*args)
+    def create_or_update(*args, &block)
+      _raise_readonly_record_error if readonly?
+      return false if destroyed?
+      
       @updating = new_record? ? :creating : :updating
       Thread.current[:sunstone_updating_model] = self
 
-      raise ReadOnlyRecord, "#{self.class} is marked as readonly" if readonly?
-      result = new_record? ? _create_record : _update_record(*args)
+      result = new_record? ? _create_record(&block) : _update_record(*args, &block)
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && result != 0
         row_hash = result.rows.first
@@ -61,9 +63,10 @@ module ActiveRecord
     # Creates a record with values matching those of the instance attributes
     # and returns its id.
     def _create_record(attribute_names = self.attribute_names)
-      attributes_values = arel_attributes_with_values_for_create(attribute_names)
-      
-      new_id = self.class.unscoped.insert attributes_values
+      attribute_names &= self.class.column_names
+      attributes_values = attributes_with_values_for_create(attribute_names)
+
+      new_id = self.class._insert_record(attributes_values)
 
       @new_record = false
       
@@ -76,18 +79,21 @@ module ActiveRecord
     end
     
     def _update_record(attribute_names = self.attribute_names)
-      attributes_values = arel_attributes_with_values_for_update(attribute_names)
+      attribute_names &= self.class.column_names
+      attributes_values = attributes_with_values_for_create(attribute_names)
+
+      # attributes_values = attributes_with_values_for_update(attribute_names)
       if attributes_values.empty?
-        rows_affected = 0
+        affected_rows = 0
         @_trigger_update_callback = true
       else
-        rows_affected = self.class.unscoped._update_record(attributes_values, id, id_in_database)
-        @_trigger_update_callback = (rows_affected.is_a?(ActiveRecord::Result) ? rows_affected.rows.size : rows_affected) > 0
+        affected_rows = self.class._update_record( attributes_values, self.class.primary_key => id_in_database )
+        @_trigger_update_callback = affected_rows == 1
       end
 
       yield(self) if block_given?
 
-      rows_affected
+      affected_rows
     end
     
     #!!!! TODO: I am duplicated from finder_methods.....

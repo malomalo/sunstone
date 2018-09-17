@@ -45,7 +45,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
       TestModelA.create
     end
   end
-  
+
   test '#create with errors' do
     req_stub = webmock(:post, "/fleets").with(
       body: { fleet: {} }.to_json
@@ -78,7 +78,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
 
     fleet = Fleet.find(1)
     fleet.save
-    
+
     assert fleet.save
     assert_equal 1, fleet.id
     assert_equal 'Armada Duo', fleet.name
@@ -108,9 +108,9 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
       TestModelB.create
     end
   end
-  
-  
-  
+
+
+
   test '#update clears belongs_to relationship' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, fleet_id: 1, name: 'Armada Uno'}].to_json
@@ -125,7 +125,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     assert ship.update(fleet: nil)
     assert_requested req_stub
   end
-  
+
   test '#update' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
@@ -140,7 +140,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
 
     assert_requested req_stub
   end
-  
+
   test '#update!' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json

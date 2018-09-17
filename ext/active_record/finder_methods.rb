@@ -39,98 +39,109 @@ end
 module ActiveRecord
   module FinderMethods
 
-    def find_with_associations
-      join_dependency = nil
-      aliases = nil
-      relation = if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
-        self
-      else
-        join_dependency = construct_join_dependency(joins_values)
-        aliases  = join_dependency.aliases
-        apply_join_dependency(select(aliases.columns), join_dependency)
+    class SunstoneJoinDependency
+      def initialize(klass)
+        @klass = klass
       end
       
-      if block_given?
-        yield relation
-      else
-        if ActiveRecord::NullRelation === relation
-          []
-        else
-          arel = relation.arel
-          rows = if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-            connection.select_all(arel, 'SQL', arel.bind_values + relation.bound_attributes)
-          else
-            connection.select_all(arel, 'SQL', relation.bound_attributes)
-          end
-          if join_dependency
-            join_dependency.instantiate(rows, aliases)
-          else
-            instantiate_with_associations(rows, relation)
-          end
-        end
+      def reflections
+        []
       end
-    end
-
-    def instantiate_with_associations(result_set, klass)
-      seen = Hash.new { |h, parent_klass|
-        h[parent_klass] = Hash.new { |i, parent_id|
-          i[parent_id] = Hash.new { |j, child_klass| j[child_klass] = {} }
+      
+      def instantiate(result_set, &block)
+        seen = Hash.new { |i, object_id|
+          i[object_id] = Hash.new { |j, child_class|
+            j[child_class] = {}
+          }
         }
-      }
 
-      model_cache = Hash.new { |h,kklass| h[kklass] = {} }
-      parents = model_cache[self.base_class]
+        model_cache = Hash.new { |h, klass| h[klass] = {} }
+        parents = model_cache[@klass]
 
-      result_set.each { |row_hash|
-        parent = parents[row_hash[primary_key]] ||= instantiate(row_hash.select{|k,v| column_names.include?(k.to_s) })
-        construct(parent, row_hash.select{|k,v| !column_names.include?(k.to_s) }, seen, model_cache)
-      }
+        message_bus = ActiveSupport::Notifications.instrumenter
 
-      parents.values
-    end
+        payload = {
+          record_count: result_set.length,
+          class_name: @klass.name
+        }
 
-    def construct(parent, relations, seen, model_cache)
-      relations.each do |key, attributes|
-        reflection = parent.class.reflect_on_association(key)
-        next unless reflection
+        message_bus.instrument("instantiation.active_record", payload) do
+          result_set.each { |row_hash|
+            parent_key = @klass.primary_key ? row_hash[@klass.primary_key] : row_hash
+            parent = parents[parent_key] ||= @klass.instantiate(row_hash.select{|k,v| @klass.column_names.include?(k.to_s) }, &block)
+            construct(parent, row_hash.select{|k,v| !@klass.column_names.include?(k.to_s) }, seen, model_cache)
+          }
+        end
 
-        if reflection.collection?
+        parents.values
+      end
+
+      def construct(parent, relations, seen, model_cache)
+        relations.each do |key, attributes|
+          reflection = parent.class.reflect_on_association(key)
+          next unless reflection
+
+          if reflection.collection?
+            other = parent.association(reflection.name)
+            other.loaded!
+          else
+            if parent.association_cached?(reflection.name)
+              model = parent.association(reflection.name).target
+              construct(model, attributes.select{|k,v| !model.class.column_names.include?(k.to_s) }, seen, model_cache)
+            end
+          end
+
+          if !reflection.collection?
+            construct_association(parent, reflection, attributes, seen, model_cache)
+          else
+            attributes.each do |row|
+              construct_association(parent, reflection, row, seen, model_cache)
+            end
+          end
+
+        end
+      end
+
+      def construct_association(parent, reflection, attributes, seen, model_cache)
+        return if attributes.nil?
+
+        klass = if reflection.polymorphic?
+          parent.send(reflection.foreign_type).constantize.base_class
+        else
+          reflection.klass
+        end
+        id = attributes[klass.primary_key]
+        model = seen[parent.object_id][klass][id]
+
+        if model
+          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+
           other = parent.association(reflection.name)
-          other.loaded!
-        else
-          if parent.association_cached?(reflection.name)
-            model = parent.association(reflection.name).target
-            construct(model, attributes.select{|k,v| !model.class.column_names.include?(k.to_s) }, seen, model_cache)
+
+          if reflection.collection?
+            other.target.push(model)
+          else
+            other.target = model
           end
+
+          other.set_inverse_instance(model)
+        else
+          model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
+          seen[parent.object_id][model.class.base_class][id] = model
+          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+        end
+      end
+
+
+      def construct_model(record, reflection, id, attributes, seen, model_cache)
+        klass = if reflection.polymorphic?
+          record.send(reflection.foreign_type).constantize
+        else
+          reflection.klass
         end
 
-        if !reflection.collection?
-          construct_association(parent, reflection, attributes, seen, model_cache)
-        else
-          attributes.each do |row|
-            construct_association(parent, reflection, row, seen, model_cache)
-          end
-        end
-
-      end
-    end
-
-    def construct_association(parent, reflection, attributes, seen, model_cache)
-      return if attributes.nil?
-
-      klass = if reflection.polymorphic?
-        parent.send(reflection.foreign_type).constantize.base_class
-      else
-        reflection.klass
-      end
-      id = attributes[klass.primary_key]
-      model = seen[parent.class.base_class][parent.id][klass][id]
-
-      if model
-        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
-
-        other = parent.association(reflection.name)
+        model = model_cache[klass][id] ||= klass.instantiate(attributes)
+        other = record.association(reflection.name)
 
         if reflection.collection?
           other.target.push(model)
@@ -139,34 +150,38 @@ module ActiveRecord
         end
 
         other.set_inverse_instance(model)
-      else
-        model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
-        seen[parent.class.base_class][parent.id][model.class.base_class][id] = model
-        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+        model
       end
+  
     end
 
-
-    def construct_model(record, reflection, id, attributes, seen, model_cache)
-      klass = if reflection.polymorphic?
-        record.send(reflection.foreign_type).constantize
+    def apply_join_dependency(eager_loading: true)
+      if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        join_dependency = SunstoneJoinDependency.new(base_class)
+        relation = except(:includes, :eager_load, :preload)
+        relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
       else
-        reflection.klass
+        join_dependency = construct_join_dependency
+        relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
       end
 
-      model = model_cache[klass][id] ||= klass.instantiate(attributes)
-      other = record.association(reflection.name)
-
-      if reflection.collection?
-        other.target.push(model)
-      else
-        other.target = model
+      if eager_loading && !using_limitable_reflections?(join_dependency.reflections)
+        if has_limit_or_offset?
+          limited_ids = limited_ids_for(relation)
+          limited_ids.empty? ? relation.none! : relation.where!(primary_key => limited_ids)
+        end
+        relation.limit_value = relation.offset_value = nil
       end
 
-      other.set_inverse_instance(model)
-      model
+      if block_given?
+        if !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          relation._select!(join_dependency.aliases.columns)
+        end
+        yield relation, join_dependency
+      else
+        relation
+      end
     end
-
   end
 
 end

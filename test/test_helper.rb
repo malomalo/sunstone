@@ -14,7 +14,7 @@ require "minitest/autorun"
 require 'minitest/unit'
 require 'minitest/reporters'
 require 'webmock/minitest'
-require 'mocha/mini_test'
+require 'mocha/minitest'
 
 require 'sunstone'
 require File.expand_path('../schema_mock.rb', __FILE__)

@@ -10,10 +10,6 @@ module Arel
   module Visitors
     class Sunstone < Arel::Visitors::Reduce
       
-      def initialize
-        @dispatch = get_dispatch_cache
-      end
-      
       def compile node, &block
         accept(node, Arel::Collectors::SQLString.new, &block).value
       end
@@ -81,7 +77,6 @@ module Arel
         collector.operation     = :insert
         
         if o.values
-          
           if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
             collector.updates = {}
           else
@@ -108,7 +103,7 @@ module Arel
                   end
                 }
               else
-                collector.updates[k] = values[i]
+                collector.updates[k] = visit(values[i], collector)
               end
             end
           end
@@ -818,7 +813,7 @@ module Arel
       def visit_Arel_Nodes_Equality o, collector
         key = visit(o.left, collector)
         value = (o.right.nil? ? nil : visit(o.right, collector))
-
+        
         if key.is_a?(Hash)
           add_to_bottom_of_hash(key, {eq: value})
         elsif o.left.class.name == 'Arel::Attributes::Key'
@@ -948,7 +943,8 @@ module Arel
       alias :visit_Arel_Attributes_Boolean :visit_Arel_Attributes_Attribute
 
       def visit_Arel_Nodes_BindParam o, collector
-        o
+        a = collector.add_bind(o.value)
+        o.is_a?(Arel::Nodes::BindParam) ? o : a
       end
 
       def literal(o, collector)

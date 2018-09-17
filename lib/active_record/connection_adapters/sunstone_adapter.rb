@@ -130,7 +130,7 @@ module ActiveRecord
       def collector
         Arel::Collectors::Sunstone.new
       end
-
+      
       def server_config
         JSON.parse(@connection.get("/configuration").body)
       end
@@ -173,8 +173,7 @@ module ActiveRecord
       # If the next id was calculated in advance (as in Oracle), it should be
       # passed in as +id_value+.
       def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-        sql, binds, pk, sequence_name = sql_for_insert(arel, pk, id_value, sequence_name, binds)
-        exec_insert(sql, name, binds, pk, sequence_name)
+        exec_insert(arel, name, binds, pk, sequence_name)
       end
       alias create insert
       

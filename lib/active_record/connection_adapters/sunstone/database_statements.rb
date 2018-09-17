@@ -7,49 +7,97 @@ module ActiveRecord
 
         def to_sql(arel, binds = [])
           if arel.respond_to?(:ast)
-            collected = Arel::Visitors::ToSql.new(self).accept(arel.ast, prepared_statements ? AbstractAdapter::SQLString.new : AbstractAdapter::BindCollector.new)
-            collected.compile(binds, self).freeze
+            unless binds.empty?
+              raise "Passing bind parameters with an arel AST is forbidden. " \
+                "The values must be stored on the AST directly"
+            end
+            Arel::Visitors::ToSql.new(self).accept(arel.ast, Arel::Collectors::SubstituteBinds.new(self, Arel::Collectors::SQLString.new)).value
           else
             arel.dup.freeze
           end
         end
         
         # Converts an arel AST to a Sunstone API Request
-        def to_sar(arel, bvs = [])
-          if arel.respond_to?(:ast)
-            collected = visitor.accept(arel.ast, collector)
-            collected.compile(bvs, self)
+        def to_sar(arel_or_sar_string, binds = nil)
+          if arel_or_sar_string.respond_to?(:ast)
+            sar = visitor.accept(arel_or_sar_string.ast, collector)
+            binds = sar.binds if binds.nil?
           else
-            arel
+            sar = arel_or_sar_string
+          end
+          sar.compile(binds)
+        end
+        
+        def to_sar_and_binds(arel_or_sar_string, binds = []) # :nodoc:
+          if arel_or_sar_string.respond_to?(:ast)
+            unless binds.empty?
+              raise "Passing bind parameters with an arel AST is forbidden. " \
+                "The values must be stored on the AST directly"
+            end
+            sar = visitor.accept(arel_or_sar_string.ast, collector)
+            # puts ['a', sar.freeze, sar.binds].map(&:inspect)
+            [sar.freeze, sar.binds]
+          else
+            # puts ['b',arel_or_sar_string.dup.freeze, binds].map(&:inspect)
+            [arel_or_sar_string.dup.freeze, binds]
           end
         end
         
+        # This is used in the StatementCache object. It returns an object that
+        # can be used to query the database repeatedly.
         def cacheable_query(klass, arel) # :nodoc:
-          collected = visitor.accept(arel.ast, collector)
           if prepared_statements
-            klass.query(collected.value)
+            sql, binds = visitor.accept(arel.ast, collector).value
+            query = klass.query(sql)
+          elsif self.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+            collector = SunstonePartialQueryCollector.new(self.collector)
+            parts, binds = visitor.accept(arel.ast, collector).value
+            query = StatementCache::PartialQuery.new(parts, true)
           else
-            if self.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-              StatementCache::PartialQuery.new(collected, true)
-            else
-              StatementCache::PartialQuery.new(collected.value, false)
-            end
+            collector = PartialQueryCollector.new
+            parts, binds = visitor.accept(arel.ast, collector).value
+            query = klass.partial_query(parts)
+          end
+          [query, binds]
+        end
+
+        class SunstonePartialQueryCollector
+          delegate_missing_to :@collector
+          
+          def initialize(collector)
+            @collector = collector
+            @binds = []
+          end
+
+          def add_bind(obj)
+            @binds << obj
+          end
+
+          def value
+            [@collector, @binds]
           end
         end
 
         # Returns an ActiveRecord::Result instance.
         def select_all(arel, name = nil, binds = [], preparable: nil)
-          arel, binds = binds_from_relation arel, binds
-          select(arel, name, binds)
+          arel = arel_from_relation(arel)
+          sar, binds = to_sar_and_binds(arel, binds)
+          select(sar, name, binds)
         end
 
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
           sars = []
-          multiple_requests = arel.is_a?(Arel::SelectManager)
-
+          multiple_requests = arel.is_a?(Arel::Collectors::Sunstone)
+          type_casted_binds = binds#type_casted_binds(binds)
+          
           if multiple_requests
-            allowed_limit = limit_definition(arel.source.left.name)
-            requested_limit = binds.find { |x| x.name == 'LIMIT' }&.value
+            allowed_limit = limit_definition(arel.table)
+            limit_bind_index = nil#binds.find_index { |x| x.name == 'LIMIT' }
+            requested_limit = if limit_bind_index
+              type_casted_binds[limit_bind_index]
+            else
+              arel.limit&.value&.value_for_database
+            end
 
             if allowed_limit.nil?
               multiple_requests = false
@@ -61,7 +109,7 @@ module ActiveRecord
           end
 
           send_request = lambda { |req_arel|
-            sar = to_sar(req_arel, binds)
+            sar = to_sar(req_arel, type_casted_binds)
             sars.push(sar)
             log_mess = sar.path.split('?', 2)
             log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) do
@@ -75,12 +123,11 @@ module ActiveRecord
           }
 
           result = if multiple_requests
-            bind = binds.find { |x| x.name == 'LIMIT' }
-            binds.delete(bind)
+            binds.delete_at(limit_bind_index) if limit_bind_index
 
             limit, offset, results = allowed_limit, 0, []
             while requested_limit ? offset < requested_limit : true
-              split_arel = arel.clone
+              split_arel = arel.dup
               split_arel.limit = limit
               split_arel.offset = offset
               request_results = send_request.call(split_arel)
@@ -104,8 +151,12 @@ module ActiveRecord
         end
         
         def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-          value = exec_insert(arel, name, binds, pk, sequence_name)
+          sar, binds = to_sar_and_binds(arel, binds)
+          value = exec_insert(sar, name, binds, pk, sequence_name)
           id_value || last_inserted_id(value)
+          
+          # value = exec_insert(arel, name, binds, pk, sequence_name)
+          # id_value || last_inserted_id(value)
         end
         
         def update(arel, name = nil, binds = [])

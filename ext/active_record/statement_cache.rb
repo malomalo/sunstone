@@ -5,9 +5,7 @@ module ActiveRecord
       def initialize(values, sunstone=false)
         @values = values
         @indexes = if sunstone
-          values.value.find_all { |thing|
-            Arel::Nodes::BindParam === thing
-          }
+          
         else
           values.each_with_index.find_all { |thing,i|
             Arel::Nodes::BindParam === thing
@@ -16,11 +14,13 @@ module ActiveRecord
       end
 
       def sql_for(binds, connection)
-        casted_binds = binds.map(&:value_for_database)
+
         
         if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-          @values.compile(binds)
+          binds.map!(&:value_for_database)
+          @values
         else
+          casted_binds = binds.map(&:value_for_database)
           val = @values.dup
           @indexes.each { |i| val[i] = connection.quote(casted_binds.shift) }
           val.join

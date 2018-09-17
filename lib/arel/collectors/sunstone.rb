@@ -1,7 +1,7 @@
 module Arel
   module Collectors
     class Sunstone < Arel::Collectors::Bind
-
+      
       MAX_URI_LENGTH = 2083
 
       attr_accessor :request_type, :table, :where, :limit, :offset, :order, :operation, :columns, :updates, :eager_loads, :id, :distinct, :distinct_on
@@ -9,24 +9,23 @@ module Arel
       # This is used to removed an bind values. It is not used in the request
       attr_accessor :join_source
       
+      attr_reader :binds
+      
       def initialize
         @join_source = []
-        super
+        @binds = []
       end
-
-      def cast_attribute(v)
-        if (v.is_a?(ActiveRecord::Attribute))
-          v.value_for_database
-        else
-          v
-        end
+      
+      def add_bind(bind)
+        @binds << bind.value_for_database
+        bind
       end
 
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
           hash.map do |v|
             if v.is_a?(Arel::Nodes::BindParam)
-              cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+              bvs.shift#.value_for_database
             elsif v.is_a?(Hash) || v.is_a?(Array)
               substitute_binds(v, bvs)
             else
@@ -37,7 +36,7 @@ module Arel
           newhash = {}
           hash.each do |k, v|
             if v.is_a?(Arel::Nodes::BindParam)
-              newhash[k] = cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+              newhash[k] = bvs.shift || v.value.value_for_database
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
             elsif v.is_a?(Array)
@@ -48,14 +47,10 @@ module Arel
           end
           newhash
         elsif hash.is_a?(Arel::Nodes::BindParam)
-          cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+          bvs.shift || hash.value.value_for_database
         else
-          cast_attribute(bvs.last.is_a?(Array) ? bvs.shift.last : bvs.shift)
+          bvs.shift || hash.value.value_for_database
         end
-      end
-
-      def value
-        flatten_nested(where).flatten
       end
 
       def flatten_nested(obj)
@@ -68,6 +63,13 @@ module Arel
         end
       end
 
+      def value
+        self
+      end
+      
+      def sql_for(bvs, conn = nil)
+        compile(bvs, conn)
+      end
       def compile bvs, conn = nil
         path = "/#{table}"
         headers = {}
@@ -110,7 +112,7 @@ module Arel
         elsif offset
           params[:offset] = offset
         end
-
+        
         case operation
         when :count
           path += "/#{operation}"
@@ -121,7 +123,7 @@ module Arel
           path += "/#{params[:where]['id']}"
           params.delete(:where)
         end
-        
+
         if params.size > 0 && request_type == Net::HTTP::Get
           newpath = path + "?#{CGI.escape(MessagePack.pack(params))}"
           if newpath.length > MAX_URI_LENGTH

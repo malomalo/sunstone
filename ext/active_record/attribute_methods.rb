@@ -5,19 +5,19 @@ module ActiveRecord
     
     # Returns a Hash of the Arel::Attributes and attribute values that have been
     # typecasted for use in an Arel insert/update method.
-    def arel_attributes_with_values(attribute_names)
+    def attributes_with_values(attribute_names)
       attrs = {}
       arel_table = self.class.arel_table
       
       attribute_names.each do |name|
-        attrs[arel_table[name]] = typecasted_attribute_value(name)
+        attrs[name] = _read_attribute(name)
       end
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         self.class.reflect_on_all_associations.each do |reflection|
           if reflection.belongs_to?
             if association(reflection.name).loaded? && association(reflection.name).target == Thread.current[:sunstone_updating_model]
-              attrs.delete(arel_table[reflection.foreign_key])
+              attrs.delete(reflection.foreign_key)
             else
               add_attributes_for_belongs_to_association(reflection, attrs)
             end
@@ -50,13 +50,9 @@ module ActiveRecord
         elsif autosave != false
           if record.new_record? || (autosave && record.changed_for_autosave?)
             if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
-              end
+              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_create, record.attribute_names)              
             else
-              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
-              end
+              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_update, record.attribute_names)
             end
           end
         end
@@ -87,13 +83,9 @@ module ActiveRecord
             end
 
             if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
-              end
+              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_create, record.attribute_names)
             else
-              record.send(:arel_attributes_with_values_for_update, record.attribute_names).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, false, true)] = v
-              end
+              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_update, record.attribute_names)
             end
           end
         end
@@ -112,21 +104,18 @@ module ActiveRecord
 
       if association = association_instance_get(reflection.name)
         if new_record? || (association.instance_variable_defined?(:@sunstone_changed) && association.instance_variable_get(:@sunstone_changed)) || association.target.any?(&:changed_for_autosave?) || association.target.any?(&:new_record?)
-          attrs[Arel::Attributes::EmptyRelation.new(arel_table, reflection.name, true, true)] = [] if association.target.empty?
-        
-          association.target.each_with_index do |record, idx|
-            next if record.destroyed?
-
-            if record.new_record?
-              record.send(:arel_attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
-              end
-            else
-              record.send(:arel_attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key]).each do |k, v|
-                attrs[Arel::Attributes::Relation.new(k, reflection.name, idx, true)] = v
+          attrs["#{reflection.name}_attributes"] = if association.target.empty?
+            []
+          else
+            association.target.select { |r| !r.destroyed? }.map do |record|
+              if record.new_record?
+                record.send(:attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key])
+              else
+                record.send(:attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key])
               end
             end
           end
+        
           association.instance_variable_set(:@sunstone_changed, false)
         end
 
