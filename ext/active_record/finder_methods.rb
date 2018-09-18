@@ -48,6 +48,10 @@ module ActiveRecord
         []
       end
       
+      def apply_column_aliases(relation)
+        relation
+      end
+      
       def instantiate(result_set, &block)
         seen = Hash.new { |i, object_id|
           i[object_id] = Hash.new { |j, child_class|
@@ -155,7 +159,7 @@ module ActiveRecord
   
     end
 
-    def apply_join_dependency(eager_loading: true)
+    def apply_join_dependency(eager_loading: group_values.empty?)
       if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         join_dependency = SunstoneJoinDependency.new(base_class)
         relation = except(:includes, :eager_load, :preload)
@@ -174,9 +178,6 @@ module ActiveRecord
       end
 
       if block_given?
-        if !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-          relation._select!(join_dependency.aliases.columns)
-        end
         yield relation, join_dependency
       else
         relation
