@@ -40,28 +40,28 @@ module ActiveRecord
         end
       end
 
-
-    end
-
-    class HasManyAssociation
-
-      def insert_record(record, validate = true, raise = false)
-        set_owner_attributes(record)
-        set_inverse_instance(record)
-
+      def insert_record(record, validate = true, raise = false, &block)
         if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && (!owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating))
           true
         elsif raise
-          record.save!(:validate => validate)
+          record.save!(validate: validate, &block)
         else
-          record.save(:validate => validate)
+          record.save(validate: validate, &block)
         end
       end
+
+
+    end
+
+    class HasManyThroughAssociation
 
       private
       def save_through_record(record)
         return if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        build_through_record(record).save!
+        association = build_through_record(record)
+        if association.changed?
+          association.save!
+        end
       ensure
         @through_records.delete(record.object_id)
       end

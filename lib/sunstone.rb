@@ -39,4 +39,3 @@ require File.expand_path(File.join(__FILE__, '../../ext/arel/attributes/relation
 require File.expand_path(File.join(__FILE__, '../../ext/arel/attributes/empty_relation'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/select_statement'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/finder_methods'))
-require File.expand_path(File.join(__FILE__, '../../ext/active_record/batches'))

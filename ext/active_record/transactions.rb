@@ -34,29 +34,19 @@ module ActiveRecord
     # end
 
     def with_transaction_returning_status
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && instance_variable_defined?(:@updating) && @updating
-        begin
-          status = yield
-        rescue ActiveRecord::Rollback
-          clear_transaction_record_state
-          status = nil
-        end
-        return status
-      end
-      
       status = nil
-      self.class.transaction do
-        add_to_transaction
-        begin
+      
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && instance_variable_defined?(:@updating) && @updating
+        status = yield
+        status
+      else
+        self.class.transaction do
+          add_to_transaction
           status = yield
-        rescue ActiveRecord::Rollback
-          clear_transaction_record_state
-          status = nil
+          raise ActiveRecord::Rollback unless status
         end
-        
-        raise ActiveRecord::Rollback unless status
+        status
       end
-      status
     ensure
       if @transaction_state && @transaction_state.committed?
         clear_transaction_record_state

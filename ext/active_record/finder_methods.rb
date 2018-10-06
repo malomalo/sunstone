@@ -17,7 +17,7 @@ module ActiveRecord
       return ["1=0"] if attributes.empty?
   
       attributes.flat_map do |key, value|
-        if value.is_a?(Hash)
+        if value.is_a?(Hash) && !table.has_column?(key)
           ka = associated_predicate_builder(key).expand_from_hash(value)
           if self.table.instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
@@ -27,6 +27,38 @@ module ActiveRecord
             }
           end
           ka
+        elsif table.associated_with?(key)
+          # Find the foreign key when using queries such as:
+          # Post.where(author: author)
+          #
+          # For polymorphic relationships, find the foreign key and type:
+          # PriceEstimate.where(estimate_of: treasure)
+          associated_table = table.associated_table(key)
+          if associated_table.polymorphic_association?
+            case value.is_a?(Array) ? value.first : value
+            when Base, Relation
+              value = [value] unless value.is_a?(Array)
+              klass = PolymorphicArrayValue
+            end
+          end
+
+          klass ||= AssociationQueryValue
+          queries = klass.new(associated_table, value).queries.map do |query|
+            expand_from_hash(query).reduce(&:and)
+          end
+          queries.reduce(&:or)
+        elsif table.aggregated_with?(key)
+          mapping = table.reflect_on_aggregation(key).mapping
+          queries = Array.wrap(value).map do |object|
+            mapping.map do |field_attr, aggregate_attr|
+              if mapping.size == 1 && !object.respond_to?(aggregate_attr)
+                build(table.arel_attribute(field_attr), object)
+              else
+                build(table.arel_attribute(field_attr), object.send(aggregate_attr))
+              end
+            end.reduce(&:and)
+          end
+          queries.reduce(&:or)
         else
           build(table.arel_attribute(key), value)
         end

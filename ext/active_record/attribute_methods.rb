@@ -6,10 +6,7 @@ module ActiveRecord
     # Returns a Hash of the Arel::Attributes and attribute values that have been
     # typecasted for use in an Arel insert/update method.
     def attributes_with_values(attribute_names)
-      attrs = {}
-      arel_table = self.class.arel_table
-      
-      attribute_names.each do |name|
+      attrs = attribute_names.each_with_object({}) do |name, attrs|
         attrs[name] = _read_attribute(name)
       end
 
@@ -24,7 +21,7 @@ module ActiveRecord
           elsif reflection.has_one?
             add_attributes_for_has_one_association(reflection, attrs)
           elsif reflection.collection?
-            add_attributes_for_collection_association(reflection, attrs, arel_table)
+            add_attributes_for_collection_association(reflection, attrs, self.class.arel_table)
           end
         end
       end
@@ -123,8 +120,6 @@ module ActiveRecord
         association.reset_scope if association.respond_to?(:reset_scope)
       end
     end
-
-
     
   end
 end

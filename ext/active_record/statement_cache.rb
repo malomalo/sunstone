@@ -14,8 +14,6 @@ module ActiveRecord
       end
 
       def sql_for(binds, connection)
-
-        
         if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
           binds.map!(&:value_for_database)
           @values

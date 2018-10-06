@@ -19,7 +19,7 @@ module Arel
         super
         @cores  = @cores.map { |x| x.clone }
         @orders = @orders.map { |x| x.clone }
-        @eager_load = @eager_load.map { |x| x.clone }
+        @eager_load = @eager_load&.map { |x| x.clone }
       end
       
       def hash

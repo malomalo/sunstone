@@ -80,9 +80,8 @@ module ActiveRecord
     
     def _update_record(attribute_names = self.attribute_names)
       attribute_names &= self.class.column_names
-      attributes_values = attributes_with_values_for_create(attribute_names)
+      attributes_values = attributes_with_values_for_update(attribute_names)
 
-      # attributes_values = attributes_with_values_for_update(attribute_names)
       if attributes_values.empty?
         affected_rows = 0
         @_trigger_update_callback = true
