@@ -15,6 +15,10 @@ env:
     - RAILS_VERSION=v5.2.0 GEM=ar:mysql2
     - RAILS_VERSION=v5.2.0 GEM=ar:sqlite3
     - RAILS_VERSION=v5.2.0 GEM=ar:postgresql
+    - RAILS_VERSION=v5.2.1 GEM=ar:mysql2
+    - RAILS_VERSION=v5.2.1 GEM=ar:sqlite3
+    - RAILS_VERSION=v5.2.1 GEM=ar:postgresql
+
 
 addons:
   postgresql: "9.4"
