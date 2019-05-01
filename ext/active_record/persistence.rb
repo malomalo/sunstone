@@ -79,14 +79,13 @@ module ActiveRecord
     end
     
     def _update_record(attribute_names = self.attribute_names)
-      attribute_names &= self.class.column_names
-      attributes_values = attributes_with_values(attribute_names)
+      attribute_values = attributes_with_values(attribute_names)
 
-      if attributes_values.empty?
+      if attribute_values.empty?
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record( attributes_values, self.class.primary_key => id_in_database )
+        affected_rows = self.class._update_record( attribute_values, self.class.primary_key => id_in_database )
         @_trigger_update_callback = affected_rows == 1
       end
 
@@ -94,7 +93,7 @@ module ActiveRecord
 
       affected_rows
     end
-    
+
     #!!!! TODO: I am duplicated from finder_methods.....
     def construct(parent, relations, seen, model_cache)
       relations.each do |key, attributes|
