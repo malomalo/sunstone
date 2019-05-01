@@ -8,7 +8,7 @@ end
 
 module Arel
   module Visitors
-    class Sunstone < Arel::Visitors::Reduce
+    class Sunstone < Arel::Visitors::Visitor
       
       def compile node, &block
         accept(node, Arel::Collectors::SQLString.new, &block).value
@@ -80,12 +80,11 @@ module Arel
           if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
             collector.updates = {}
           else
-            keys = o.values.right.map { |x| visit(x, collector) }
-            values = o.values.left
+            values = o.values.expr[0].map { |x| visit(x, collector) }
             collector.updates = {}
-          
-
-            keys.each_with_index do |k, i|
+            
+            values.each_with_index do |value, i|
+              k = value.value.name
               if k.is_a?(Hash)
                 add_to_bottom_of_hash_or_array(k, values[i])
                 collector.updates.deep_merge!(k) { |key, v1, v2|

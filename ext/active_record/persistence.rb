@@ -14,14 +14,14 @@ module ActiveRecord
     
     private
 
-    def create_or_update(*args, &block)
+    def create_or_update(**, &block)
       _raise_readonly_record_error if readonly?
       return false if destroyed?
       
       @updating = new_record? ? :creating : :updating
       Thread.current[:sunstone_updating_model] = self
 
-      result = new_record? ? _create_record(&block) : _update_record(*args, &block)
+      result = new_record? ? _create_record(&block) : _update_record(&block)
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && result != 0
         row_hash = result.rows.first
@@ -64,7 +64,7 @@ module ActiveRecord
     # and returns its id.
     def _create_record(attribute_names = self.attribute_names)
       attribute_names &= self.class.column_names
-      attributes_values = attributes_with_values_for_create(attribute_names)
+      attributes_values = attributes_with_values(attribute_names)
 
       new_id = self.class._insert_record(attributes_values)
 
@@ -80,7 +80,7 @@ module ActiveRecord
     
     def _update_record(attribute_names = self.attribute_names)
       attribute_names &= self.class.column_names
-      attributes_values = attributes_with_values_for_update(attribute_names)
+      attributes_values = attributes_with_values(attribute_names)
 
       if attributes_values.empty?
         affected_rows = 0

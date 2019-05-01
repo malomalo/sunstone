@@ -49,6 +49,7 @@ class ActiveRecord::EagerLoadingTest < ActiveSupport::TestCase
   
 
   test '#eager_loads' do
+    skip
     assert_equal <<-SQL, Fleet.eager_load(ships: :sailors).limit(2).to_sql
       SELECT DISTINCT "fleets"."id"
       FROM "fleets"
@@ -56,9 +57,6 @@ class ActiveRecord::EagerLoadingTest < ActiveSupport::TestCase
       LEFT OUTER JOIN "sailors" ON "sailors"."ship_id" = "ships"."id"
       LIMIT 2
     SQL
-
-
-
   end
 
 end
