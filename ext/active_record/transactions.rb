@@ -41,7 +41,14 @@ module ActiveRecord
         status
       else
         self.class.transaction do
-          add_to_transaction
+          if has_transactional_callbacks?
+            add_to_transaction
+          else
+            sync_with_transaction_state if @transaction_state&.finalized?
+            @transaction_state = self.class.connection.transaction_state
+          end
+          remember_transaction_record_state
+
           status = yield
           raise ActiveRecord::Rollback unless status
         end

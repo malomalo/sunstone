@@ -18,8 +18,8 @@ module ActiveRecord
           binds.map!(&:value_for_database)
           @values
         else
-          casted_binds = binds.map(&:value_for_database)
           val = @values.dup
+          casted_binds = binds.map(&:value_for_database)
           @indexes.each { |i| val[i] = connection.quote(casted_binds.shift) }
           val.join
         end

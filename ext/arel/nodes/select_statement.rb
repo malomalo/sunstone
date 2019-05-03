@@ -1,6 +1,6 @@
 module Arel
   module Nodes
-    class SelectStatement < Arel::Nodes::Node
+    class SelectStatement < Arel::Nodes::NodeExpression
 
       attr_accessor :eager_load
 

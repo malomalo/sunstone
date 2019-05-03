@@ -29,10 +29,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rgeo'
   s.add_development_dependency 'simplecov'
   s.add_development_dependency 'byebug'
-  s.add_development_dependency 'activesupport', '~> 5.2.1'
+  s.add_development_dependency 'activesupport', '>= 6.0.0.rc1'
   
   # Runtime
   s.add_runtime_dependency 'msgpack'
   s.add_runtime_dependency 'cookie_store'
-  s.add_runtime_dependency 'activerecord', '~> 5.2.1'
+  s.add_runtime_dependency 'activerecord', '>= 6.0.0.rc1'
 end

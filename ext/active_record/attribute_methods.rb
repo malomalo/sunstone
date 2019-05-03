@@ -46,11 +46,7 @@ module ActiveRecord
           record.destroy
         elsif autosave != false
           if record.new_record? || (autosave && record.changed_for_autosave?)
-            if record.new_record?
-              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_create, record.attribute_names)              
-            else
-              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_update, record.attribute_names)
-            end
+            attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values, record.new_record? ? (record.attribute_names - ['id']) : record.attribute_names)
           end
         end
       end
@@ -79,11 +75,7 @@ module ActiveRecord
               record[reflection.foreign_key] = key
             end
 
-            if record.new_record?
-              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_create, record.attribute_names)
-            else
-              attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values_for_update, record.attribute_names)
-            end
+            attrs["#{reflection.name}_attributes"] = record.send(:attributes_with_values, record.new_record? ? (record.attribute_names - ['id']): record.attribute_names)
           end
         end
       end
@@ -105,11 +97,7 @@ module ActiveRecord
             []
           else
             association.target.select { |r| !r.destroyed? }.map do |record|
-              if record.new_record?
-                record.send(:attributes_with_values_for_create, record.send(:keys_for_partial_write) + [record.class.primary_key])
-              else
-                record.send(:attributes_with_values_for_update, record.send(:keys_for_partial_write) + [record.class.primary_key])
-              end
+              record.send(:attributes_with_values, record.send(:attribute_names_for_partial_writes) + (record.new_record? ? [] : [record.class.primary_key]))
             end
           end
         

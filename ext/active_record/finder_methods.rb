@@ -1,6 +1,6 @@
 module Arel
   module Visitors
-    class ToSql < Arel::Visitors::Reduce
+    class ToSql < Arel::Visitors::Visitor
       
       def visit_Arel_Attributes_Relation o, collector
         visit(o.relation, collector)
@@ -19,7 +19,7 @@ module ActiveRecord
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
           ka = associated_predicate_builder(key).expand_from_hash(value)
-          if self.table.instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
                 k.left = Arel::Attributes::Relation.new(k.left, key)
@@ -49,16 +49,21 @@ module ActiveRecord
           queries.reduce(&:or)
         elsif table.aggregated_with?(key)
           mapping = table.reflect_on_aggregation(key).mapping
-          queries = Array.wrap(value).map do |object|
-            mapping.map do |field_attr, aggregate_attr|
-              if mapping.size == 1 && !object.respond_to?(aggregate_attr)
-                build(table.arel_attribute(field_attr), object)
-              else
-                build(table.arel_attribute(field_attr), object.send(aggregate_attr))
-              end
-            end.reduce(&:and)
+          values = value.nil? ? [nil] : Array.wrap(value)
+          if mapping.length == 1 || values.empty?
+            column_name, aggr_attr = mapping.first
+            values = values.map do |object|
+              object.respond_to?(aggr_attr) ? object.public_send(aggr_attr) : object
+            end
+            build(table.arel_attribute(column_name), values)
+          else
+            queries = values.map do |object|
+              mapping.map do |field_attr, aggregate_attr|
+                build(table.arel_attribute(field_attr), object.try!(aggregate_attr))
+              end.reduce(&:and)
+            end
+            queries.reduce(&:or)
           end
-          queries.reduce(&:or)
         else
           build(table.arel_attribute(key), value)
         end

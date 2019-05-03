@@ -3,7 +3,7 @@ module ActiveRecord
     module Sunstone
       module Type
         class Array < ActiveRecord::Type::Value
-          include ActiveRecord::Type::Helpers::Mutable
+          include ActiveModel::Type::Helpers::Mutable
           
           attr_reader :subtype
           delegate :type, :user_input_in_time_zone, :limit, to: :subtype
