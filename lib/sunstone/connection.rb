@@ -32,6 +32,7 @@ module Sunstone
       end
 
       @connection = Net::HTTP.new(host, port)
+      @connection.max_retries = 0
       @connection.use_ssl = use_ssl
       if use_ssl && config[:ca_cert]
         @connection.cert_store = OpenSSL::X509::Store.new
@@ -396,7 +397,7 @@ module Sunstone
         when 301
           raise Sunstone::Exception::MovedPermanently, response.body
         when 502
-          raise ActiveRecord::ConnectionNotEstablished, response.body
+          raise Sunstone::Exception::BadGateway, response.body
         when 500..599
           raise Sunstone::ServerError, response.body
         else
