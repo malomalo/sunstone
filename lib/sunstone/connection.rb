@@ -32,7 +32,12 @@ module Sunstone
       end
 
       @connection = Net::HTTP.new(host, port)
-      @connection.max_retries = 0
+      @connection.max_retries         = 0
+      @connection.open_timeout        = 5
+      @connection.read_timeout        = 30
+      @connection.write_timeout       = 5
+      @connection.ssl_timeout         = 5
+      @connection.keep_alive_timeout  = 30
       @connection.use_ssl = use_ssl
       if use_ssl && config[:ca_cert]
         @connection.cert_store = OpenSSL::X509::Store.new
@@ -167,7 +172,6 @@ module Sunstone
       end
 
       return_value = nil
-      retry_count = 0
       begin
         close_connection = false
         @connection.request(request) do |response|
@@ -196,9 +200,6 @@ module Sunstone
           end
         end
         @connection.finish if close_connection
-      rescue ActiveRecord::ConnectionNotEstablished
-        retry_count += 1
-        retry_count == 1 ? retry : raise
       end
 
       return_value
