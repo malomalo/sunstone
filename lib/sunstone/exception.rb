@@ -29,6 +29,9 @@ module Sunstone
 
     class MovedPermanently < Sunstone::Exception
     end
+    
+    class BadGateway < Sunstone::Exception
+    end
 
     class ApiVersionUnsupported < Sunstone::Exception
     end
