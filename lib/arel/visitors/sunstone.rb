@@ -66,11 +66,29 @@ module Arel
 
         collector
       end
-      
+
       def visit_Arel_Nodes_Overlaps o, collector
-        { visit(o.left, collector) => {overlaps: o.left.type_cast_for_database(o.right) }}
+        key = visit(o.left, collector)
+        value = { overlaps: visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash_or_array(key, value)
+          key
+        else
+          {key => value}
+        end
       end
-      
+
+      def visit_Arel_Nodes_NotOverlaps o, collector
+        key = visit(o.left, collector)
+        value = { not_overlaps: visit(o.right, collector) }
+        if key.is_a?(Hash)
+          add_to_bottom_of_hash_or_array(key, value)
+          key
+        else
+          {key => value}
+        end
+      end
+
       def visit_Arel_Nodes_InsertStatement o, collector
         collector.request_type  = Net::HTTP::Post
         collector.table         = o.relation.name
@@ -865,7 +883,24 @@ module Arel
           { key => value }
         end
       end
-      
+
+      def visit_Arel_Nodes_HasAnyKey o, collector
+        key = visit(o.left, collector)
+        value = { has_any_key: (o.right.nil? ? nil : o.right.to_s) }
+        
+        if key.is_a?(Hash)
+          okey = key
+          while okey.values.first.is_a?(Hash)
+            okey = okey.values.first
+          end
+          nkey = okey.keys.first
+          nvalue = okey.values.first
+          okey[nkey] = { nvalue => value }
+        else
+          { key => value }
+        end
+      end
+
       def visit_Arel_Nodes_NotEqual o, collector
         {
           visit(o.left, collector) => { :not => visit(o.right, collector) }
