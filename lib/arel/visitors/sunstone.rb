@@ -884,9 +884,26 @@ module Arel
         end
       end
 
+      def visit_Arel_Nodes_HasKeys o, collector
+        key = visit(o.left, collector)
+        value = { has_keys: visit(o.right, collector) }
+        
+        if key.is_a?(Hash)
+          okey = key
+          while okey.values.first.is_a?(Hash)
+            okey = okey.values.first
+          end
+          nkey = okey.keys.first
+          nvalue = okey.values.first
+          okey[nkey] = { nvalue => value }
+        else
+          { key => value }
+        end
+      end
+
       def visit_Arel_Nodes_HasAnyKey o, collector
         key = visit(o.left, collector)
-        value = { has_any_key: (o.right.nil? ? nil : o.right.to_s) }
+        value = { has_any_key: visit(o.right, collector) }
         
         if key.is_a?(Hash)
           okey = key
