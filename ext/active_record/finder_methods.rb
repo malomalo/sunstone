@@ -202,7 +202,7 @@ module ActiveRecord
         relation = except(:includes, :eager_load, :preload)
         relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
       else
-        join_dependency = construct_join_dependency
+        join_dependency = construct_join_dependency(eager_load_values + includes_values)
         relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
       end
 
