@@ -6,7 +6,7 @@ module ActiveRecord
           include ActiveModel::Type::Helpers::Mutable
           
           attr_reader :subtype
-          delegate :type, :user_input_in_time_zone, :limit, to: :subtype
+          delegate :type, :user_input_in_time_zone, :limit, :precision, :scale, to: :subtype
           
           def initialize(subtype)
             @subtype = subtype
@@ -47,13 +47,14 @@ module ActiveRecord
           def map(value, &block)
             value.map(&block)
           end
+
+          def changed_in_place?(raw_old_value, new_value)
+            deserialize(raw_old_value) != new_value
+          end
           
-          # def cast_value(string)
-          #   return string unless string.is_a?(::String)
-          #   return if string.empty?
-          #
-          #   JSON.parse(string)
-          # end
+          def force_equality?(value)
+            value.is_a?(::Array)
+          end
           
           private
           
