@@ -2,6 +2,22 @@ module ActiveRecord
   # = Active Record \Persistence
   module Persistence
     
+    module ClassMethods
+      def rpc(name)
+        define_method("#{name}!") do
+          req = Net::HTTP::Post.new("/#{self.class.table_name}/#{CGI.escape(id.to_s)}/#{CGI.escape(name.to_s)}")
+          self.class.connection.instance_variable_get(:@connection).send_request(req) do |response|
+            JSON.parse(response.body).each do |k,v|
+              if self.class.column_names.include?(k)
+                @attributes.write_from_database(k, v)
+              end
+            end
+          end
+          true
+        end
+      end
+    end
+    
     def update!(attributes)
       @no_save_transaction = true
       with_transaction_returning_status do
