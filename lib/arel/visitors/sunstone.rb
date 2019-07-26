@@ -67,28 +67,6 @@ module Arel
         collector
       end
 
-      def visit_Arel_Nodes_Overlaps o, collector
-        key = visit(o.left, collector)
-        value = { overlaps: visit(o.right, collector) }
-        if key.is_a?(Hash)
-          add_to_bottom_of_hash_or_array(key, value)
-          key
-        else
-          {key => value}
-        end
-      end
-
-      def visit_Arel_Nodes_NotOverlaps o, collector
-        key = visit(o.left, collector)
-        value = { not_overlaps: visit(o.right, collector) }
-        if key.is_a?(Hash)
-          add_to_bottom_of_hash_or_array(key, value)
-          key
-        else
-          {key => value}
-        end
-      end
-
       def visit_Arel_Nodes_InsertStatement o, collector
         collector.request_type  = Net::HTTP::Post
         collector.table         = o.relation.name
