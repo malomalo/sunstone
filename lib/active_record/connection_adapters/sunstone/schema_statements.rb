@@ -73,9 +73,9 @@ module ActiveRecord
           simple_type = SqlTypeMetadata.new(
             sql_type: options['type'],
             type: cast_type.type,
-            limit: cast_type.limit,
-            precision: cast_type.precision,
-            scale: cast_type.scale,
+            limit: options['limit'] || cast_type.limit,
+            precision: options['precision'] || cast_type.precision,
+            scale: options['scale'] || cast_type.scale
           )
           SunstoneSQLTypeMetadata.new(simple_type, options)
         end
