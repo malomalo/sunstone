@@ -9,6 +9,7 @@ require 'active_record/connection_adapters/sunstone/column'
 
 require 'active_record/connection_adapters/sunstone/type/date_time'
 require 'active_record/connection_adapters/sunstone/type/array'
+require 'active_record/connection_adapters/sunstone/type/binary'
 require 'active_record/connection_adapters/sunstone/type/uuid'
 require 'active_record/connection_adapters/sunstone/type/json'
 
@@ -136,11 +137,12 @@ module ActiveRecord
       end
       
       def lookup_cast_type_from_column(column) # :nodoc:
-        if column.array
-          Sunstone::Type::Array.new(type_map.lookup(column.sql_type))
-        else
-          type_map.lookup(column.sql_type)
-        end
+        cast_type = type_map.lookup(column.sql_type, {
+          limit: column.limit,
+          precision: column.precision,
+          scale: column.scale
+        })
+        column.array ? Sunstone::Type::Array.new(cast_type) : cast_type
       end
       
       def transaction(requires_new: nil, isolation: nil, joinable: true)
@@ -187,9 +189,19 @@ module ActiveRecord
 
       def initialize_type_map(m) # :nodoc:
         m.register_type 'boolean',    Type::Boolean.new
-        m.register_type 'string',     Type::String.new
-        m.register_type 'integer',    Type::Integer.new
-        m.register_type 'decimal',    Type::Decimal.new
+        m.register_type 'string' do |_, options|
+          Type::String.new(**options.slice(:limit))
+        end
+        m.register_type 'integer' do |_, options|
+          Type::Integer.new(**options.slice(:limit))
+        end
+        m.register_type 'decimal' do |_, options|
+          Type::Decimal.new(**options.slice(:precision, :scale))
+        end
+        m.register_type 'binary' do |_, options|
+          Sunstone::Type::Binary.new(**options.slice(:limit))
+        end
+
         m.register_type 'datetime',   Sunstone::Type::DateTime.new
         m.register_type 'json',       Sunstone::Type::Json.new
         m.register_type 'uuid',       Sunstone::Type::Uuid.new

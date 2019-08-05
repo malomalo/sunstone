@@ -68,14 +68,18 @@ module ActiveRecord
           SunstoneColumn.new(name, sql_type_metadata, options)
         end
         
+        def lookup_cast_type(options)
+          type_map.lookup(options['type'], options.symbolize_keys)
+        end
+        
         def fetch_type_metadata(options)
-          cast_type = lookup_cast_type(options['type'])
+          cast_type = lookup_cast_type(options)
           simple_type = SqlTypeMetadata.new(
             sql_type: options['type'],
             type: cast_type.type,
-            limit: options['limit'] || cast_type.limit,
-            precision: options['precision'] || cast_type.precision,
-            scale: options['scale'] || cast_type.scale
+            limit: cast_type.limit,
+            precision: cast_type.precision,
+            scale: cast_type.scale
           )
           SunstoneSQLTypeMetadata.new(simple_type, options)
         end
