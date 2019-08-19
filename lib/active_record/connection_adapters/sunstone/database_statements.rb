@@ -47,15 +47,15 @@ module ActiveRecord
         # can be used to query the database repeatedly.
         def cacheable_query(klass, arel) # :nodoc:
           if prepared_statements
-            sql, binds = visitor.accept(arel.ast, collector).value
+            sql, binds = visitor.compile(arel.ast, collector)
             query = klass.query(sql)
           elsif self.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             collector = SunstonePartialQueryCollector.new(self.collector)
-            parts, binds = visitor.accept(arel.ast, collector).value
+            parts, binds = visitor.compile(arel.ast, collector)
             query = StatementCache::PartialQuery.new(parts, true)
           else
-            collector = PartialQueryCollector.new
-            parts, binds = visitor.accept(arel.ast, collector).value
+            collector = klass.partial_query_collector
+            parts, binds = visitor.compile(arel.ast, collector)
             query = klass.partial_query(parts)
           end
           [query, binds]

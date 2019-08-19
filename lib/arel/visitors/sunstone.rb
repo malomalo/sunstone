@@ -10,10 +10,10 @@ module Arel
   module Visitors
     class Sunstone < Arel::Visitors::Visitor
       
-      def compile node, &block
-        accept(node, Arel::Collectors::SQLString.new, &block).value
+      def compile(node, collector = Arel::Collectors::Sunstone.new)
+        accept(node, collector).value
       end
-
+      
       def preparable
         false
       end

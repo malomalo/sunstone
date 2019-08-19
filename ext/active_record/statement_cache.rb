@@ -5,10 +5,9 @@ module ActiveRecord
       def initialize(values, sunstone=false)
         @values = values
         @indexes = if sunstone
-          
         else
-          values.each_with_index.find_all { |thing,i|
-            Arel::Nodes::BindParam === thing
+          values.each_with_index.find_all { |thing, i|
+            Substitute === thing
           }.map(&:last)
         end
       end

@@ -81,7 +81,7 @@ module ActiveRecord
       def initialize(connection, logger, connection_parameters, config)
         super(connection, logger, config)
 
-        @prepared_statements = false
+        @prepared_statement_status = Concurrent::ThreadLocalVar.new(false)
         @connection_parameters = connection_parameters
 
         # @type_map = Type::HashLookupTypeMap.new
