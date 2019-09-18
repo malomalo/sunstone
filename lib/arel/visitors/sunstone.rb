@@ -925,9 +925,12 @@ module Arel
         value = if o.relation.is_a?(Arel::Attributes::Relation)
           { o.name => visit_Arel_Attributes_Relation(o.relation, collector, false) }
         else
-          visit(o.relation, collector)
+          if o.relation.is_a?(Arel::Attributes::Attribute)
+            { o.name => o.relation.name }
+          else
+            visit(o.relation, collector)
+          end
         end
-        # value = value.to_s.split('.').last if !value.is_a?(Hash)
 
         if o.collection
           ary = []

@@ -1,6 +1,7 @@
 require 'active_record/connection_adapters/abstract_adapter'
 
-#require 'active_record/connection_adapters/statement_pool'
+require 'arel/nodes/relation'
+require 'arel/visitors/to_sql_extensions'
 
 require 'active_record/connection_adapters/sunstone/database_statements'
 require 'active_record/connection_adapters/sunstone/schema_statements'

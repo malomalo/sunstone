@@ -1,15 +1,3 @@
-module Arel
-  module Visitors
-    class ToSql < Arel::Visitors::Visitor
-      
-      def visit_Arel_Attributes_Relation o, collector
-        visit(o.relation, collector)
-      end
-      
-    end
-  end
-end
-
 module ActiveRecord
   class PredicateBuilder # :nodoc:
 
