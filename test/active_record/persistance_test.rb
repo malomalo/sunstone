@@ -11,7 +11,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     create_table "fleets" do |t|
       t.string   "name",                    limit: 255
     end
-    
+
     create_table "sailors" do |t|
       t.string   "name",                    limit: 255
     end
@@ -22,7 +22,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     end
 
   end
-  
+
   class Fleet < ActiveRecord::Base
     has_many :ships
   end
@@ -36,14 +36,17 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
   class Sailor < ActiveRecord::Base
     has_and_belongs_to_many :ships
   end
-  
+
   class TestModelA < ActiveRecord::Base
   end
-  
+
   class TestModelB < ActiveRecord::Base
     before_save do
       TestModelA.create
     end
+  end
+
+  class TestModelC < ActiveRecord::Base
   end
 
   test '#create with errors' do
@@ -85,6 +88,15 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
   end
 
   test '#save attempts another request while in transaction' do
+    webmock(:get, '/test_model_cs/schema').to_return(
+      body: {
+        attributes: {
+          id: {type: 'integer', primary_key: true, null: false, array: false},
+          name: {type: 'string', primary_key: false, null: true, array: false}
+        }
+      }.to_json,
+      headers: { 'StandardAPI-Version' => '6.0.0.29' }
+    )
     webmock(:get, '/test_model_bs/schema').to_return(
       body: {
         columns: {
