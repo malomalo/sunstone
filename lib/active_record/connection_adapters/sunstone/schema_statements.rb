@@ -33,7 +33,8 @@ module ActiveRecord
 
           @definitions[table_name] = if (version >= Gem::Version.create('6.0.0.29'))
             schema = JSON.parse(response.body)
-            { 'columns' => schema['attributes'], 'limit' => schema['limit'] }
+            schema['columns'] = schema.delete('attributes')
+            schema
           elsif (version >= Gem::Version.create('5.0.0.5'))
             JSON.parse(response.body)
           else
