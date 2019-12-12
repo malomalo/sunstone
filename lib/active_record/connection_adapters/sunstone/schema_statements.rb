@@ -31,7 +31,11 @@ module ActiveRecord
 
           version = Gem::Version.create(response['StandardAPI-Version'] || '5.0.0.4')
 
-          @definitions[table_name] = if (version >= Gem::Version.create('5.0.0.5'))
+          @definitions[table_name] = if (version >= Gem::Version.create('6.0.0.29'))
+            schema = JSON.parse(response.body)
+            schema['columns'] = schema.delete('attributes')
+            schema
+          elsif (version >= Gem::Version.create('5.0.0.5'))
             JSON.parse(response.body)
           else
             { 'columns' => JSON.parse(response.body), 'limit' => nil }
@@ -58,20 +62,20 @@ module ActiveRecord
         def tables
           JSON.parse(@connection.get('/tables').body)
         end
-        
+
         def views
           []
         end
-        
+
         def new_column(name, options)
           sql_type_metadata = fetch_type_metadata(options)
           SunstoneColumn.new(name, sql_type_metadata, options)
         end
-        
+
         def lookup_cast_type(options)
           type_map.lookup(options['type'], options.symbolize_keys)
         end
-        
+
         def fetch_type_metadata(options)
           cast_type = lookup_cast_type(options)
           simple_type = SqlTypeMetadata.new(
@@ -83,7 +87,7 @@ module ActiveRecord
           )
           SunstoneSQLTypeMetadata.new(simple_type, options)
         end
-        
+
         def column_name_for_operation(operation, node) # :nodoc:
           visitor.accept(node, collector).first[operation.to_sym]
         end

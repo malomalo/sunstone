@@ -32,7 +32,7 @@ module ActiveRecord
         conn_params[:port]    ||= uri.port
         conn_params[:use_ssl] ||= (uri.scheme == 'https')
       end
-      
+
       # Forward only valid config params to Sunstone::Connection
       conn_params.slice!(*VALID_SUNSTONE_CONN_PARAMS)
 
@@ -80,7 +80,7 @@ module ActiveRecord
 
       # Initializes and connects a SunstoneAPI adapter.
       def initialize(connection, logger, connection_parameters, config)
-        super(connection, logger, config)
+        super(connection, logger, config.reverse_merge(prepared_statements: false))
 
         @prepared_statement_status = Concurrent::ThreadLocalVar.new(false)
         @connection_parameters = connection_parameters
@@ -97,12 +97,12 @@ module ActiveRecord
         super
         @connection.reconnect!
       end
-      
+
       def disconnect!
         super
         @connection.disconnect!
       end
-      
+
       # Executes the delete statement and returns the number of rows affected.
       def delete(arel, name = nil, binds = [])
         r = exec_delete(arel, name, binds)
@@ -124,19 +124,19 @@ module ActiveRecord
       def update_table_definition(table_name, base) #:nodoc:
         SunstoneAPI::Table.new(table_name, base)
       end
-      
+
       def arel_visitor
         Arel::Visitors::Sunstone.new
       end
-      
+
       def collector
         Arel::Collectors::Sunstone.new
       end
-      
+
       def server_config
         JSON.parse(@connection.get("/configuration").body)
       end
-      
+
       def lookup_cast_type_from_column(column) # :nodoc:
         cast_type = type_map.lookup(column.sql_type, {
           limit: column.limit,
@@ -145,7 +145,7 @@ module ActiveRecord
         })
         column.array ? Sunstone::Type::Array.new(cast_type) : cast_type
       end
-      
+
       def transaction(requires_new: nil, isolation: nil, joinable: true)
         Thread.current[:sunstone_transaction_count] ||= 0
         Thread.current[:sunstone_request_sent] = nil if Thread.current[:sunstone_transaction_count] == 0
@@ -162,7 +162,7 @@ module ActiveRecord
       rescue ActiveRecord::Rollback
         # rollbacks are silently swallowed
       end
-      
+
       def supports_json?
         true
       end
@@ -179,13 +179,13 @@ module ActiveRecord
         exec_insert(arel, name, binds, pk, sequence_name)
       end
       alias create insert
-      
+
       # Should be the defuat insert, but rails escapes if for SQL so we'll just
       # catch the string "DEFATUL VALUES" in the visitor
       # def empty_insert_statement_value
       #   {}
       # end
-      
+
       private
 
       def initialize_type_map(m) # :nodoc:
@@ -206,7 +206,7 @@ module ActiveRecord
         m.register_type 'datetime',   Sunstone::Type::DateTime.new
         m.register_type 'json',       Sunstone::Type::Json.new
         m.register_type 'uuid',       Sunstone::Type::Uuid.new
-          
+
         if defined?(Sunstone::Type::EWKB)
           m.register_type 'ewkb',       Sunstone::Type::EWKB.new
         end
@@ -215,7 +215,7 @@ module ActiveRecord
       def create_table_definition(name, temporary, options, as = nil) # :nodoc:
         SunstoneAPI::TableDefinition.new native_database_types, name, temporary, options, as
       end
-        
+
       ActiveRecord::Type.add_modifier({ array: true }, Sunstone::Type::Array, adapter: :sunstone)
       # ActiveRecord::Type.add_modifier({ range: true }, OID::Range, adapter: :postgresql)
     end
