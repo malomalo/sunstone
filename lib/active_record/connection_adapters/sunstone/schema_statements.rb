@@ -50,7 +50,8 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          definition(table_name)['columns']
+          # First check for attributes and then for the deprecated columns field
+          definition(table_name)['attributes'] || definition(table_name)['columns']
         end
 
         # Returns the limit definition of the table (the maximum limit that can
