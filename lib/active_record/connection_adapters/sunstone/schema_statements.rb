@@ -51,6 +51,7 @@ module ActiveRecord
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
           # First check for attributes and then for the deprecated columns field
+          # TODO: Remove after 0.3
           definition(table_name)['attributes'] || definition(table_name)['columns']
         end
 

@@ -348,7 +348,7 @@ module Sunstone
       headers = Thread.current[:sunstone_headers]&.clone || {}
       headers['Accept'] = 'application/json'
       headers['User-Agent'] = user_agent
-      headers['Api-Version'] = '0.1.0'
+      headers['Api-Version'] = '0.2.0'
       headers['Connection'] = 'keep-alive'
       
       request_api_key = Thread.current[:sunstone_api_key] || api_key
