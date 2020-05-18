@@ -6,7 +6,7 @@ module ActiveRecord
   
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
-          ka = associated_predicate_builder(key).expand_from_hash(value)
+          ka = table.associated_predicate_builder(key).expand_from_hash(value)
           if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)

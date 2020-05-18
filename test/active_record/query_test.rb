@@ -107,7 +107,7 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
   end
 
   test '#to_sql binds correctly when joining' do
-    assert_equal 'SELECT ships.* FROM ships INNER JOIN ownerships ON ownerships.asset_id = ships.id AND ownerships.asset_type = \'ActiveRecord::QueryTest::Ship\' WHERE ownerships.id = 1', Ship.joins(:ownerships).where({ ownerships: { id: 1 } }).to_sql
+    assert_equal 'SELECT ships.* FROM ships INNER JOIN ownerships ON ownerships.asset_type = \'ActiveRecord::QueryTest::Ship\' AND ownerships.asset_id = ships.id WHERE ownerships.id = 1', Ship.joins(:ownerships).where({ ownerships: { id: 1 } }).to_sql
   end
 
   test '#to_sar' do
