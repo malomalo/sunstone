@@ -1,12 +1,12 @@
 module ActiveRecord
   class PredicateBuilder # :nodoc:
 
-    def expand_from_hash(attributes)
+    def expand_from_hash(attributes, &block)
       return ["1=0"] if attributes.empty?
   
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
-          ka = table.associated_predicate_builder(key).expand_from_hash(value)
+          ka = table.associated_table(key, &block).send(:predicate_builder).expand_from_hash(value.stringify_keys)
           if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
