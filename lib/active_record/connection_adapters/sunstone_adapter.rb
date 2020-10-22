@@ -212,8 +212,8 @@ module ActiveRecord
         end
       end
 
-      def create_table_definition(name, temporary, options, as = nil) # :nodoc:
-        SunstoneAPI::TableDefinition.new native_database_types, name, temporary, options, as
+      def create_table_definition(name, **options)
+        SunstoneAPI::TableDefinition.new(self, name, **options)
       end
 
       ActiveRecord::Type.add_modifier({ array: true }, Sunstone::Type::Array, adapter: :sunstone)

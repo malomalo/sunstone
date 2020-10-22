@@ -34,6 +34,10 @@ class ActiveSupport::TestCase
       def string(name, options={})
         @columns[name] = Column.new(name, :string, options)
       end
+      
+      def text(name, options={})
+        @columns[name] = Column.new(name, :text, options)
+      end
 
       def datetime(name, options={})
         @columns[name] = Column.new(name, :datetime, options)

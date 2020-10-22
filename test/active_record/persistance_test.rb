@@ -14,6 +14,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
 
     create_table "sailors" do |t|
       t.string   "name",                    limit: 255
+      t.text     "assignment"
     end
 
     create_table "sailors_ships", id: false do |t|
@@ -74,7 +75,7 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     assert_requested req_stub
   end
 
-  test '#save w/o changes' do
+  test '#save w/o changes does not trigger a request' do
     webmock(:get, '/fleets', where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, name: 'Armada Duo'}].to_json
     )
@@ -85,6 +86,18 @@ class ActiveRecord::PersistanceTest < ActiveSupport::TestCase
     assert fleet.save
     assert_equal 1, fleet.id
     assert_equal 'Armada Duo', fleet.name
+    
+    
+    webmock(:get, '/sailors', where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, name: 'Nandor', assignment: 'stay alert'}].to_json
+    )
+
+    fleet = Sailor.find(1)
+    fleet.save
+
+    assert fleet.save
+    assert_equal 1, fleet.id
+    assert_equal 'stay alert', fleet.assignment
   end
 
   test '#save attempts another request while in transaction' do
