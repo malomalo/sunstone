@@ -105,6 +105,8 @@ module ActiveRecord
         @_trigger_update_callback = affected_rows == 1
       end
 
+      @previously_new_record = false
+
       yield(self) if block_given?
 
       affected_rows

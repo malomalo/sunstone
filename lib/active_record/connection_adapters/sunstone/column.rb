@@ -2,8 +2,7 @@ module ActiveRecord
   module ConnectionAdapters
     # Sunstone-specific extensions to column definitions in a table.
     class SunstoneColumn < Column #:nodoc:
-      delegate :array, to: :sql_type_metadata
-      alias :array? :array
+      attr_reader :array
       
       def initialize(name, sql_type_metadata, options={})
         @name = name.freeze
@@ -14,6 +13,7 @@ module ActiveRecord
         @collation = nil
         @table_name = nil
         @primary_key = (options['primary_key'] == true)
+        @array = options['array']
       end
       
       def primary_key?

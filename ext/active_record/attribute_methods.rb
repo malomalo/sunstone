@@ -6,8 +6,8 @@ module ActiveRecord
     # Returns a Hash of the Arel::Attributes and attribute values that have been
     # typecasted for use in an Arel insert/update method.
     def attributes_with_values(attribute_names)
-      attrs = attribute_names.each_with_object({}) do |name, attrs|
-        attrs[name] = _read_attribute(name)
+      attrs = attribute_names.index_with do |name|
+        _read_attribute(name)
       end
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)

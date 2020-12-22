@@ -3,7 +3,7 @@ require 'test_helper'
 class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
 
   test '#send_request(#<Net::HTTPRequest>) includes the api-key header when present' do
-    connection = Sunstone::Connection.new(url: "http://my_api_key@example.com")
+    connection = Sunstone::Connection.new(endpoint: "http://my_api_key@example.com")
     
     test_stub = stub_request(:get, "http://example.com/verify").with { |req|
       req.headers['Api-Key'] == 'my_api_key'
@@ -13,7 +13,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   end
   
   test '#send_request(#<Net::HTTPRequest>) includes the user_agent' do
-    connection = Sunstone::Connection.new(url: "http://example.com")
+    connection = Sunstone::Connection.new(endpoint: "http://example.com")
     
     test_stub = stub_request(:get, "http://example.com/verify").with { |req|
       req.headers['User-Agent'] =~ /Sunstone\/\S+ Ruby\/\S+ \S+/
@@ -22,7 +22,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
     assert_requested(test_stub)
     
     # Custom Agent
-    connection = Sunstone::Connection.new(url: "http://example.com", user_agent: "MyClient/2")
+    connection = Sunstone::Connection.new(endpoint: "http://example.com", user_agent: "MyClient/2")
     
     test_stub = stub_request(:get, "http://example.com/verify").with { |req|
       req.headers['User-Agent'] =~ /MyClient\/2 Sunstone\/\S+ Ruby\/\S+ \S+/
@@ -34,7 +34,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   test '#send_request(#<Net::HTTPRequest>)' do
     stub_request(:get, "http://testhost.com/test").to_return(body: 'get')
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     assert_equal('get', connection.send_request(Net::HTTP::Get.new('/test')).body)
   end
 
@@ -45,7 +45,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
       body: "post"
     )
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     assert_equal('post', connection.send_request(Net::HTTP::Post.new('/test'), '{"key":"value"}').body)
   end
 
@@ -58,14 +58,14 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
     wr.write('{"key":"value"}')
     wr.close
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     assert_equal('post', connection.send_request(Net::HTTP::Post.new('/test'), rd).body)
   end
 
   test '#send_request(#<Net::HTTPRequest>, body) with Ruby Object body' do
     stub_request(:post, "http://testhost.com/test").with(body: '{"key":"value"}').to_return(body: "post")
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     assert_equal('post', connection.send_request(Net::HTTP::Post.new('/test'), {:key => 'value'}).body)
   end
 
@@ -80,7 +80,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
     stub_request(:get, "http://testhost.com/503").to_return(status: 503)
     stub_request(:get, "http://testhost.com/550").to_return(status: 550)
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     assert_raises(Sunstone::Exception::BadRequest)   { connection.send_request(Net::HTTP::Get.new('/400')) }
     assert_raises(Sunstone::Exception::Unauthorized) { connection.send_request(Net::HTTP::Get.new('/401')) }
     assert_raises(Sunstone::Exception::Forbidden) { connection.send_request(Net::HTTP::Get.new('/403')) }
@@ -95,7 +95,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   test '#send_request(#<Net::HTTPRequest>, &block) returns value returned from &block' do
     stub_request(:get, "http://testhost.com/test").to_return(body: 'get')
 
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     value = connection.send_request(Net::HTTP::Get.new('/test')) do |response|
       3215
     end
@@ -104,7 +104,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   end
 
   test '#send_request(#<Net::HTTPRequest>, &block)' do
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     stub_request(:get, "http://testhost.com/test").to_return(body: 'get')
 
     connection.send_request(Net::HTTP::Get.new('/test')) do |response|
@@ -122,7 +122,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   end
 
   test '#send_request(#<Net::HTTPRequest>, &block) with block reading chunks' do
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     
     rd, wr = IO.pipe
     rd = Net::BufferedIO.new(rd)
@@ -149,7 +149,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
   
   # TODO: support multple depreaction-notice headers
   test 'deprecation warning printed when deprecation header returned' do
-    connection = Sunstone::Connection.new(url: "http://testhost.com")
+    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
     
     stub_request(:get, "http://testhost.com/test").to_return(
       body: 'get',

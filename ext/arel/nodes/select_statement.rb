@@ -4,7 +4,7 @@ module Arel
 
       attr_accessor :eager_load
 
-      def initialize cores = [SelectCore.new]
+      def initialize(cores = [SelectCore.new])
         super()
         @cores          = cores
         @orders         = []

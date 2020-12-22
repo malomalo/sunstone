@@ -6,7 +6,7 @@ module ActiveRecord
   
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
-          ka = table.associated_table(key, &block).send(:predicate_builder).expand_from_hash(value.stringify_keys)
+          ka = table.associated_table(key, &block).predicate_builder.expand_from_hash(value.stringify_keys)
           if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
@@ -28,13 +28,18 @@ module ActiveRecord
               value = [value] unless value.is_a?(Array)
               klass = PolymorphicArrayValue
             end
+          elsif associated_table.through_association?
+            next associated_table.predicate_builder.expand_from_hash(
+              associated_table.primary_key => value
+            )
           end
 
           klass ||= AssociationQueryValue
-          queries = klass.new(associated_table, value).queries.map do |query|
-            expand_from_hash(query).reduce(&:and)
+          queries = klass.new(associated_table, value).queries.map! do |query|
+            expand_from_hash(query)
           end
-          queries.reduce(&:or)
+
+          grouping_queries(queries)
         elsif table.aggregated_with?(key)
           mapping = table.reflect_on_aggregation(key).mapping
           values = value.nil? ? [nil] : Array.wrap(value)
@@ -43,17 +48,18 @@ module ActiveRecord
             values = values.map do |object|
               object.respond_to?(aggr_attr) ? object.public_send(aggr_attr) : object
             end
-            build(table.arel_attribute(column_name), values)
+            self[column_name, values]
           else
             queries = values.map do |object|
               mapping.map do |field_attr, aggregate_attr|
-                build(table.arel_attribute(field_attr), object.try!(aggregate_attr))
-              end.reduce(&:and)
+                self[field_attr, object.try!(aggregate_attr)]
+              end
             end
-            queries.reduce(&:or)
+
+            grouping_queries(queries)
           end
         else
-          build(table.arel_attribute(key), value)
+          self[key, value]
         end
       end
     end
@@ -77,7 +83,7 @@ module ActiveRecord
         relation
       end
       
-      def instantiate(result_set, &block)
+      def instantiate(result_set, strict_loading_value, &block)
         seen = Hash.new { |i, object_id|
           i[object_id] = Hash.new { |j, child_class|
             j[child_class] = {}
@@ -98,14 +104,14 @@ module ActiveRecord
           result_set.each { |row_hash|
             parent_key = @klass.primary_key ? row_hash[@klass.primary_key] : row_hash
             parent = parents[parent_key] ||= @klass.instantiate(row_hash.select{|k,v| @klass.column_names.include?(k.to_s) }, &block)
-            construct(parent, row_hash.select{|k,v| !@klass.column_names.include?(k.to_s) }, seen, model_cache)
+            construct(parent, row_hash.select{|k,v| !@klass.column_names.include?(k.to_s) }, seen, model_cache, strict_loading_value)
           }
         end
 
         parents.values
       end
 
-      def construct(parent, relations, seen, model_cache)
+      def construct(parent, relations, seen, model_cache, strict_loading_value)
         relations.each do |key, attributes|
           reflection = parent.class.reflect_on_association(key)
           next unless reflection
@@ -116,22 +122,22 @@ module ActiveRecord
           else
             if parent.association_cached?(reflection.name)
               model = parent.association(reflection.name).target
-              construct(model, attributes.select{|k,v| !model.class.column_names.include?(k.to_s) }, seen, model_cache)
+              construct(model, attributes.select{|k,v| !model.class.column_names.include?(k.to_s) }, seen, model_cache, strict_loading_value)
             end
           end
 
           if !reflection.collection?
-            construct_association(parent, reflection, attributes, seen, model_cache)
+            construct_association(parent, reflection, attributes, seen, model_cache, strict_loading_value)
           else
             attributes.each do |row|
-              construct_association(parent, reflection, row, seen, model_cache)
+              construct_association(parent, reflection, row, seen, model_cache, strict_loading_value)
             end
           end
 
         end
       end
 
-      def construct_association(parent, reflection, attributes, seen, model_cache)
+      def construct_association(parent, reflection, attributes, seen, model_cache, strict_loading_value)
         return if attributes.nil?
 
         klass = if reflection.polymorphic?
@@ -143,7 +149,7 @@ module ActiveRecord
         model = seen[parent.object_id][klass][id]
 
         if model
-          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache, strict_loading_value)
 
           other = parent.association(reflection.name)
 
@@ -155,14 +161,14 @@ module ActiveRecord
 
           other.set_inverse_instance(model)
         else
-          model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
+          model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache, strict_loading_value)
           seen[parent.object_id][model.class.base_class][id] = model
-          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+          construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache, strict_loading_value)
         end
       end
 
 
-      def construct_model(record, reflection, id, attributes, seen, model_cache)
+      def construct_model(record, reflection, id, attributes, seen, model_cache, strict_loading_value)
         klass = if reflection.polymorphic?
           record.send(reflection.foreign_type).constantize
         else
@@ -191,12 +197,21 @@ module ActiveRecord
         relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
       else
         join_dependency = construct_join_dependency(
-          eager_load_values + includes_values, Arel::Nodes::OuterJoin
+          eager_load_values | includes_values, Arel::Nodes::OuterJoin
         )
         relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
       end
 
-      if eager_loading && !using_limitable_reflections?(join_dependency.reflections)
+      if eager_loading && !(
+          using_limitable_reflections?(join_dependency.reflections) &&
+          using_limitable_reflections?(
+            construct_join_dependency(
+              select_association_list(joins_values).concat(
+                select_association_list(left_outer_joins_values)
+              ), nil
+            ).reflections
+          )
+      )
         if has_limit_or_offset?
           limited_ids = limited_ids_for(relation)
           limited_ids.empty? ? relation.none! : relation.where!(primary_key => limited_ids)

@@ -10,7 +10,7 @@ module Sunstone
     #
     # Options:
     #
-    # * <tt>:url</tt> - An optional url used to set the protocol, host, port,
+    # * <tt>:endpoint</tt> - An optional endpoint used to set the protocol, host, port,
     #   and api_key
     # * <tt>:host</tt> - The default is to connect to 127.0.0.1.
     # * <tt>:port</tt> - Defaults to 80.
@@ -19,8 +19,8 @@ module Sunstone
     # * <tt>:user_agent</tt> - An optional string. Will be joined with other
     #                          User-Agent info.
     def initialize(config)
-      if config[:url]
-        uri = URI.parse(config.delete(:url))
+      if config[:endpoint]
+        uri = URI.parse(config.delete(:endpoint))
         config[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
         config[:host]    ||= uri.host
         config[:port]    ||= uri.port

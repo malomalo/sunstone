@@ -1,10 +1,4 @@
 require 'arel/visitors/visitor'
-class Arel::Visitors::Dot
-  def visit_Arel_Nodes_Casted o
-    # collector << quoted(o.val, o.attribute).to_s
-    visit_String o.val
-  end
-end
 
 module Arel
   module Visitors
@@ -233,7 +227,7 @@ module Arel
       #
       def visit_Arel_Nodes_Casted o, collector
         # collector << quoted(o.val, o.attribute).to_s
-        o.val
+        o.value
       end
 
       def visit_Arel_Nodes_Quoted o, collector
@@ -953,9 +947,9 @@ module Arel
         end
       end
 
-      def visit_Arel_Attributes_EmptyRelation o, collector, top=true
-        o.for_write ? "#{o.name}_attributes" : o.name
-      end
+      # def visit_Arel_Attributes_EmptyRelation o, collector, top=true
+      #   o.for_write ? "#{o.name}_attributes" : o.name
+      # end
       
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
