@@ -86,7 +86,7 @@ class ActiveSupport::TestCase
 
   set_callback(:setup, :before) do
     if !instance_variable_defined?(:@suite_setup_run) && self.class.class_variable_defined?(:@@schema)
-      ActiveRecord::Base.establish_connection(adapter: 'sunstone', endpoint: 'http://example.com')
+      ActiveRecord::Base.establish_connection(adapter: 'sunstone', url: 'http://example.com')
 
       req_stub = stub_request(:get, /^http:\/\/example.com/).with do |req|
         case req.uri.path

@@ -4,7 +4,7 @@ class Sunstone::Connection::CookieStoreTest < ActiveSupport::TestCase
 
   test '#send_request(#<Net::HTTPRequest) adds cookies to the cookie store if present' do
     store = CookieStore::HashStore.new
-    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
+    connection = Sunstone::Connection.new(url: "http://testhost.com")
     stub_request(:get, "http://testhost.com/test").to_return(:body => 'get', :headers => {'Set-Cookie' => 'foo=bar; Max-Age=3600'})
 
     Sunstone::Connection.with_cookie_store(store) { connection.get('/test') }
@@ -17,7 +17,7 @@ class Sunstone::Connection::CookieStoreTest < ActiveSupport::TestCase
   
   test '#send_request(#<Net::HTTPRequest) sends cookie header if cookie store is present' do
     store = CookieStore::HashStore.new
-    connection = Sunstone::Connection.new(endpoint: "http://testhost.com")
+    connection = Sunstone::Connection.new(url: "http://testhost.com")
     stub_request(:get, "http://testhost.com/test").to_return(
       headers: {
         'Set-Cookie' => 'foo=bar; Path="/" Max-Age=3600'

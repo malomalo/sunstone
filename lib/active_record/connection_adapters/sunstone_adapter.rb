@@ -17,7 +17,7 @@ require 'active_record/connection_adapters/sunstone/type/json'
 module ActiveRecord
   module ConnectionHandling # :nodoc:
 
-    VALID_SUNSTONE_CONN_PARAMS = [:endpoint, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
+    VALID_SUNSTONE_CONN_PARAMS = [:url, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
 
     # Establishes a connection to the database that's used by all Active Record
     # objects
@@ -25,8 +25,8 @@ module ActiveRecord
       conn_params = config.symbolize_keys
       conn_params.delete_if { |_, v| v.nil? }
 
-      if conn_params[:endpoint]
-        uri = URI.parse(conn_params.delete(:endpoint))
+      if conn_params[:url]
+        uri = URI.parse(conn_params.delete(:url))
         conn_params[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
         conn_params[:host]    ||= uri.host
         conn_params[:port]    ||= uri.port
