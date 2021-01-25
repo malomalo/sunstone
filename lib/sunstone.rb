@@ -41,6 +41,7 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/finder_met
 
 if ActiveRecord::VERSION::MAJOR == 6 && ActiveRecord::VERSION::MINOR == 1
   # Patch to allow Rails 6.1 pass url to adapter, all other versions work
+  require 'active_record/database_configurations'
   class ActiveRecord::DatabaseConfigurations::UrlConfig
     private
     def build_url_hash

@@ -119,5 +119,13 @@ class ActiveRecord::QueryTest < ActiveSupport::TestCase
     query = MessagePack.unpack(CGI.unescape(uri.query))
     assert_equal({"where"=>{"ownerships"=>{"id"=>{"eq"=>1}}}}, query)
   end
+  
+  test 'Arel::Nodes::HomogeneousIn' do
+    webmock(:get, "/ships", { where: {id: {in: [10,12]} }, limit: 100, offset: 0 }).to_return({
+      body: [].to_json
+    })
+
+    Ship.where(id: [10,12]).to_a
+  end
 
 end

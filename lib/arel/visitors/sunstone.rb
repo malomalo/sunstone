@@ -703,6 +703,7 @@ module Arel
           {key => value}
         end
       end
+      alias_method :visit_Arel_Nodes_HomogeneousIn, :visit_Arel_Nodes_In
       
       def visit_Arel_Nodes_NotIn o, collector
         key = visit(o.left, collector)
