@@ -57,6 +57,6 @@ jobs:
           bundle update --jobs=3 --retry=3
 
       - run: |
-          pushd ~/rails
+          pushd ~/rails/activerecord
           bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
         
