@@ -24,7 +24,7 @@ jobs:
   rails-postgresql:
     strategy:
       matrix:
-        rails: [2.7, 3.0]
+        rails: [v6.1.3]
         
     runs-on: ubuntu-20.04
 
