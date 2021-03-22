@@ -56,5 +56,7 @@ jobs:
           cat ~/rails/Gemfile
           bundle update --jobs=3 --retry=3
 
-      - run: bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
+      - run: |
+          pushd ~/rails
+          bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
         
