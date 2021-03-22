@@ -22,6 +22,10 @@ jobs:
       - run: bundle exec rake test
 
   rails-postgresql:
+    strategy:
+      matrix:
+        rails: [2.7, 3.0]
+        
     runs-on: ubuntu-20.04
 
     steps:
@@ -41,7 +45,7 @@ jobs:
     
     - name: Download Rails
       run: |
-        git clone --branch $RAILS_VERSION https://github.com/rails/rails.git ~/build/rails
+        git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/build/rails
         pushd ~/build/rails
         sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/build/rails/activerecord/Rakefile
         sed -i "s/t.warning = true/t.warning = false/g" ~/build/rails/activerecord/Rakefile
