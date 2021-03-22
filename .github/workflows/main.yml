@@ -29,31 +29,31 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - name: Install Postgresql
-      run: |
-        sudo apt-get install curl ca-certificates gnupg
-        curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-        sudo apt-get update
-        sudo apt-get install postgresql-13
+      - name: Install Postgresql
+        run: |
+          sudo apt-get install curl ca-certificates gnupg
+          curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          sudo apt-get update
+          sudo apt-get install postgresql-13
 
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0
           
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
     
-    - name: Download Rails
-      run: |
-        git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/rails
-        pushd ~/rails
-        sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
-        sed -i "s/t.warning = true/t.warning = false/g" ~/rails/activerecord/Rakefile
-        sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('$GITHUB_WORKSPACE'\)\)\nrequire 'sunstone'" ~/rails/activerecord/test/cases/helper.rb
-        rm ~/rails/Gemfile.lock
-        sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('$GITHUB_WORKSPACE'\\)\" ~/rails/Gemfile
-        cat ~/rails/Gemfile
-        bundle update --jobs=3 --retry=3
+      - name: Download Rails
+        run: |
+          git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/rails
+          pushd ~/rails
+          sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
+          sed -i "s/t.warning = true/t.warning = false/g" ~/rails/activerecord/Rakefile
+          sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('$GITHUB_WORKSPACE'\)\)\nrequire 'sunstone'" ~/rails/activerecord/test/cases/helper.rb
+          rm ~/rails/Gemfile.lock
+          sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('$GITHUB_WORKSPACE'\\)\" ~/rails/Gemfile
+          cat ~/rails/Gemfile
+          bundle update --jobs=3 --retry=3
 
-    - run: bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
+      - run: bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
         
