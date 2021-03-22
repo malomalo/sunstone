@@ -45,14 +45,14 @@ jobs:
     
     - name: Download Rails
       run: |
-        git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/build/rails
-        pushd ~/build/rails
-        sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/build/rails/activerecord/Rakefile
-        sed -i "s/t.warning = true/t.warning = false/g" ~/build/rails/activerecord/Rakefile
-        sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('$GITHUB_WORKSPACE'\)\)\nrequire 'sunstone'" ~/build/rails/activerecord/test/cases/helper.rb
-        rm ~/build/rails/Gemfile.lock
-        sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('$GITHUB_WORKSPACE'\\)\" ~/build/rails/Gemfile
-        cat ~/build/rails/Gemfile
+        git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/rails
+        pushd ~/rails
+        sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
+        sed -i "s/t.warning = true/t.warning = false/g" ~/rails/activerecord/Rakefile
+        sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('$GITHUB_WORKSPACE'\)\)\nrequire 'sunstone'" ~/rails/activerecord/test/cases/helper.rb
+        rm ~/rails/Gemfile.lock
+        sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('$GITHUB_WORKSPACE'\\)\" ~/rails/Gemfile
+        cat ~/rails/Gemfile
         bundle update --jobs=3 --retry=3
 
     - run: bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
