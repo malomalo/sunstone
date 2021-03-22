@@ -47,6 +47,7 @@ jobs:
         run: |
           git clone --branch ${{ matrix.rails }} https://github.com/rails/rails.git ~/rails
           pushd ~/rails
+          cat /home/runner/work/_temp/*.sh
           sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
           sed -i "s/t.warning = true/t.warning = false/g" ~/rails/activerecord/Rakefile
           sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\(ENV['GITHUB_WORKSPACE']\)\)\nrequire 'sunstone'" ~/rails/activerecord/test/cases/helper.rb
