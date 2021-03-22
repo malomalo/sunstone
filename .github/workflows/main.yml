@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0
+
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - run: bundle exec rake test
