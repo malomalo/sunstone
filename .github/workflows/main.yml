@@ -7,8 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  sunstone:
     runs-on: ubuntu-20.04
 
     steps:
@@ -21,3 +20,36 @@ jobs:
       - run: bundle
 
       - run: bundle exec rake test
+
+  rails-postgresql:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Install Postgresql
+      run: |
+        sudo apt-get install curl ca-certificates gnupg
+        curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        sudo apt-get update
+        sudo apt-get install postgresql-13
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0
+          
+    - uses: actions/checkout@v2
+    
+    - name: Download Rails
+      run: |
+        git clone --branch $RAILS_VERSION https://github.com/rails/rails.git ~/build/rails
+        pushd ~/build/rails
+        sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/build/rails/activerecord/Rakefile
+        sed -i "s/t.warning = true/t.warning = false/g" ~/build/rails/activerecord/Rakefile
+        sed -i "/require 'support\/connection'/a \$LOAD_PATH.unshift\(File.expand_path\('$GITHUB_WORKSPACE'\)\)\nrequire 'sunstone'" ~/build/rails/activerecord/test/cases/helper.rb
+        rm ~/build/rails/Gemfile.lock
+        sed -i \"/# Active Record./a gem 'sunstone', path: File.expand_path\\('$GITHUB_WORKSPACE'\\)\" ~/build/rails/Gemfile
+        cat ~/build/rails/Gemfile
+        bundle update --jobs=3 --retry=3
+
+    - run: bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
+        
