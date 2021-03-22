@@ -45,7 +45,7 @@ jobs:
     
       - name: Download Rails
         run: |
-          git clone --branch ${{ rails }} https://github.com/rails/rails.git ~/rails
+          git clone --branch ${{ matrix.rails }} https://github.com/rails/rails.git ~/rails
           pushd ~/rails
           sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
           sed -i "s/t.warning = true/t.warning = false/g" ~/rails/activerecord/Rakefile
