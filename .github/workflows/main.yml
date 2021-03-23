@@ -116,8 +116,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install mysql-server
           sudo systemctl start mysql.service
-          mysql -u root -p root -e "CREATE USER runner@localhost;"
-          mysql -u root -p root -e "GRANT ALL PRIVILEGES ON *.* TO 'runner'@'localhost' WITH GRANT OPTION;"
+          sudo mysql -u root -p -e "CREATE USER runner@localhost;"
+          sudo mysql -u root -p -e "GRANT ALL PRIVILEGES ON *.* TO 'runner'@'localhost' WITH GRANT OPTION;"
 
       - uses: ruby/setup-ruby@v1
         with:
