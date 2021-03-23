@@ -96,9 +96,9 @@ jobs:
       - run: |
           pushd ~/rails/activerecord
           bundle exec rake sqlite3:test
-          rm test/cases/db/*.sqlite3 test/fixtures/db/*.sqlite3
+          rm test/db/*.sqlite3 test/fixtures/*.sqlite3
           bundle exec rake sqlite3:isolated_test
-          rm test/cases/db/*.sqlite3 test/fixtures/db/*.sqlite3
+          rm test/db/*.sqlite3 test/fixtures/*.sqlite3
           bundle exec rake sqlite3_mem:test
         
   ar-mysql:
