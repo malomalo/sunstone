@@ -60,5 +60,6 @@ jobs:
 
       - run: |
           pushd ~/rails/activerecord
-          bundle exec rake db:postgresql:rebuild postgresql:test postgresql:isolated_test
+          bundle exec rake db:postgresql:rebuild postgresql:test
+          bundle exec rake db:postgresql:rebuild postgresql:isolated_test
         
