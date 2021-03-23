@@ -37,7 +37,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install postgresql-13
           sudo systemctl start postgresql@13-main.service
-          sudo -u postgres createuser runner
+          sudo -u postgres createuser runner --superuser
 
       - uses: ruby/setup-ruby@v1
         with:
