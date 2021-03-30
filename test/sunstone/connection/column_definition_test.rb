@@ -6,6 +6,7 @@ class Sunstone::Connection::ColumnDefinitionTest < ActiveSupport::TestCase
     create_table "ships", limit: 100 do |t|
       t.string   "name",          limit: 255
       t.integer  "guns",          limit: 8
+      t.json     "notes",         default: {}
       t.integer  "sailor_count"
     end
   end

@@ -9,9 +9,7 @@ Gem::Specification.new do |s|
   s.summary     = %q{A library for interacting with REST APIs}
   s.description = %q{A library for interacting with REST APIs. Similar to ActiveResource}
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
+  s.files         = Dir["LICENSE", "README.rdoc", "lib/**/*", "ext/**/*"]
   s.require_paths = ["lib"]
   s.required_ruby_version = '>= 2.6'
 
@@ -35,6 +33,7 @@ Gem::Specification.new do |s|
   # Runtime
   s.add_runtime_dependency 'msgpack'
   s.add_runtime_dependency 'cookie_store'
-  s.add_runtime_dependency 'activerecord', '>= 6.1.0'
+  s.add_runtime_dependency 'activerecord', '>= 6.1.3'
   s.add_runtime_dependency 'arel-extensions', '>= 6.1.0'
+  s.add_runtime_dependency 'activerecord-filter', '>= 6.1.0'
 end

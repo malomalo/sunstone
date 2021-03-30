@@ -46,7 +46,11 @@ class ActiveSupport::TestCase
       def integer(name, options={})
         @columns[name] = Column.new(name, :integer, options)
       end
-
+      
+      def json(name, options={})
+        @columns[name] = Column.new(name, :json, options)
+      end
+      
       def to_json
         json = @options.slice(:limit)
         json[:attributes] = {}

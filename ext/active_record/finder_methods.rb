@@ -212,7 +212,7 @@ module ActiveRecord
             ).reflections
           )
       )
-        if has_limit_or_offset?
+        if has_limit_or_offset? && !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
           limited_ids = limited_ids_for(relation)
           limited_ids.empty? ? relation.none! : relation.where!(primary_key => limited_ids)
         end
@@ -225,6 +225,7 @@ module ActiveRecord
         relation
       end
     end
+    
   end
 
 end
