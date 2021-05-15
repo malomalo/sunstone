@@ -1,3 +1,3 @@
 module Sunstone
-  VERSION = '6.1.0.2'
+  VERSION = '6.1.3'
 end
