@@ -29,8 +29,6 @@ module ActiveRecord
 
           response = @connection.get("/#{table_name}/schema")
 
-          version = Gem::Version.create(response['StandardAPI-Version'] || '5.0.0.4')
-
           @definitions[table_name] = JSON.parse(response.body)
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"

@@ -8,7 +8,7 @@ module ActiveRecord
         @name = name.freeze
         @sql_type_metadata = sql_type_metadata
         @null = options['null']
-        @default = (sql_type_metadata.type == :json ? JSON.generate(options['default']) : options['default'])
+        @default = options['default'] ? JSON.generate(options['default']) : options['default']
         @default_function = nil
         @collation = nil
         @table_name = nil
