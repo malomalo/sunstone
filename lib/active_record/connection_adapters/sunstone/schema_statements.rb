@@ -31,15 +31,7 @@ module ActiveRecord
 
           version = Gem::Version.create(response['StandardAPI-Version'] || '5.0.0.4')
 
-          @definitions[table_name] = if (version >= Gem::Version.create('6.0.0.29'))
-            schema = JSON.parse(response.body)
-            schema['columns'] = schema.delete('attributes')
-            schema
-          elsif (version >= Gem::Version.create('5.0.0.5'))
-            JSON.parse(response.body)
-          else
-            { 'columns' => JSON.parse(response.body), 'limit' => nil }
-          end
+          @definitions[table_name] = JSON.parse(response.body)
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
         end
@@ -50,9 +42,7 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          # First check for attributes and then for the deprecated columns field
-          # TODO: Remove after 0.3
-          definition(table_name)['attributes'] || definition(table_name)['columns']
+          definition(table_name)['columns']
         end
 
         # Returns the limit definition of the table (the maximum limit that can

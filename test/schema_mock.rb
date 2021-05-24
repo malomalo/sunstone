@@ -53,9 +53,9 @@ class ActiveSupport::TestCase
       
       def to_json
         json = @options.slice(:limit)
-        json[:attributes] = {}
+        json[:columns] = {}
         @columns.each do |name, column|
-          json[:attributes][name] = column.as_json
+          json[:columns][name] = column.as_json
         end
         json.to_json
       end
