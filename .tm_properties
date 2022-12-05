@@ -1,1 +1,1 @@
-exclude = '{$exclude,log,bin,tmp,.tm_properties,coverage}'
+exclude = '{$exclude,log,bin,tmp,.tm_properties,coverage,*.gem}'

@@ -41,7 +41,7 @@ module ActiveRecord
       end
 
       def insert_record(record, validate = true, raise = false, &block)
-        if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && (!owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating))
+        if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
           true
         elsif raise
           record.save!(validate: validate, &block)

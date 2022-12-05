@@ -132,25 +132,52 @@ module Sunstone
         if Thread.current[:sunstone_transaction_count] == 1 && !Thread.current[:sunstone_request_sent]
           Thread.current[:sunstone_request_sent] = request
         elsif Thread.current[:sunstone_request_sent]
-          log_mess = request.path.split('?', 2)
-          log_mess += Thread.current[:sunstone_request_sent].path.split('?', 2)
-          raise ActiveRecord::StatementInvalid, <<~MSG
+          message = <<~MSG
             Cannot send multiple request in a transaction.
-            
+        
             Trying to send:
-              #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }
-            
-            Already sent:
-              #{Thread.current[:sunstone_request_sent].method} #{log_mess[2]} #{(log_mess[3] && !log_mess[3].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[3])) : '' }
           MSG
+          
+          path_and_query = request.path.split('?', 2)
+          message << "  #{request.method} #{path_and_query[0]}"
+          if path_and_query[1]
+            if request['Query-Encoding'] == 'application/msgpack'
+              message << " " << MessagePack.unpack(CGI.unescape(path_and_query[1]))
+            else
+              message << " " << CGI.unescape(path_and_query[1])
+            end
+          end
+            
+          message << "\n\nAlready sent:\n"
+          path_and_query = Thread.current[:sunstone_request_sent].path.split('?', 2)
+          message << "  #{Thread.current[:sunstone_request_sent].method} #{path_and_query[0]}"
+          if path_and_query[1]
+            if request['Query-Encoding'] == 'application/msgpack'
+              message << " " << MessagePack.unpack(CGI.unescape(path_and_query[1]))
+            else
+              message << " " << CGI.unescape(path_and_query[1])
+            end
+          end
+
+          raise ActiveRecord::StatementInvalid, message
         else
           log_mess = request.path.split('?', 2)
-          raise ActiveRecord::StatementInvalid, <<~MSG
-            Cannot send multiple request in a transaction.
+          message = if request['Query-Encoding'] == 'application/msgpack'
+            <<~MSG
+              Cannot send multiple request in a transaction.
             
-            Trying to send:
-              #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }
-          MSG
+              Trying to send:
+                #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }
+            MSG
+          else
+              <<~MSG
+              Cannot send multiple request in a transaction.
+            
+              Trying to send:
+                #{request.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? CGI.unescape(log_mess[1]) : '' }
+            MSG
+          end
+          raise ActiveRecord::StatementInvalid, message
         end
       end
       

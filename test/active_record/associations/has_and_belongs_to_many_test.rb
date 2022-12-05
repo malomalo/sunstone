@@ -32,6 +32,21 @@ class ActiveRecord::Associations::HasAndBelongsToManyTest < ActiveSupport::TestC
     assert_equal [43], Ship.find(42).sailor_ids
   end
 
+  test '#create with habtm relationships of persisted records' do
+    webmock(:get, "/sailors", where: {id: 1}, limit: 1).to_return(
+      body: [{id: 1, name: 'Captain'}].to_json
+    )
+
+    req_stub = webmock(:post, '/ships').with(
+      body: {ship: {sailors_attributes: [{id: 1}]}}.to_json
+    ).to_return(
+      body: {id: 1, name: 'Armada Uno'}.to_json
+    )
+
+    assert Ship.create(sailors: [Sailor.find(1)])
+    assert_requested req_stub
+  end
+
   test '#update habtm relationships' do
     webmock(:get, "/ships", where: {id: 1}, limit: 1).to_return(
       body: [{id: 1, fleet_id: nil, name: 'Armada Uno'}].to_json
