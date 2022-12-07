@@ -2,7 +2,7 @@ module ActiveRecord
   module Calculations
     
     def pluck(*column_names)
-      if loaded? && (column_names.map(&:to_s) - @klass.attribute_names - @klass.attribute_aliases.keys).empty?
+      if loaded? && all_attributes?(column_names)
         return records.pluck(*column_names)
       end
       
@@ -14,10 +14,17 @@ module ActiveRecord
         return records.pluck(*column_names.map{|n| n.to_s.sub(/^#{klass.table_name}\./, "")})
       else
         klass.disallow_raw_sql!(column_names)
+        columns = arel_columns(column_names)
         relation = spawn
-        relation.select_values = column_names
-        result = skip_query_cache_if_necessary { klass.connection.select_all(relation.arel, nil) }
-        result.cast_values(klass.attribute_types)
+        relation.select_values = columns
+        result = skip_query_cache_if_necessary do
+          if where_clause.contradiction?
+            ActiveRecord::Result.empty
+          else
+            klass.connection.select_all(relation.arel, "#{klass.name} Pluck")
+          end
+        end
+        type_cast_pluck_values(result, columns)
       end
     end
 

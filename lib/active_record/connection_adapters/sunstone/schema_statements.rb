@@ -81,6 +81,35 @@ module ActiveRecord
         def column_name_for_operation(operation, node) # :nodoc:
           visitor.accept(node, collector).first[operation.to_sym]
         end
+        
+        # Given a set of columns and an ORDER BY clause, returns the columns for a SELECT DISTINCT.
+        # PostgreSQL, MySQL, and Oracle override this for custom DISTINCT syntax - they
+        # require the order columns appear in the SELECT.
+        #
+        #   columns_for_distinct("posts.id", ["posts.created_at desc"])
+        #
+        def columns_for_distinct(columns, orders) # :nodoc:
+          columns
+        end
+
+        def distinct_relation_for_primary_key(relation) # :nodoc:
+          values = columns_for_distinct(
+            relation.table[relation.primary_key],
+            relation.order_values
+          )
+
+          limited = relation.reselect(values).distinct!
+          limited_ids = select_rows(limited.arel, "SQL").map(&:last)
+
+          if limited_ids.empty?
+            relation.none!
+          else
+            relation.where!(relation.primary_key => limited_ids)
+          end
+
+          relation.limit_value = relation.offset_value = nil
+          relation
+        end
 
         # TODO: def encoding
 

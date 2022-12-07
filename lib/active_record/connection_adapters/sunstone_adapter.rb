@@ -85,8 +85,8 @@ module ActiveRecord
         @prepared_statement_status = Concurrent::ThreadLocalVar.new(false)
         @connection_parameters = connection_parameters
 
-        # @type_map = Type::HashLookupTypeMap.new
-        # initialize_type_map(type_map)
+        @type_map = Type::HashLookupTypeMap.new
+        initialize_type_map(@type_map)
       end
 
       def active?
@@ -180,13 +180,23 @@ module ActiveRecord
       end
       alias create insert
 
-      # Should be the defuat insert, but rails escapes if for SQL so we'll just
-      # catch the string "DEFATUL VALUES" in the visitor
-      # def empty_insert_statement_value
-      #   {}
-      # end
+      def reload_type_map
+        type_map.clear
+        initialize_type_map
+      end
 
       private
+
+      def type_map
+        @type_map ||= Type::HashLookupTypeMap.new.tap do |mapping|
+          initialize_type_map(mapping)
+        end
+      end
+      
+      def initialize_type_map(m = type_map)
+        self.class.initialize_type_map(m)
+        load_additional_types
+      end
 
       def initialize_type_map(m) # :nodoc:
         m.register_type 'boolean',    Type::Boolean.new

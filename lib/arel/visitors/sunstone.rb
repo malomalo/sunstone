@@ -8,10 +8,6 @@ module Arel
         accept(node, collector).value
       end
       
-      def preparable
-        false
-      end
-      
       private
       
       def visit_Arel_Nodes_SelectStatement o, collector
@@ -72,26 +68,12 @@ module Arel
           else
             collector.updates = {}
             
-            o.values.expr[0].each_with_index do |value, i|
-              k = value.value.name
-              if k.is_a?(Hash)
-                add_to_bottom_of_hash_or_array(k, value)
-                collector.updates.deep_merge!(k) { |key, v1, v2|
-                  if (v1.is_a?(Array) && v2.is_a?(Array))
-                    v2.each_with_index do |v, j|
-                      if v1[j].nil?
-                        v1[j] = v2[j]
-                      else
-                        v1[j].deep_merge!(v2[j]) unless v2[j].nil?
-                      end
-                    end
-                    v1
-                  else
-                    v2
-                  end
-                }
+            o.columns.map(&:name).zip(o.values.expr.first).to_h.each do |k, v|
+              collector.updates[k] = case v
+              when Nodes::SqlLiteral, Nodes::BindParam, ActiveModel::Attribute
+                visit(v, collector)
               else
-                collector.updates[k] = visit(value, collector)
+                v
               end
             end
           end
@@ -765,8 +747,13 @@ module Arel
       def visit_Arel_Nodes_Assignment o, collector
         case o.left
         when Arel::Nodes::UnqualifiedColumn
-          { visit(o.left.expr, collector) => visit(o.right, collector) }
-        when Arel::Attributes::Attribute, Arel::Nodes::BindParam
+          case o.right
+          when Arel::Attributes::Attribute, Arel::Nodes::BindParam, ActiveModel::Attribute
+            { visit(o.left.expr, collector) => visit(o.right, collector) }
+          else
+            { visit(o.left.expr, collector) => o.right }
+          end
+        when Arel::Attributes::Attribute, Arel::Nodes::BindParam, ActiveModel::Attribute
           { visit(o.left, collector) => visit(o.right, collector) }
         else
           collector = visit o.left, collector
@@ -968,6 +955,15 @@ module Arel
       alias :visit_Arel_Attributes_Time :visit_Arel_Attributes_Attribute
       alias :visit_Arel_Attributes_Boolean :visit_Arel_Attributes_Attribute
 
+      def visit_ActiveModel_Attribute(o, collector)
+        if o.value.is_a?(ActiveRecord::StatementCache::Substitute)
+          a = collector.add_bind(o)
+          o
+        else
+          o.value_for_database
+        end
+      end
+      
       def visit_Arel_Nodes_BindParam o, collector
         a = collector.add_bind(o.value)
         o.is_a?(Arel::Nodes::BindParam) ? o : a
@@ -1067,7 +1063,6 @@ module Arel
       
       def maybe_visit thing, collector
         return collector unless thing
-        collector << " "
         visit thing, collector
       end
     end

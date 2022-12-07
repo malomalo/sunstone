@@ -24,7 +24,14 @@ module Arel
       def substitute_binds hash, bvs
         if hash.is_a?(Array)
           hash.map do |v|
-            if v.is_a?(Arel::Nodes::BindParam)
+            if v.is_a?(ActiveRecord::Relation::QueryAttribute)
+              new_v = bvs.shift
+              if new_v.is_a?(ActiveRecord::Relation::QueryAttribute)
+                new_v.value_for_database
+              else
+                v.type.serialize(new_v)
+              end
+            elsif v.is_a?(Arel::Nodes::BindParam)
               bvs.shift#.value_for_database
             elsif v.is_a?(Hash) || v.is_a?(Array)
               substitute_binds(v, bvs)
@@ -35,7 +42,14 @@ module Arel
         elsif hash.is_a?(Hash)
           newhash = {}
           hash.each do |k, v|
-            if v.is_a?(Arel::Nodes::BindParam)
+            if v.is_a?(ActiveRecord::Relation::QueryAttribute)
+              new_v = bvs.shift
+              newhash[k] = if new_v.is_a?(ActiveRecord::Relation::QueryAttribute)
+                new_v.value_for_database
+              else
+                v.type.serialize(new_v)
+              end
+            elsif v.is_a?(Arel::Nodes::BindParam)
               newhash[k] = bvs.shift || v.value.value_for_database
             elsif v.is_a?(Hash)
               newhash[k] = substitute_binds(v, bvs)
@@ -47,9 +61,16 @@ module Arel
           end
           newhash
         elsif hash.is_a?(Arel::Nodes::BindParam)
-          bvs.shift || hash.value.value_for_database
+          bvs.shift
+        elsif hash.is_a?(ActiveRecord::Relation::QueryAttribute)
+          new_v = bvs.shift
+          if new_v.is_a?(ActiveRecord::Relation::QueryAttribute)
+            new_v.value_for_database
+          else
+            v.type.serialize(new_v)
+          end
         else
-          bvs.shift || hash.value.value_for_database
+          bvs.shift
         end
       end
 

@@ -79,17 +79,20 @@ module ActiveRecord
     # Creates a record with values matching those of the instance attributes
     # and returns its id.
     def _create_record(attribute_names = self.attribute_names)
-      attribute_names &= self.class.column_names
+      attribute_names = attributes_for_create(attribute_names)
       attributes_values = attributes_with_values(attribute_names)
-
+      
       new_id = self.class._insert_record(attributes_values)
 
+      self.id ||= new_id if @primary_key
       @new_record = false
+      @previously_new_record = true
+      
+      yield(self) if block_given?
       
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         new_id
       else
-        self.id ||= new_id if self.class.primary_key
         id
       end
     end
