@@ -32,7 +32,7 @@ jobs:
 
   ar-postgresql:
     name: ActiveRecord PostgresQL Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         rails:
@@ -81,12 +81,11 @@ jobs:
           
   ar-sqlite:
     name: ActiveRecord SQLite Test
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         rails:
           - v7.0.4
-        
-    runs-on: ubuntu-20.04
 
     steps:
       - uses: ruby/setup-ruby@v1
@@ -118,12 +117,11 @@ jobs:
         
   ar-mysql:
     name: ActiveRecord MySQL Test
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         rails:
           - v7.0.4
-        
-    runs-on: ubuntu-20.04
 
     steps:
       - name: Install MySQL
