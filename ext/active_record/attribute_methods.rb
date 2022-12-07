@@ -97,7 +97,13 @@ module ActiveRecord
             []
           else
             association.target.select { |r| !r.destroyed? }.map do |record|
-              record.send(:attributes_with_values, record.send(:attribute_names_for_partial_writes) + (record.new_record? ? [] : [record.class.primary_key]))
+              record.send(
+                :attributes_with_values,
+                record.new_record? ?
+                  record.send(:attribute_names_for_partial_inserts)
+                  :
+                  record.send(:attribute_names_for_partial_updates) + [record.class.primary_key]
+                )
             end
           end
         

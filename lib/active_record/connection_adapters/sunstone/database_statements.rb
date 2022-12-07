@@ -28,18 +28,16 @@ module ActiveRecord
           sar.compile(binds)
         end
         
-        def to_sar_and_binds(arel_or_sar_string, binds = []) # :nodoc:
+        def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil) # :nodoc:
           if arel_or_sar_string.respond_to?(:ast)
             unless binds.empty?
               raise "Passing bind parameters with an arel AST is forbidden. " \
                 "The values must be stored on the AST directly"
             end
             sar = visitor.accept(arel_or_sar_string.ast, collector)
-            # puts ['a', sar.freeze, sar.binds].map(&:inspect)
-            [sar.freeze, sar.binds]
+            [sar.freeze, sar.binds, false]
           else
-            # puts ['b',arel_or_sar_string.dup.freeze, binds].map(&:inspect)
-            [arel_or_sar_string.dup.freeze, binds]
+            [arel_or_sar_string.dup.freeze, binds, false]
           end
         end
         
@@ -79,10 +77,11 @@ module ActiveRecord
         end
 
         # Returns an ActiveRecord::Result instance.
-        def select_all(arel, name = nil, binds = [], preparable: nil)
+        def select_all(arel, name = nil, binds = [], preparable: nil, async: false)
           arel = arel_from_relation(arel)
-          sar, binds = to_sar_and_binds(arel, binds)
-          select(sar, name, binds)
+          sar, binds, preparable = to_sar_and_binds(arel, binds, preparable)
+          
+          select(sar, name, binds, prepare: prepared_statements && preparable, async: async && FutureResult::SelectAll)
         end
 
         def exec_query(arel, name = 'SAR', binds = [], prepare: false)
@@ -96,7 +95,7 @@ module ActiveRecord
             requested_limit = if limit_bind_index
               type_casted_binds[limit_bind_index]
             else
-              arel.limit&.value&.value_for_database
+              arel.limit
             end
 
             if allowed_limit.nil?

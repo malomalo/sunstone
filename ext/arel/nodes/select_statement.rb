@@ -4,9 +4,9 @@ module Arel
 
       attr_accessor :eager_load
 
-      def initialize(cores = [SelectCore.new])
+      def initialize(relation = nil)
         super()
-        @cores          = cores
+        @cores          = [SelectCore.new(relation)]
         @orders         = []
         @limit          = nil
         @lock           = nil
@@ -36,7 +36,7 @@ module Arel
           self.with == other.with &&
           self.eager_load == other.eager_load
       end
-
+      alias :== :eql?
     end
   end
 end

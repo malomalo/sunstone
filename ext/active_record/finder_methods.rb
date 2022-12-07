@@ -6,7 +6,8 @@ module ActiveRecord
   
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
-          ka = table.associated_table(key, &block).predicate_builder.expand_from_hash(value.stringify_keys)
+          ka = table.associated_table(key, &block)
+                 .predicate_builder.expand_from_hash(value.stringify_keys)
           if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
@@ -23,11 +24,8 @@ module ActiveRecord
           # PriceEstimate.where(estimate_of: treasure)
           associated_table = table.associated_table(key)
           if associated_table.polymorphic_association?
-            case value.is_a?(Array) ? value.first : value
-            when Base, Relation
-              value = [value] unless value.is_a?(Array)
-              klass = PolymorphicArrayValue
-            end
+            value = [value] unless value.is_a?(Array)
+            klass = PolymorphicArrayValue
           elsif associated_table.through_association?
             next associated_table.predicate_builder.expand_from_hash(
               associated_table.primary_key => value
@@ -36,7 +34,9 @@ module ActiveRecord
 
           klass ||= AssociationQueryValue
           queries = klass.new(associated_table, value).queries.map! do |query|
-            expand_from_hash(query)
+            # If the query produced is identical to attributes don't go any deeper.
+            # Prevents stack level too deep errors when association and foreign_key are identical.
+            query == attributes ? self[key, value] : expand_from_hash(query)
           end
 
           grouping_queries(queries)
@@ -202,7 +202,7 @@ module ActiveRecord
         relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
       end
 
-      if eager_loading && !(
+      if eager_loading && has_limit_or_offset? && !(
           using_limitable_reflections?(join_dependency.reflections) &&
           using_limitable_reflections?(
             construct_join_dependency(
@@ -211,12 +211,12 @@ module ActiveRecord
               ), nil
             ).reflections
           )
-      )
-        if has_limit_or_offset? && !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-          limited_ids = limited_ids_for(relation)
-          limited_ids.empty? ? relation.none! : relation.where!(primary_key => limited_ids)
+        )
+        if !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          relation = skip_query_cache_if_necessary do
+            klass.connection.distinct_relation_for_primary_key(relation)
+          end
         end
-        relation.limit_value = relation.offset_value = nil
       end
 
       if block_given?
