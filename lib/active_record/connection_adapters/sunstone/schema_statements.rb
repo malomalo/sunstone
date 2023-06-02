@@ -28,7 +28,6 @@ module ActiveRecord
           end
 
           response = @connection.get("/#{table_name}/schema")
-
           @definitions[table_name] = JSON.parse(response.body)
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
@@ -40,7 +39,9 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          definition(table_name)['columns']
+          # TODO: settle on schema, I think we've switched to attributes, so
+          # columns can be removed soon?
+          definition(table_name)['attributes'] || definition(table_name)['columns']
         end
 
         # Returns the limit definition of the table (the maximum limit that can

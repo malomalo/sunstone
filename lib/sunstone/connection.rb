@@ -4,7 +4,7 @@
 module Sunstone
   class Connection
 
-    attr_reader :api_key, :host, :port, :use_ssl
+    attr_reader :api_key, :host, :port, :use_ssl, :prefix
 
     # Initialize a connection a Sunstone API server.
     #
@@ -31,7 +31,7 @@ module Sunstone
         self.instance_variable_set(:"@#{key}", config[key])
       end
 
-      @connection = Net::HTTP.new(host, port)
+      @connection = Net::HTTP.new(host, port || (use_ssl ? 443 : 80))
       @connection.max_retries         = 0
       @connection.open_timeout        = 5
       @connection.read_timeout        = 30

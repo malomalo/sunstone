@@ -13,11 +13,11 @@ module ActiveRecord
           #
           # +value+ The raw input, as provided from the database.
           def deserialize(value)
-            value.nil? ? nil : Base64.strict_decode64(value)            
+            value.nil? ? nil : Base64.strict_decode64(value)
           end
           
-          # Casts a value from the ruby type to a type that the database knows how
-          # to understand. The returned value from this method should be a
+          # Casts a value from the ruby type to a type that the database knows
+          # how to understand. The returned value from this method should be a
           # +String+, +Numeric+, +Date+, +Time+, +Symbol+, +true+, +false+, or
           # +nil+.
           def serialize(value)
