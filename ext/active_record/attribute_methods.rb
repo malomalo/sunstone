@@ -1,3 +1,6 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+
 module ActiveRecord
   module AttributeMethods
 
@@ -25,6 +28,16 @@ module ActiveRecord
       end
 
       attrs
+    end
+
+    # Filters out the virtual columns and also primary keys, from the attribute names, when the primary
+    # key is to be generated (e.g. the id attribute has no value).
+    def attributes_for_create(attribute_names)
+      attribute_names &= self.class.column_names
+      attribute_names.delete_if do |name|
+        (pk_attribute?(name) && id.nil?) ||
+          column_for_attribute(name).virtual?
+      end
     end
 
     def add_attributes_for_belongs_to_association(reflection, attrs)

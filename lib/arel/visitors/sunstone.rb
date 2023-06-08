@@ -61,27 +61,34 @@ module Arel
         collector.request_type  = Net::HTTP::Post
         collector.table         = o.relation.name
         collector.operation     = :insert
-        
+
         if o.values
-          if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
-            collector.updates = {}
-          else
-            collector.updates = {}
-            
-            o.columns.map(&:name).zip(o.values.expr.first).to_h.each do |k, v|
-              collector.updates[k] = case v
-              when Nodes::SqlLiteral, Nodes::BindParam, ActiveModel::Attribute
-                visit(v, collector)
-              else
-                v
-              end
-            end
-          end
+          values = visit(o.values, collector)
+          collector.updates = o.columns.map(&:name).zip(values).to_h
         end
-        
+
         collector
       end
-      
+
+      def visit_Arel_Nodes_ValuesList o, collector
+        o.rows[0].map do |v|
+          visit_subrelation v, collector
+        end
+      end
+
+      def visit_subrelation v, collector
+        case v
+        # when Nodes::SqlLiteral, Nodes::BindParam, ActiveModel::Attribute
+        #   visit(v, collector)
+        when Array
+          v.map { |v2| visit_subrelation v2, collector }
+        when Hash
+          v.transform_values { |v2| visit_subrelation v2, collector }
+        else
+          visit(v, collector)
+        end
+      end
+
       def find_bottom(hash)
         if hash.is_a?(Hash)
           if hash.values.first.is_a?(Array) || hash.values.first.is_a?(Hash)
@@ -748,10 +755,12 @@ module Arel
         case o.left
         when Arel::Nodes::UnqualifiedColumn
           case o.right
-          when Arel::Attributes::Attribute, Arel::Nodes::BindParam, ActiveModel::Attribute
-            { visit(o.left.expr, collector) => visit(o.right, collector) }
+          when Array
+            { visit(o.left.expr, collector) => o.right.map { |i| i.transform_values { |v| visit(v, collector) } } }
+          when Hash
+            { visit(o.left.expr, collector) => o.right.transform_values { |v| visit(v, collector) } }
           else
-            { visit(o.left.expr, collector) => o.right }
+            { visit(o.left.expr, collector) => visit(o.right, collector) }
           end
         when Arel::Attributes::Attribute, Arel::Nodes::BindParam, ActiveModel::Attribute
           { visit(o.left, collector) => visit(o.right, collector) }

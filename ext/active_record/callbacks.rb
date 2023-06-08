@@ -1,3 +1,6 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+
 module ActiveRecord
   module Callbacks
     private

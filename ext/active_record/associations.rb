@@ -1,5 +1,9 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+
 require 'active_record'
 require 'active_record/associations'
+
 module ActiveRecord
   module Associations
     module ClassMethods
