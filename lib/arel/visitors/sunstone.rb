@@ -3,24 +3,24 @@ require 'arel/visitors/visitor'
 module Arel
   module Visitors
     class Sunstone < Arel::Visitors::Visitor
-      
+
       def compile(node, collector = Arel::Collectors::Sunstone.new)
         accept(node, collector).value
       end
-      
+
       private
-      
+
       def visit_Arel_Nodes_SelectStatement o, collector
         collector.table = o.cores.first.source.left.name
 
         collector = o.cores.inject(collector) { |c,x|
           visit_Arel_Nodes_SelectCore(x, c)
         }
-        
+
         if !o.orders.empty?
           collector.order = o.orders.map { |x| visit(x, collector) }
         end
-        
+
         collector = maybe_visit o.limit, collector
         collector = maybe_visit o.offset, collector
         collector = maybe_visit o.eager_load, collector
@@ -63,8 +63,12 @@ module Arel
         collector.operation     = :insert
 
         if o.values
-          values = visit(o.values, collector)
-          collector.updates = o.columns.map(&:name).zip(values).to_h
+          if o.values.is_a?(Arel::Nodes::SqlLiteral) && o.values == 'DEFAULT VALUES'
+            collector.updates = {}
+          else
+            values = visit(o.values, collector)
+            collector.updates = o.columns.map(&:name).zip(values).to_h
+          end
         end
 
         collector
@@ -78,8 +82,6 @@ module Arel
 
       def visit_subrelation v, collector
         case v
-        # when Nodes::SqlLiteral, Nodes::BindParam, ActiveModel::Attribute
-        #   visit(v, collector)
         when Array
           v.map { |v2| visit_subrelation v2, collector }
         when Hash
@@ -105,10 +107,10 @@ module Arel
           end
         end
       end
-      
+
       def add_to_bottom_of_hash_or_array(hash, value)
         hash = find_bottom(hash)
-        
+
         if hash.is_a?(Hash)
           nkey = hash.keys.first
           nvalue = hash.values.first
@@ -154,26 +156,26 @@ module Arel
       #
       def visit_Arel_Nodes_UpdateStatement o, collector
         collector.request_type  = Net::HTTP::Patch
-        
+
         collector.table = o.relation.name
         collector.operation     = :update
-        
+
         # collector.id = o.wheres.first.children.first.right
         if !o.wheres.empty?
           collector.where = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
             w.is_a?(Array) ? c += w : c << w
           }
         end
-        
+
         if collector.where.size != 1 && collector.where.first.size != 1 && !collector.where.first['id']
           raise 'Upsupported'
         end
-        
+
         collector.where = collector.where.first
-        
+
         if o.values
           collector.updates = {}
-          
+
           o.values.map { |x| visit(x, collector) }.each do |value|
             value.each do |key, v|
               if key.is_a?(Hash)
@@ -198,7 +200,7 @@ module Arel
             end
           end
         end
-        
+
         collector
       end
       #
@@ -433,7 +435,7 @@ module Arel
       def visit_Arel_Nodes_Descending o, collector
         { visit(o.expr, collector) => :desc }
       end
-      
+
       def visit_Arel_Nodes_RandomOrdering o, collector
         :random
       end
@@ -475,7 +477,7 @@ module Arel
       #
       def visit_Arel_Nodes_Count o, collector
         collector.operation = :calculate
-        
+
         collector.columns   ||= []
         collector.columns   << {:count => (o.expressions.first.is_a?(Arel::Attributes::Attribute) ? o.expressions.first.name : o.expressions.first) }
         # collector.columns   = visit o.expressions.first, collector
@@ -483,7 +485,7 @@ module Arel
 
       def visit_Arel_Nodes_Sum o, collector
         collector.operation = :calculate
-        
+
         collector.columns   ||= []
         collector.columns   << {:sum => (o.expressions.first.is_a?(Arel::Attributes::Attribute) ? o.expressions.first.name : o.expressions.first) }
         # collector.columns   = visit o.expressions.first, collector
@@ -491,7 +493,7 @@ module Arel
 
       def visit_Arel_Nodes_Max o, collector
         collector.operation = :calculate
-        
+
         collector.columns   ||= []
         if o.expressions.first.is_a?(Arel::Attributes::Attribute)
           relation = o.expressions.first.relation
@@ -693,11 +695,11 @@ module Arel
         end
       end
       alias_method :visit_Arel_Nodes_HomogeneousIn, :visit_Arel_Nodes_In
-      
+
       def visit_Arel_Nodes_NotIn o, collector
         key = visit(o.left, collector)
         value = {not_in: visit(o.right, collector)}
-        
+
         if hash.is_a?(Hash)
           add_to_bottom_of_hash_or_array(key, value)
           key
@@ -705,10 +707,10 @@ module Arel
           {key => value}
         end
       end
-      
+
       # You merge a into b if a keys do not colid with b keys
       def mergeable?(hash_a, hash_b)
-        
+
         hash_a.each do |key, value_a|
           #TODO: one day maybe just use symbols for all keys?
           if hash_b.has_key?(key.to_sym) || hash_b.has_key?(key.to_s)
@@ -722,7 +724,7 @@ module Arel
         end
         true
       end
-      
+
       def visit_Arel_Nodes_And o, collector
         ors = []
 
@@ -737,16 +739,16 @@ module Arel
             ors << value
           end
         end
-        
+
         result = []
         ors.each_with_index do |c, i|
           result << c
           result << 'AND' if ors.size != i + 1
         end
-        
+
         result.size == 1 ? result.first : result
       end
-      
+
       def visit_Arel_Nodes_Or o, collector
         [visit(o.left, collector), 'OR', visit(o.right, collector)]
       end
@@ -779,7 +781,7 @@ module Arel
         okey.merge!(value)
         hash
       end
-      
+
       def add_to_bottom_of_hash(hash, value)
         okey = hash
         while okey.is_a?(Hash) && (okey.values.first.is_a?(Hash) || okey.values.first.is_a?(Array))
@@ -794,11 +796,11 @@ module Arel
         okey[nkey] = { nvalue => value }
         hash
       end
-      
+
       def visit_Arel_Nodes_Equality o, collector
         key = visit(o.left, collector)
         value = (o.right.nil? ? nil : visit(o.right, collector))
-        
+
         if key.is_a?(Hash)
           add_to_bottom_of_hash(key, {eq: value})
         elsif o.left.class.name == 'Arel::Attributes::Key'
@@ -807,7 +809,7 @@ module Arel
           { key => value }
         end
       end
-      
+
       def visit_Arel_Nodes_TSMatch(o, collector)
         key = visit(o.left, collector)
         value = { ts_match: (o.right.nil? ? nil : visit(o.right, collector)) }
@@ -823,11 +825,11 @@ module Arel
           hash
         end
       end
-      
+
       def visit_Arel_Nodes_TSVector(o, collector)
         visit(o.attribute, collector)
       end
-      
+
       def visit_Arel_Nodes_TSQuery(o, collector)
         if o.language
           [visit(o.expression, collector), visit(o.language, collector)]
@@ -835,11 +837,11 @@ module Arel
           visit(o.expression, collector)
         end
       end
-      
+
       def visit_Arel_Nodes_HasKey o, collector
         key = visit(o.left, collector)
         value = {has_key: (o.right.nil? ? nil : o.right.to_s)}
-        
+
         if key.is_a?(Hash)
           okey = key
           while okey.values.first.is_a?(Hash)
@@ -856,7 +858,7 @@ module Arel
       def visit_Arel_Nodes_HasKeys o, collector
         key = visit(o.left, collector)
         value = { has_keys: visit(o.right, collector) }
-        
+
         if key.is_a?(Hash)
           okey = key
           while okey.values.first.is_a?(Hash)
@@ -873,7 +875,7 @@ module Arel
       def visit_Arel_Nodes_HasAnyKey o, collector
         key = visit(o.left, collector)
         value = { has_any_key: visit(o.right, collector) }
-        
+
         if key.is_a?(Hash)
           okey = key
           while okey.values.first.is_a?(Hash)
@@ -903,11 +905,11 @@ module Arel
       def visit_Arel_Nodes_UnqualifiedColumn o, collector
         o.name
       end
-      
+
       def visit_Arel_Attributes_Cast(o, collector)
         visit(o.relation, collector) # No casting yet
       end
-      
+
       def visit_Arel_Attributes_Key o, collector
         "#{visit(o.relation, collector)}.#{o.name}"
       end
@@ -947,7 +949,7 @@ module Arel
       # def visit_Arel_Attributes_EmptyRelation o, collector, top=true
       #   o.for_write ? "#{o.name}_attributes" : o.name
       # end
-      
+
       def visit_Arel_Attributes_Attribute o, collector
         join_name = o.relation.table_alias || o.relation.name
 
@@ -972,7 +974,7 @@ module Arel
           o.value_for_database
         end
       end
-      
+
       def visit_Arel_Nodes_BindParam o, collector
         a = collector.add_bind(o.value)
         o.is_a?(Arel::Nodes::BindParam) ? o : a
@@ -1069,7 +1071,7 @@ module Arel
           collector
         end
       end
-      
+
       def maybe_visit thing, collector
         return collector unless thing
         visit thing, collector
