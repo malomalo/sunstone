@@ -17,7 +17,25 @@ module ActiveRecord
         end
       end
     end
-    
+
+    # Updates the attributes of the model from the passed-in hash and saves the
+    # record, all wrapped in a transaction. If the object is invalid, the saving
+    # will fail and false will be returned.
+    def update(attributes)
+      @sunstone_updating = :updating
+      Thread.current[:sunstone_updating_model] = self
+
+      # The following transaction covers any possible database side-effects of the
+      # attributes assignment. For example, setting the IDs of a child collection.
+      with_transaction_returning_status do
+        assign_attributes(attributes)
+        save
+      end
+    ensure
+      @sunstone_updating = false
+      Thread.current[:sunstone_updating_model] = nil
+    end
+
     def update!(attributes)
       @no_save_transaction = true
       with_transaction_returning_status do
@@ -33,8 +51,8 @@ module ActiveRecord
     def create_or_update(**, &block)
       _raise_readonly_record_error if readonly?
       return false if destroyed?
-      
-      @updating = new_record? ? :creating : :updating
+
+      @sunstone_updating = new_record? ? :creating : :updating
       Thread.current[:sunstone_updating_model] = self
 
       result = new_record? ? _create_record(&block) : _update_record(&block)
@@ -72,17 +90,18 @@ module ActiveRecord
       end
       raise ActiveRecord::RecordInvalid
     ensure
-      @updating = false
+      @sunstone_updating = false
       Thread.current[:sunstone_updating_model] = nil
     end
-    
+
     # Creates a record with values matching those of the instance attributes
     # and returns its id.
     def _create_record(attribute_names = self.attribute_names)
       attribute_names = attributes_for_create(attribute_names)
-      attributes_values = attributes_with_values(attribute_names)
-      
-      new_id = self.class._insert_record(attributes_values)
+
+      new_id = self.class._insert_record(
+        attributes_with_values(attribute_names)
+      )
 
       self.id ||= new_id if @primary_key
       @new_record = false
@@ -96,15 +115,16 @@ module ActiveRecord
         id
       end
     end
-    
+
     def _update_record(attribute_names = self.attribute_names)
+      attribute_names = attributes_for_update(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
 
       if attribute_values.empty?
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record( attribute_values, self.class.primary_key => id_in_database )
+        affected_rows = self.class._update_record( attribute_values, _primary_key_constraints_hash)
         @_trigger_update_callback = affected_rows == 1
       end
 

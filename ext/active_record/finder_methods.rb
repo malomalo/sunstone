@@ -1,14 +1,18 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+
 module ActiveRecord
   class PredicateBuilder # :nodoc:
 
     def expand_from_hash(attributes, &block)
       return ["1=0"] if attributes.empty?
-  
+
       attributes.flat_map do |key, value|
         if value.is_a?(Hash) && !table.has_column?(key)
           ka = table.associated_table(key, &block)
-                 .predicate_builder.expand_from_hash(value.stringify_keys)
-          if self.send(:table).instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+            .predicate_builder.expand_from_hash(value.stringify_keys)
+
+          if self.table.instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
                 k.left = Arel::Attributes::Relation.new(k.left, key)

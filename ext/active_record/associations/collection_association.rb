@@ -1,3 +1,5 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
 module ActiveRecord
   module Associations
     class CollectionAssociation
@@ -8,7 +10,7 @@ module ActiveRecord
 
         if owner.new_record?
           replace_records(other_array, original_target)
-        elsif owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
+        elsif owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
           replace_common_records_in_memory(other_array, original_target)
 
           # Remove from target
@@ -41,7 +43,7 @@ module ActiveRecord
       end
 
       def insert_record(record, validate = true, raise = false, &block)
-        if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@updating) && owner.instance_variable_get(:@updating)
+        if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
           true
         elsif raise
           record.save!(validate: validate, &block)
@@ -68,29 +70,5 @@ module ActiveRecord
 
     end
 
-  end
-end
-
-module ActiveRecord
-  module Persistence
-    
-    # Updates the attributes of the model from the passed-in hash and saves the
-    # record, all wrapped in a transaction. If the object is invalid, the saving
-    # will fail and false will be returned.
-    def update(attributes)
-      @updating = :updating
-      Thread.current[:sunstone_updating_model] = self
-      
-      # The following transaction covers any possible database side-effects of the
-      # attributes assignment. For example, setting the IDs of a child collection.
-      with_transaction_returning_status do
-        assign_attributes(attributes)
-        save
-      end
-    ensure
-      @updating = false
-      Thread.current[:sunstone_updating_model] = nil
-    end
-    
   end
 end

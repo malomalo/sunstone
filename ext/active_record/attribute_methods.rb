@@ -1,14 +1,15 @@
+# The last ref that this code was synced with Rails
+# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+
 module ActiveRecord
   module AttributeMethods
-    
+
     protected
-    
+
     # Returns a Hash of the Arel::Attributes and attribute values that have been
     # typecasted for use in an Arel insert/update method.
     def attributes_with_values(attribute_names)
-      attrs = attribute_names.index_with do |name|
-        _read_attribute(name)
-      end
+      attrs = attribute_names.index_with { |name| @attributes[name] }
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         self.class.reflect_on_all_associations.each do |reflection|
@@ -25,17 +26,17 @@ module ActiveRecord
           end
         end
       end
-      
+
       attrs
     end
-    
+
     def add_attributes_for_belongs_to_association(reflection, attrs)
       key = :"add_attributes_for_belongs_to_association_#{reflection.name}"
       @_already_called ||= {}
       return if @_already_called[key]
       @_already_called[key]=true
       @_already_called[:"autosave_associated_records_for_#{reflection.name}"] = true
-      
+
       association = association_instance_get(reflection.name)
       record      = association && association.load_target
       if record && !record.destroyed?
@@ -51,14 +52,14 @@ module ActiveRecord
         end
       end
     end
-    
+
     def add_attributes_for_has_one_association(reflection, attrs)
       key = :"add_attributes_for_has_one_association#{reflection.name}"
       @_already_called ||= {}
       return if @_already_called[key]
       @_already_called[key]=true
       @_already_called[:"autosave_associated_records_for_#{reflection.name}"] = true
-      
+
       association = association_instance_get(reflection.name)
       record      = association && association.load_target
 
@@ -80,7 +81,7 @@ module ActiveRecord
         end
       end
     end
-    
+
     def add_attributes_for_collection_association(reflection, attrs, arel_table=nil)
       key = :"add_attributes_for_collection_association#{reflection.name}"
       @_already_called ||= {}
@@ -106,7 +107,7 @@ module ActiveRecord
                 )
             end
           end
-        
+
           association.instance_variable_set(:@sunstone_changed, false)
         end
 
@@ -114,6 +115,6 @@ module ActiveRecord
         association.reset_scope if association.respond_to?(:reset_scope)
       end
     end
-    
+
   end
 end
