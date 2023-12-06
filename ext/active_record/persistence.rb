@@ -124,7 +124,7 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record( attribute_values, _primary_key_constraints_hash)
+        affected_rows = self.class._update_record( attribute_values, _query_constraints_hash)
         @_trigger_update_callback = affected_rows == 1
       end
 
