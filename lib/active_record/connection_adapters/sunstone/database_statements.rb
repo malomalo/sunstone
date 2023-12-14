@@ -25,20 +25,33 @@ module ActiveRecord
           else
             sar = arel_or_sar_string
           end
+
           sar.compile(binds)
         end
         
         def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil) # :nodoc:
+          # Arel::TreeManager -> Arel::Node
           if arel_or_sar_string.respond_to?(:ast)
+            arel_or_sar_string = arel_or_sar_string.ast
+          end
+
+          if Arel.arel_node?(arel_or_sar_string) && !(String === arel_or_sar_string)
             unless binds.empty?
               raise "Passing bind parameters with an arel AST is forbidden. " \
                 "The values must be stored on the AST directly"
             end
-            sar = visitor.accept(arel_or_sar_string.ast, collector)
+            
+            sar = visitor.accept(arel_or_sar_string, collector)
             [sar.freeze, sar.binds, false]
           else
             [arel_or_sar_string.dup.freeze, binds, false]
           end
+        end
+        
+        def sar_for_insert(sql, pk, binds, returning)
+          # TODO: when StandardAPI supports returning we can do this; it might
+          # already need to investigate
+          to_sar_and_binds(sql, binds)
         end
         
         # This is used in the StatementCache object. It returns an object that
@@ -80,11 +93,26 @@ module ActiveRecord
         def select_all(arel, name = nil, binds = [], preparable: nil, async: false)
           arel = arel_from_relation(arel)
           sar, binds, preparable = to_sar_and_binds(arel, binds, preparable)
-          
+
           select(sar, name, binds, prepare: prepared_statements && preparable, async: async && FutureResult::SelectAll)
+        rescue ::RangeError
+          ActiveRecord::Result.empty(async: async)
+        end
+        
+        # Executes insert +sql+ statement in the context of this connection using
+        # +binds+ as the bind substitutes. +name+ is logged along with
+        # the executed +sql+ statement.
+        # Some adapters support the `returning` keyword argument which allows to control the result of the query:
+        # `nil` is the default value and maintains default behavior. If an array of column names is passed -
+        # the result will contain values of the specified columns from the inserted row.
+        #
+        # TODO: Add support for returning
+        def exec_insert(arel, name = nil, binds = [], pk = nil, sequence_name = nil, returning: nil)
+          sar, binds = sar_for_insert(arel, pk, binds, returning)
+          internal_exec_query(sar, name, binds)
         end
 
-        def exec_query(arel, name = 'SAR', binds = [], prepare: false)
+        def internal_exec_query(arel, name = 'SAR', binds = [], prepare: false, async: false, allow_retry: false, materialize_transactions: true)
           sars = []
           multiple_requests = arel.is_a?(Arel::Collectors::Sunstone)
           type_casted_binds = binds#type_casted_binds(binds)
@@ -112,11 +140,13 @@ module ActiveRecord
             sars.push(sar)
             log_mess = sar.path.split('?', 2)
             log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) do
-              response = @connection.send_request(sar)
-              if response.is_a?(Net::HTTPNoContent)
-                nil
-              else
-                JSON.parse(response.body)
+              with_raw_connection do |conn|
+                response = conn.send_request(sar)
+                if response.is_a?(Net::HTTPNoContent)
+                  nil
+                else
+                  JSON.parse(response.body)
+                end
               end
             end
           }
@@ -141,21 +171,21 @@ module ActiveRecord
           
           if sars[0].instance_variable_defined?(:@sunstone_calculation) && sars[0].instance_variable_get(:@sunstone_calculation)
             # this is a count, min, max.... yea i know..
-            ActiveRecord::Result.new(['all'], [result], {:all => type_map.lookup('integer', {})})
+            ActiveRecord::Result.new(['all'], [result], {:all => @type_map.lookup('integer', {})})
           elsif result.is_a?(Array)
             ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
           else
-            ActiveRecord::Result.new(result.keys, [result])
+            ActiveRecord::Result.new(result.keys, [result.values])
           end
         end
         
         def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
           sar, binds = to_sar_and_binds(arel, binds)
           value = exec_insert(sar, name, binds, pk, sequence_name)
+
+          return returning_column_values(value) unless returning.nil?
+
           id_value || last_inserted_id(value)
-          
-          # value = exec_insert(arel, name, binds, pk, sequence_name)
-          # id_value || last_inserted_id(value)
         end
         
         def update(arel, name = nil, binds = [])
@@ -169,6 +199,10 @@ module ActiveRecord
         def last_inserted_id(result)
           row = result.rows.first
           row && row['id']
+        end
+
+        def returning_column_values(result)
+          result.rows.first
         end
 
       end

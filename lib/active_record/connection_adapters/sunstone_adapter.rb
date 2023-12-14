@@ -17,27 +17,14 @@ require 'active_record/connection_adapters/sunstone/type/json'
 module ActiveRecord
   module ConnectionHandling # :nodoc:
 
-    VALID_SUNSTONE_CONN_PARAMS = [:url, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
-
+    def sunstone_adapter_class
+      ConnectionAdapters::SunstoneAPIAdapter
+    end
+    
     # Establishes a connection to the database that's used by all Active Record
     # objects
     def sunstone_connection(config)
-      conn_params = config.symbolize_keys
-      conn_params.delete_if { |_, v| v.nil? }
-
-      if conn_params[:url]
-        uri = URI.parse(conn_params.delete(:url))
-        conn_params[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
-        conn_params[:host]    ||= uri.host
-        conn_params[:port]    ||= uri.port
-        conn_params[:use_ssl] ||= (uri.scheme == 'https')
-      end
-
-      # Forward only valid config params to Sunstone::Connection
-      conn_params.slice!(*VALID_SUNSTONE_CONN_PARAMS)
-
-      client = ::Sunstone::Connection.new(conn_params)
-      ConnectionAdapters::SunstoneAPIAdapter.new(client, logger, conn_params, config)
+      sunstone_adapter_class.new(config)
     end
   end
 
@@ -54,6 +41,7 @@ module ActiveRecord
     #   <encoding></tt> call on the connection.
     class SunstoneAPIAdapter < AbstractAdapter
       ADAPTER_NAME = 'Sunstone'.freeze
+      VALID_SUNSTONE_CONN_PARAMS = [:url, :host, :port, :api_key, :use_ssl, :user_agent, :ca_cert]
 
       NATIVE_DATABASE_TYPES = {
         string:      { name: "string" },
@@ -61,6 +49,12 @@ module ActiveRecord
         json:        { name: "json" },
         boolean:     { name: "boolean" }
       }
+      
+      class << self
+        def new_client(conn_params)
+          ::Sunstone::Connection.new(conn_params)
+        end
+      end
 
       # include PostgreSQL::Quoting
       # include PostgreSQL::ReferentialIntegrity
@@ -72,35 +66,66 @@ module ActiveRecord
       def supports_statement_cache?
         false
       end
+      
+      def default_prepared_statements
+        false
+      end
 
-      def clear_cache!
+      def clear_cache!(new_connection: false)
         # TODO move @definitions to using @schema_cache
         @definitions = {}
       end
 
       # Initializes and connects a SunstoneAPI adapter.
-      def initialize(connection, logger, connection_parameters, config)
-        super(connection, logger, config.reverse_merge(prepared_statements: false))
+      def initialize(...)
+        super
 
-        @prepared_statement_status = Concurrent::ThreadLocalVar.new(false)
-        @connection_parameters = connection_parameters
+        conn_params = @config.compact
+        if conn_params[:url]
+          uri = URI.parse(conn_params.delete(:url))
+          conn_params[:api_key] ||= (uri.user ? CGI.unescape(uri.user) : nil)
+          conn_params[:host]    ||= uri.host
+          conn_params[:port]    ||= uri.port
+          conn_params[:use_ssl] ||= (uri.scheme == 'https')
+        end
 
-        @type_map = Type::HashLookupTypeMap.new
-        initialize_type_map(@type_map)
+        # Forward only valid config params to Sunstone::Connection
+        conn_params.slice!(*VALID_SUNSTONE_CONN_PARAMS)
+
+        @connection_parameters = conn_params
+
+        @max_identifier_length = nil
+        @type_map = nil
+        @raw_connection = nil
+      end
+
+      def url(path=nil)
+        "http#{@connection_parameters[:use_ssl] ? 's' : ''}://#{@connection_parameters[:host]}#{@connection_parameters[:port] != 80 ? (@connection_parameters[:port] == 443 && @connection_parameters[:use_ssl] ? '' : ":#{@connection_parameters[:port]}") : ''}#{path}"
       end
 
       def active?
-        @connection.active?
+        @connection&.active?
       end
 
-      def reconnect!
+      def load_type_map
+        @type_map = Type::HashLookupTypeMap.new
+        initialize_type_map(@type_map)
+      end
+      
+      def reconnect
         super
-        @connection.reconnect!
+        @raw_connection&.reconnect!
       end
 
       def disconnect!
         super
-        @connection.disconnect!
+        @raw_connection&.disconnect!
+        @raw_connection = nil
+      end
+
+      def discard! # :nodoc:
+        super
+        @raw_connection = nil
       end
 
       # Executes the delete statement and returns the number of rows affected.
@@ -137,8 +162,12 @@ module ActiveRecord
         JSON.parse(@connection.get("/configuration").body)
       end
 
+      def return_value_after_insert?(column) # :nodoc:
+        column.auto_populated?
+      end
+
       def lookup_cast_type_from_column(column) # :nodoc:
-        cast_type = type_map.lookup(column.sql_type, {
+        cast_type = @type_map.lookup(column.sql_type, {
           limit: column.limit,
           precision: column.precision,
           scale: column.scale
@@ -167,55 +196,63 @@ module ActiveRecord
         true
       end
 
-      # Executes an INSERT query and returns the new record's ID
-      #
-      # +id_value+ will be returned unless the value is nil, in
-      # which case the database will attempt to calculate the last inserted
-      # id and return that value.
-      #
-      # If the next id was calculated in advance (as in Oracle), it should be
-      # passed in as +id_value+.
-      def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
-        exec_insert(arel, name, binds, pk, sequence_name)
+      # Executes an INSERT query and returns a hash of the object and
+      # any updated relations. This is different from AR which returns an ID
+      def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [], returning: nil)
+        exec_insert(arel, name, binds, pk, sequence_name, returning: returning)
       end
       alias create insert
 
+      # Connects to a StandardAPI server and sets up the adapter depending
+      # on the connected server's characteristics.
+      def connect
+        @raw_connection = self.class.new_client(@connection_parameters)
+      end
+
+      def reconnect
+        @raw_connection&.reconnect!
+        connect unless @raw_connection
+      end
+
+      # Configures the encoding, verbosity, schema search path, and time zone of the connection.
+      # This is called by #connect and should not be called manually.
+      def configure_connection
+        reload_type_map
+      end
+
       def reload_type_map
-        type_map.clear
+        if @type_map
+          type_map.clear
+        else
+          @type_map = Type::HashLookupTypeMap.new
+        end
+
         initialize_type_map
       end
 
       private
-
-      def type_map
-        @type_map ||= Type::HashLookupTypeMap.new.tap do |mapping|
-          initialize_type_map(mapping)
-        end
-      end
       
-      def initialize_type_map(m = type_map)
-        self.class.initialize_type_map(m)
-        load_additional_types
+      def initialize_type_map(m = nil)
+        self.class.initialize_type_map(m || @type_map)
       end
 
-      def initialize_type_map(m) # :nodoc:
-        m.register_type 'boolean',    Type::Boolean.new
-        m.register_type 'string' do |_, options|
-          Type::String.new(**options.slice(:limit))
-        end
-        m.register_type 'integer' do |_, options|
-          Type::Integer.new(**options.slice(:limit))
-        end
-        m.register_type 'decimal' do |_, options|
-          Type::Decimal.new(**options.slice(:precision, :scale))
-        end
-        m.register_type 'binary' do |_, options|
+      def self.initialize_type_map(m) # :nodoc:
+        m.register_type               'boolean',    Type::Boolean.new
+        m.register_type               'binary'      do |_, options|
           Sunstone::Type::Binary.new(**options.slice(:limit))
         end
-
-        m.register_type 'datetime',   Sunstone::Type::DateTime.new
-        m.register_type 'json',       Sunstone::Type::Json.new
-        m.register_type 'uuid',       Sunstone::Type::Uuid.new
+        m.register_type               'datetime',   Sunstone::Type::DateTime.new
+        m.register_type               'decimal'     do |_, options|
+          Type::Decimal.new(**options.slice(:precision, :scale))
+        end
+        m.register_type               'integer'     do |_, options|
+          Type::Integer.new(**options.slice(:limit))
+        end
+        m.register_type               'json',       Sunstone::Type::Json.new
+        m.register_type               'string'      do |_, options|
+          Type::String.new(**options.slice(:limit))
+        end
+        m.register_type               'uuid',       Sunstone::Type::Uuid.new
 
         if defined?(Sunstone::Type::EWKB)
           m.register_type 'ewkb',       Sunstone::Type::EWKB.new
