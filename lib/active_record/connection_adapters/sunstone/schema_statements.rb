@@ -27,7 +27,7 @@ module ActiveRecord
             return @definitions[table_name]
           end
 
-          response = @connection.get("/#{table_name}/schema")
+          response = with_raw_connection { |conn| conn.get("/#{table_name}/schema") }
           @definitions[table_name] = JSON.parse(response.body)
         rescue ::Sunstone::Exception::NotFound
           raise ActiveRecord::StatementInvalid, "Table \"#{table_name}\" does not exist"
@@ -51,7 +51,7 @@ module ActiveRecord
         end
 
         def tables
-          JSON.parse(@connection.get('/tables').body)
+          JSON.parse(with_raw_connection { |conn| conn.get('/tables').body })
         end
 
         def views
@@ -64,7 +64,7 @@ module ActiveRecord
         end
 
         def lookup_cast_type(options)
-          type_map.lookup(options['type'], options.symbolize_keys)
+          @type_map.lookup(options['type'], options.symbolize_keys)
         end
 
         def fetch_type_metadata(options)

@@ -142,7 +142,7 @@ module Sunstone
           message << "  #{request.method} #{path_and_query[0]}"
           if path_and_query[1]
             if request['Query-Encoding'] == 'application/msgpack'
-              message << " " << MessagePack.unpack(CGI.unescape(path_and_query[1]))
+              message << " " << MessagePack.unpack(CGI.unescape(path_and_query[1])).inspect
             else
               message << " " << CGI.unescape(path_and_query[1])
             end

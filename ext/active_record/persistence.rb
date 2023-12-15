@@ -6,10 +6,12 @@ module ActiveRecord
       def rpc(name)
         define_method("#{name}!") do
           req = Net::HTTP::Post.new("/#{self.class.table_name}/#{CGI.escape(id.to_s)}/#{CGI.escape(name.to_s)}")
-          self.class.connection.instance_variable_get(:@connection).send_request(req) do |response|
-            JSON.parse(response.body).each do |k,v|
-              if self.class.column_names.include?(k)
-                @attributes.write_from_database(k, v)
+          self.class.connection.send(:with_raw_connection) do |conn|
+            conn.send_request(req) do |response|
+              JSON.parse(response.body).each do |k,v|
+                if self.class.column_names.include?(k)
+                  @attributes.write_from_database(k, v)
+                end
               end
             end
           end
@@ -58,7 +60,7 @@ module ActiveRecord
       result = new_record? ? _create_record(&block) : _update_record(&block)
 
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && result != 0
-        row_hash = result.rows.first
+        row_hash = result[0]
 
         seen = Hash.new { |h, parent_klass|
           h[parent_klass] = Hash.new { |i, parent_id|
@@ -69,10 +71,13 @@ module ActiveRecord
         model_cache = Hash.new { |h,klass| h[klass] = {} }
         parents = model_cache[self.class.base_class]
         
-        self.assign_attributes(row_hash.select{|k,v| self.class.column_names.include?(k.to_s) })
-        row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }.each do |relation_name, value|
-          assc = association(relation_name.to_sym)
-          assc.reset if assc.reflection.collection?
+        row_hash.each do |key, value|
+          if self.class.column_names.include?(key.to_s)
+            _write_attribute(key, value)
+          else
+            assc = association(key.to_sym)
+            assc.reset if assc.reflection.collection? # TODO: can load here if included
+          end
         end
 
         construct(self, row_hash.select{|k,v| !self.class.column_names.include?(k.to_s) }, seen, model_cache)
@@ -98,19 +103,28 @@ module ActiveRecord
     # and returns its id.
     def _create_record(attribute_names = self.attribute_names)
       attribute_names = attributes_for_create(attribute_names)
+      attribute_values = attributes_with_values(attribute_names)
 
-      new_id = self.class._insert_record(
-        attributes_with_values(attribute_names)
+      returning_columns = self.class._returning_columns_for_insert
+
+      returning_values = self.class._insert_record(
+        attribute_values,
+        returning_columns
       )
 
-      self.id ||= new_id if @primary_key
+      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        returning_columns.zip(returning_values).each do |column, value|
+          _write_attribute(column, value) if !_read_attribute(column)
+        end if returning_values
+      end
+
       @new_record = false
       @previously_new_record = true
       
       yield(self) if block_given?
       
       if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        new_id
+        returning_values
       else
         id
       end
@@ -124,7 +138,7 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record( attribute_values, _primary_key_constraints_hash)
+        affected_rows = self.class._update_record(attribute_values, _query_constraints_hash)
         @_trigger_update_callback = affected_rows == 1
       end
 

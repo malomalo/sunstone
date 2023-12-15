@@ -67,7 +67,7 @@ class ActiveSupport::TestCase
   def webmock(method, path, query=nil)
     query = deep_transform_query(query) if query
 
-    stub_request(method, /^#{ActiveRecord::Base.connection.instance_variable_get(:@connection).url}/).with do |req|
+    stub_request(method, /^#{ActiveRecord::Base.connection.url}/).with do |req|
       if query
         req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
       else
