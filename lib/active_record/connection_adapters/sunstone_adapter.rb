@@ -104,7 +104,7 @@ module ActiveRecord
       end
 
       def active?
-        @connection&.active?
+        @raw_connection&.active?
       end
 
       def load_type_map
@@ -159,7 +159,9 @@ module ActiveRecord
       end
 
       def server_config
-        JSON.parse(@connection.get("/configuration").body)
+        with_raw_connection do |conn|
+          JSON.parse(conn.get("/configuration").body)
+        end
       end
 
       def return_value_after_insert?(column) # :nodoc:
