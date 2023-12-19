@@ -112,7 +112,7 @@ module ActiveRecord
         returning_columns
       )
 
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         returning_columns.zip(returning_values).each do |column, value|
           _write_attribute(column, value) if !_read_attribute(column)
         end if returning_values
