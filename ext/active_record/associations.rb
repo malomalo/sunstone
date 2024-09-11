@@ -25,13 +25,13 @@ module ActiveRecord
 
         include Module.new {
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
-          def destroy_associations
-            if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-              association(:#{middle_reflection.name}).delete_all(:delete_all)
-              association(:#{name}).reset
+            def destroy_associations
+              if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+                association(:#{middle_reflection.name}).delete_all(:delete_all)
+                association(:#{name}).reset
+              end
+              super
             end
-            super
-          end
           RUBY
         }
 
@@ -44,7 +44,9 @@ module ActiveRecord
         end
 
         has_many name, scope, **hm_options, &extension
-        _reflections[name.to_s].parent_reflection = habtm_reflection
+        puts name
+        puts _reflections.inspect
+        _reflections[name].parent_reflection = habtm_reflection
       end
     end
   end

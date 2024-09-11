@@ -105,17 +105,20 @@ module ActiveRecord
       attribute_names = attributes_for_create(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
 
-      returning_columns = self.class._returning_columns_for_insert
+      self.class.with_connection do |connection|
+        returning_columns = self.class._returning_columns_for_insert(connection)
 
-      returning_values = self.class._insert_record(
-        attribute_values,
-        returning_columns
-      )
+        returning_values = self.class._insert_record(
+          connection,
+          attribute_values,
+          returning_columns
+        )
 
-      if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        returning_columns.zip(returning_values).each do |column, value|
-          _write_attribute(column, value) if !_read_attribute(column)
-        end if returning_values
+        if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          returning_columns.zip(returning_values).each do |column, value|
+            _write_attribute(column, value) if !_read_attribute(column)
+          end if returning_values
+        end
       end
 
       @new_record = false
@@ -138,7 +141,7 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record(attribute_values, _query_constraints_hash)
+        affected_rows = _update_row(attribute_names)
         @_trigger_update_callback = affected_rows == 1
       end
 
