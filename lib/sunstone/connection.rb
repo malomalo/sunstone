@@ -203,7 +203,7 @@ module Sunstone
         close_connection = false
         @connection.request(request) do |response|
           if response['Deprecation-Notice']
-            ActiveSupport::Deprecation.warn(response['Deprecation-Notice'])
+            ::ActiveRecord.deprecator.warn(response['Deprecation-Notice'])
           end
 
           validate_response_code(response)

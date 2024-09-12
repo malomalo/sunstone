@@ -104,7 +104,8 @@ module ActiveRecord
     def _create_record(attribute_names = self.attribute_names)
       attribute_names = attributes_for_create(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
-
+      returning_values = nil
+      
       self.class.with_connection do |connection|
         returning_columns = self.class._returning_columns_for_insert(connection)
 
@@ -141,7 +142,7 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = _update_row(attribute_names)
+        affected_rows = self.class._update_record(attribute_values, _query_constraints_hash)
         @_trigger_update_callback = affected_rows == 1
       end
 

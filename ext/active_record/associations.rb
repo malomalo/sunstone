@@ -44,8 +44,6 @@ module ActiveRecord
         end
 
         has_many name, scope, **hm_options, &extension
-        puts name
-        puts _reflections.inspect
         _reflections[name].parent_reflection = habtm_reflection
       end
     end
