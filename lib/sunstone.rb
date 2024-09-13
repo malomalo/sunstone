@@ -39,17 +39,5 @@ require File.expand_path(File.join(__FILE__, '../../ext/arel/attributes/empty_re
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/select_statement'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/finder_methods'))
 
-if ActiveRecord::VERSION::MAJOR == 6 && ActiveRecord::VERSION::MINOR == 1
-  # Patch to allow Rails 6.1 pass url to adapter, all other versions work
-  require 'active_record/database_configurations'
-  class ActiveRecord::DatabaseConfigurations::UrlConfig
-    private
-    def build_url_hash
-      if url.nil? || %w(jdbc: http: https:).any? { |protocol| url.start_with?(protocol) }
-        { url: url }
-      else
-        ConnectionUrlResolver.new(url).to_hash
-      end
-    end
-  end
-end
+
+ActiveRecord::ConnectionAdapters.register("sunstone", "ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter", "active_record/connection_adapters/sunstone_adapter")

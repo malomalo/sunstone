@@ -29,8 +29,7 @@ module ActiveRecord
           sar.compile(binds)
         end
         
-        def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil) # :nodoc:
-          # Arel::TreeManager -> Arel::Node
+        def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil, allow_retry = false)
           if arel_or_sar_string.respond_to?(:ast)
             arel_or_sar_string = arel_or_sar_string.ast
           end
@@ -42,9 +41,9 @@ module ActiveRecord
             end
             
             sar = visitor.accept(arel_or_sar_string, collector)
-            [sar.freeze, sar.binds, false]
+            [sar.freeze, sar.binds, false, allow_retry]
           else
-            [arel_or_sar_string.dup.freeze, binds, false]
+            [arel_or_sar_string.dup.freeze, binds, false, allow_retry]
           end
         end
         
@@ -90,11 +89,15 @@ module ActiveRecord
         end
 
         # Returns an ActiveRecord::Result instance.
-        def select_all(arel, name = nil, binds = [], preparable: nil, async: false)
+        def select_all(arel, name = nil, binds = [], preparable: nil, async: false, allow_retry: false)
           arel = arel_from_relation(arel)
-          sar, binds, preparable = to_sar_and_binds(arel, binds, preparable)
+          sar, binds, preparable, allow_retry = to_sar_and_binds(arel, binds, preparable, allow_retry)
 
-          select(sar, name, binds, prepare: prepared_statements && preparable, async: async && FutureResult::SelectAll)
+          select(sar, name, binds,
+            prepare: prepared_statements && preparable,
+            async: async && FutureResult::SelectAll,
+            allow_retry: allow_retry
+          )
         rescue ::RangeError
           ActiveRecord::Result.empty(async: async)
         end
@@ -112,7 +115,7 @@ module ActiveRecord
           internal_exec_query(sar, name, binds)
         end
 
-        def internal_exec_query(arel, name = 'SAR', binds = [], prepare: false, async: false, allow_retry: false, materialize_transactions: true)
+        def internal_exec_query(arel, name = 'SAR', binds = [], prepare: false, async: false, allow_retry: false)
           sars = []
           multiple_requests = arel.is_a?(Arel::Collectors::Sunstone)
           type_casted_binds = binds#type_casted_binds(binds)
@@ -179,9 +182,9 @@ module ActiveRecord
           end
         end
         
-        def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [])
+        def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [], returning: nil)
           sar, binds = to_sar_and_binds(arel, binds)
-          value = exec_insert(sar, name, binds, pk, sequence_name)
+          value = exec_insert(sar, name, binds, pk, sequence_name, returning: returning)
 
           return returning_column_values(value) unless returning.nil?
 

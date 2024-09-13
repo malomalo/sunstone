@@ -104,18 +104,22 @@ module ActiveRecord
     def _create_record(attribute_names = self.attribute_names)
       attribute_names = attributes_for_create(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
+      returning_values = nil
+      
+      self.class.with_connection do |connection|
+        returning_columns = self.class._returning_columns_for_insert(connection)
 
-      returning_columns = self.class._returning_columns_for_insert
+        returning_values = self.class._insert_record(
+          connection,
+          attribute_values,
+          returning_columns
+        )
 
-      returning_values = self.class._insert_record(
-        attribute_values,
-        returning_columns
-      )
-
-      if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
-        returning_columns.zip(returning_values).each do |column, value|
-          _write_attribute(column, value) if !_read_attribute(column)
-        end if returning_values
+        if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          returning_columns.zip(returning_values).each do |column, value|
+            _write_attribute(column, value) if !_read_attribute(column)
+          end if returning_values
+        end
       end
 
       @new_record = false

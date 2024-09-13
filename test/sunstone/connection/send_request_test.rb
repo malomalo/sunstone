@@ -156,7 +156,7 @@ class Sunstone::Connection::SendRequestTest < ActiveSupport::TestCase
       headers: { 'Deprecation-Notice': 'my deprecation message' }
     )
     
-    ActiveSupport::Deprecation.expects(:warn).with('my deprecation message')
+    ActiveRecord.deprecator.expects(:warn).with('my deprecation message')
     
     connection.send_request(Net::HTTP::Get.new('/test'))
   end

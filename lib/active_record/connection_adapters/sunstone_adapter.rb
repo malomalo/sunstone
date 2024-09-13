@@ -3,6 +3,7 @@ require 'active_record/connection_adapters/abstract_adapter'
 require 'arel/nodes/relation'
 require 'arel/visitors/to_sql_extensions'
 
+require 'active_record/connection_adapters/sunstone/quoting'
 require 'active_record/connection_adapters/sunstone/database_statements'
 require 'active_record/connection_adapters/sunstone/schema_statements'
 require 'active_record/connection_adapters/sunstone/schema_dumper'
@@ -15,19 +16,6 @@ require 'active_record/connection_adapters/sunstone/type/uuid'
 require 'active_record/connection_adapters/sunstone/type/json'
 
 module ActiveRecord
-  module ConnectionHandling # :nodoc:
-
-    def sunstone_adapter_class
-      ConnectionAdapters::SunstoneAPIAdapter
-    end
-    
-    # Establishes a connection to the database that's used by all Active Record
-    # objects
-    def sunstone_connection(config)
-      sunstone_adapter_class.new(config)
-    end
-  end
-
   module ConnectionAdapters
     # The SunstoneAPI adapter.
     #
@@ -56,7 +44,7 @@ module ActiveRecord
         end
       end
 
-      # include PostgreSQL::Quoting
+      include Sunstone::Quoting
       # include PostgreSQL::ReferentialIntegrity
       include Sunstone::SchemaStatements
       include Sunstone::DatabaseStatements
@@ -105,11 +93,6 @@ module ActiveRecord
 
       def active?
         @raw_connection&.active?
-      end
-
-      def load_type_map
-        @type_map = Type::HashLookupTypeMap.new
-        initialize_type_map(@type_map)
       end
       
       def reconnect
@@ -169,6 +152,7 @@ module ActiveRecord
       end
 
       def lookup_cast_type_from_column(column) # :nodoc:
+        verify! if type_map.nil?
         cast_type = @type_map.lookup(column.sql_type, {
           limit: column.limit,
           precision: column.precision,
@@ -219,6 +203,8 @@ module ActiveRecord
       # Configures the encoding, verbosity, schema search path, and time zone of the connection.
       # This is called by #connect and should not be called manually.
       def configure_connection
+        super
+        
         reload_type_map
       end
 
@@ -233,7 +219,9 @@ module ActiveRecord
       end
 
       private
-      
+
+      attr_reader :type_map
+
       def initialize_type_map(m = nil)
         self.class.initialize_type_map(m || @type_map)
       end

@@ -6,7 +6,7 @@ module ActiveRecord
 
       def replace(other_array)
         other_array.each { |val| raise_on_type_mismatch!(val) }
-        original_target = load_target.dup
+        original_target = skip_strict_loading { load_target }.dup
 
         if owner.new_record?
           replace_records(other_array, original_target)
@@ -51,7 +51,6 @@ module ActiveRecord
           record.save(validate: validate, &block)
         end
       end
-
 
     end
 
