@@ -92,18 +92,30 @@ module ActiveRecord
       end
 
       def active?
-        @raw_connection&.active?
+        @lock.synchronize do
+          @raw_connection&.active?
+        end
       end
       
-      def reconnect
-        super
-        @raw_connection&.reconnect!
+      # Connects to a StandardAPI server and sets up the adapter depending
+      # on the connected server's characteristics.
+      def connect
+        @raw_connection = self.class.new_client(@connection_parameters)
       end
 
+      def reconnect
+        @lock.synchronize do
+          @raw_connection&.reconnect!
+          connect unless @raw_connection
+        end
+      end
+      
       def disconnect!
-        super
-        @raw_connection&.disconnect!
-        @raw_connection = nil
+        @lock.synchronize do
+          super
+          @raw_connection&.disconnect!
+          @raw_connection = nil
+        end
       end
 
       def discard! # :nodoc:
@@ -188,17 +200,6 @@ module ActiveRecord
         exec_insert(arel, name, binds, pk, sequence_name, returning: returning)
       end
       alias create insert
-
-      # Connects to a StandardAPI server and sets up the adapter depending
-      # on the connected server's characteristics.
-      def connect
-        @raw_connection = self.class.new_client(@connection_parameters)
-      end
-
-      def reconnect
-        @raw_connection&.reconnect!
-        connect unless @raw_connection
-      end
 
       # Configures the encoding, verbosity, schema search path, and time zone of the connection.
       # This is called by #connect and should not be called manually.
