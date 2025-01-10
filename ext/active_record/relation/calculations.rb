@@ -4,6 +4,21 @@
 module ActiveRecord
   module Calculations
 
+    # Prior to Rails 8 we didn't need this method becuase it would
+    # return the first value if there was just one - so we'll just
+    # do the same as prevously because it doesn't have to be joined
+    def select_for_count
+      puts [:mp , select_values].inspect
+      if select_values.empty?
+        :all
+      else
+        with_connection do |conn|
+          sv = arel_columns(select_values).map { |column| conn.visitor.compile(column) }
+          sv.one? ? sv.first : sv.join(", ")
+        end
+      end
+    end
+
     def pluck(*column_names)
       if @none
         if @async
@@ -25,20 +40,20 @@ module ActiveRecord
       if has_include?(column_names.first)
         relation = apply_join_dependency
         relation.pluck(*column_names)
-      elsif klass.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      elsif model.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
         load
-        return records.pluck(*column_names.map{|n| n.to_s.sub(/^#{klass.table_name}\./, "")})
+        return records.pluck(*column_names.map{|n| n.to_s.sub(/^#{model.table_name}\./, "")})
       else
-        klass.disallow_raw_sql!(flattened_args(column_names))
-        columns = arel_columns(column_names)
+        model.disallow_raw_sql!(flattened_args(column_names))
         relation = spawn
+        columns = relation.arel_columns(column_names)
         relation.select_values = columns
         result = skip_query_cache_if_necessary do
           if where_clause.contradiction?
             ActiveRecord::Result.empty(async: @async)
           else
-            klass.with_connection do |c|
-              c.select_all(relation.arel, "#{klass.name} Pluck", async: @async)
+            model.with_connection do |c|
+              c.select_all(relation.arel, "#{model.name} Pluck", async: @async)
             end
           end
         end

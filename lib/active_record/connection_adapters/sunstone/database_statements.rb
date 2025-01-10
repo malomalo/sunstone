@@ -30,6 +30,7 @@ module ActiveRecord
         end
         
         def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil, allow_retry = false)
+          # Arel::TreeManager -> Arel::Node
           if arel_or_sar_string.respond_to?(:ast)
             arel_or_sar_string = arel_or_sar_string.ast
           end
@@ -40,10 +41,14 @@ module ActiveRecord
                 "The values must be stored on the AST directly"
             end
             
-            sar = visitor.accept(arel_or_sar_string, collector)
+            c = collector()
+            c.retryable = true
+            sar = visitor.compile(arel_or_sar_string, c)
+            puts sar.inspect
             [sar.freeze, sar.binds, false, allow_retry]
           else
-            [arel_or_sar_string.dup.freeze, binds, false, allow_retry]
+            arel_or_sar_string = arel_or_sar_string.dup.freeze unless arel_or_sar_string.frozen?
+            [arel_or_sar_string, binds, false, allow_retry]
           end
         end
         
@@ -191,8 +196,8 @@ module ActiveRecord
           id_value || last_inserted_id(value)
         end
         
-        def update(arel, name = nil, binds = [])
-          exec_update(arel, name, binds)
+        def update(...)
+          exec_update(...)
         end
         
         def delete(arel, name = nil, binds = [])

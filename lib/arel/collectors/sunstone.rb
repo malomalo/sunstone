@@ -146,6 +146,7 @@ module Arel
         end
 
         if params.size > 0 && request_type == Net::HTTP::Get
+          puts 'REQ: ' +  params.inspect
           newpath = path + "?#{CGI.escape(MessagePack.pack(params))}"
           if newpath.length > MAX_URI_LENGTH
             request_type_override = Net::HTTP::Post
