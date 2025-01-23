@@ -5,8 +5,7 @@ module Arel
     class Sunstone < Arel::Visitors::Visitor
 
       def compile(node, collector = Arel::Collectors::Sunstone.new)
-        byebug
-        accept(node, collector)
+        accept(node, collector).value
       end
 
       private

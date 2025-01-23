@@ -8,13 +8,19 @@ module ActiveRecord
     # return the first value if there was just one - so we'll just
     # do the same as prevously because it doesn't have to be joined
     def select_for_count
-      puts [:mp , select_values].inspect
       if select_values.empty?
         :all
       else
         with_connection do |conn|
-          sv = arel_columns(select_values).map { |column| conn.visitor.compile(column) }
-          sv.one? ? sv.first : sv.join(", ")
+          # Rails compiles this to a string, but we don't have string we
+          # have a hash
+          if model.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+            sv = arel_columns(select_values)
+            sv.one? ? sv.first : sv
+          else
+            sv = arel_columns(select_values).map { |column| conn.visitor.compile(column) } 
+            sv.one? ? sv.first : sv.join(", ")
+          end
         end
       end
     end

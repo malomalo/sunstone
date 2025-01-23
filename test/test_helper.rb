@@ -68,15 +68,7 @@ class ActiveSupport::TestCase
     query = deep_transform_query(query) if query
 
     stub_request(method, /^#{ActiveRecord::Base.connection.url}/).with do |req|
-    puts req.inspect
-    puts unpack(req.uri.query.sub(/=true$/, '')).inspect if req.uri.query
       if query
-        if req&.uri&.path == path && req.uri.query
-          puts 'START'
-puts unpack(req.uri.query.sub(/=true$/, '')).inspect
-puts query.inspect
-puts 'END'
-        end
         req&.uri&.path == path && req.uri.query && unpack(req.uri.query.sub(/=true$/, '')) == query
       else
         req&.uri&.path == path && req.uri.query.nil?

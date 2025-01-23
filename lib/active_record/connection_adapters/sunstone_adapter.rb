@@ -123,12 +123,6 @@ module ActiveRecord
         @raw_connection = nil
       end
 
-      # Executes the delete statement and returns the number of rows affected.
-      def delete(arel, name = nil, binds = [])
-        r = exec_delete(arel, name, binds)
-        r.rows.first.to_i
-      end
-
       def native_database_types #:nodoc:
         NATIVE_DATABASE_TYPES
       end
