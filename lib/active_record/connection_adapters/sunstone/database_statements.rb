@@ -30,6 +30,7 @@ module ActiveRecord
         end
         
         def to_sar_and_binds(arel_or_sar_string, binds = [], preparable = nil, allow_retry = false)
+          # Arel::TreeManager -> Arel::Node
           if arel_or_sar_string.respond_to?(:ast)
             arel_or_sar_string = arel_or_sar_string.ast
           end
@@ -40,10 +41,13 @@ module ActiveRecord
                 "The values must be stored on the AST directly"
             end
             
-            sar = visitor.accept(arel_or_sar_string, collector)
+            col = collector()
+            col.retryable = true
+            sar = visitor.compile(arel_or_sar_string, col)
             [sar.freeze, sar.binds, false, allow_retry]
           else
-            [arel_or_sar_string.dup.freeze, binds, false, allow_retry]
+            arel_or_sar_string = arel_or_sar_string.dup.freeze unless arel_or_sar_string.frozen?
+            [arel_or_sar_string, binds, false, allow_retry]
           end
         end
         
@@ -115,8 +119,8 @@ module ActiveRecord
           internal_exec_query(sar, name, binds)
         end
 
-        def internal_exec_query(arel, name = 'SAR', binds = [], prepare: false, async: false, allow_retry: false)
-          sars = []
+        # Lowest level way to execute a query. Doesn't check for illegal writes, doesn't annotate queries, yields a native result object.
+        def raw_execute(arel, name = nil, binds = [], prepare: false, async: false, allow_retry: false, materialize_transactions: true, batch: false)
           multiple_requests = arel.is_a?(Arel::Collectors::Sunstone)
           type_casted_binds = binds#type_casted_binds(binds)
           
@@ -137,49 +141,72 @@ module ActiveRecord
               multiple_requests = true
             end
           end
-
-          send_request = lambda { |req_arel|
+          
+          send_request = lambda { |conn, req_arel, batch|
             sar = to_sar(req_arel, type_casted_binds)
-            sars.push(sar)
             log_mess = sar.path.split('?', 2)
-            log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) do
-              with_raw_connection do |conn|
-                response = conn.send_request(sar)
-                if response.is_a?(Net::HTTPNoContent)
-                  nil
-                else
-                  JSON.parse(response.body)
-                end
-              end
+            log("#{sar.method} #{log_mess[0]} #{(log_mess[1] && !log_mess[1].empty?) ? MessagePack.unpack(CGI.unescape(log_mess[1])) : '' }", name) do |notification_payload|
+              result = perform_query(conn, sar, prepare:, notification_payload:, batch: batch)
+              result.instance_variable_set(:@sunstone_calculation, true) if result && sar.instance_variable_get(:@sunstone_calculation)
+              result
             end
           }
-
-          result = if multiple_requests
-            binds.delete_at(limit_bind_index) if limit_bind_index
-
-            limit, offset, results = allowed_limit, 0, []
-            while requested_limit ? offset < requested_limit : true
-              split_arel = arel.dup
-              split_arel.limit = limit
-              split_arel.offset = offset
-              request_results = send_request.call(split_arel)
-              results = results + request_results
-              break if request_results.size < limit
-              offset = offset + limit
-            end
-            results
-          else
-            send_request.call(arel)
-          end
           
-          if sars[0].instance_variable_defined?(:@sunstone_calculation) && sars[0].instance_variable_get(:@sunstone_calculation)
-            # this is a count, min, max.... yea i know..
-            ActiveRecord::Result.new(['all'], [result], {:all => @type_map.lookup('integer', {})})
-          elsif result.is_a?(Array)
-            ActiveRecord::Result.new(result[0] ? result[0].keys : [], result.map{|r| r.values})
-          else
-            ActiveRecord::Result.new(result.keys, [result.values])
+          result = with_raw_connection(allow_retry: allow_retry, materialize_transactions: materialize_transactions) do |conn|
+            if multiple_requests
+              binds.delete_at(limit_bind_index) if limit_bind_index
+
+              limit, offset, results = allowed_limit, 0, nil
+              last_affected_rows = 0
+              while requested_limit ? offset < requested_limit : true
+                split_arel = arel.dup
+                split_arel.limit = limit
+                split_arel.offset = offset
+                request_results = send_request.call(conn, split_arel, true)
+                last_affected_rows += @last_affected_rows
+                if results
+                  results.push(*request_results)
+                else
+                  results = request_results
+                end
+                break if request_results.size < limit
+                offset = offset + limit
+              end
+              @last_affected_rows = last_affected_rows
+              results
+            else
+              send_request.call(conn, arel, true)
+            end
           end
+
+          result
+        end
+
+        def perform_query(raw_connection, sar, prepare:, notification_payload:, batch: false)
+          response = raw_connection.send_request(sar)
+          result = response.is_a?(Net::HTTPNoContent) ? nil : JSON.parse(response.body)
+
+          verified!
+          # handle_warnings(result)
+          @last_affected_rows = response['Affected-Rows'] || result&.count || 0
+          notification_payload[:row_count] = @last_affected_rows
+          result
+        end
+        
+        # Receive a native adapter result object and returns an ActiveRecord::Result object.
+        def cast_result(raw_result)
+          if raw_result.instance_variable_defined?(:@sunstone_calculation) && raw_result.instance_variable_get(:@sunstone_calculation)
+            # this is a count, min, max.... yea i know..
+            ActiveRecord::Result.new(['all'], [raw_result], {:all => @type_map.lookup('integer', {})})
+          elsif raw_result.is_a?(Array)
+            ActiveRecord::Result.new(raw_result[0] ? raw_result[0].keys : [], raw_result.map{|r| r.values})
+          else
+            ActiveRecord::Result.new(raw_result.keys, [raw_result.values])
+          end
+        end
+
+        def affected_rows(raw_result)
+          @last_affected_rows
         end
         
         def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [], returning: nil)
@@ -190,13 +217,18 @@ module ActiveRecord
 
           id_value || last_inserted_id(value)
         end
-        
+        alias create insert
+
+        # Executes the update statement and returns the number of rows affected.
         def update(arel, name = nil, binds = [])
-          exec_update(arel, name, binds)
+          sar, binds = to_sar_and_binds(arel, binds)
+          internal_exec_query(sar, name, binds)
         end
         
+        # Executes the delete statement and returns the number of rows affected.
         def delete(arel, name = nil, binds = [])
-          exec_delete(arel, name, binds)
+          sql, binds = to_sar_and_binds(arel, binds)
+          exec_delete(sql, name, binds)
         end
 
         def last_inserted_id(result)
