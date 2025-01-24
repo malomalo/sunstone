@@ -36,9 +36,9 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.4.0-rc1
+          - 3.3
+          - 3.4
         rails-version:
-          - v7.2.1
           - v8.0.1
         postgres-version:
           - 17
@@ -89,9 +89,9 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.4.0-rc1
+          - 3.3
+          - 3.4
         rails-version:
-          - v7.2.1
           - v8.0.1
 
     steps:
@@ -129,9 +129,9 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.4.0-rc1
+          - 3.3
+          - 3.4
         rails-version:
-          - v7.2.1
           - v8.0.1
 
     steps:
