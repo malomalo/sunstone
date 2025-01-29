@@ -206,7 +206,7 @@ module ActiveRecord
     end
 
     def apply_join_dependency(eager_loading: group_values.empty?)
-      if sunstone?
+      if model.sunstone?
         join_dependency = SunstoneJoinDependency.new(base_class)
         relation = except(:includes, :eager_load, :preload)
         relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
@@ -227,7 +227,7 @@ module ActiveRecord
             ).reflections
           )
         )
-        if !sunstone?
+        if !model.sunstone?
           relation = skip_query_cache_if_necessary do
             klass.connection.distinct_relation_for_primary_key(relation)
           end
