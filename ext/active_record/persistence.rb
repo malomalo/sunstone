@@ -59,7 +59,7 @@ module ActiveRecord
 
       result = new_record? ? _create_record(&block) : _update_record(&block)
 
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && result != 0
+      if self.sunstone? && result != 0
         row_hash = result[0]
 
         seen = Hash.new { |h, parent_klass|
@@ -115,7 +115,7 @@ module ActiveRecord
           returning_columns
         )
 
-        if !self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        if !self.sunstone?
           returning_columns.zip(returning_values).each do |column, value|
             _write_attribute(column, value) if !_read_attribute(column)
           end if returning_values
@@ -127,7 +127,7 @@ module ActiveRecord
       
       yield(self) if block_given?
       
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      if self.sunstone?
         returning_values
       else
         id

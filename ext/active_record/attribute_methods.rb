@@ -11,7 +11,7 @@ module ActiveRecord
     def attributes_with_values(attribute_names)
       attrs = attribute_names.index_with { |name| @attributes[name] }
 
-      if self.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      if self.sunstone?
         self.class.reflect_on_all_associations.each do |reflection|
           if reflection.belongs_to?
             if association(reflection.name).loaded? && association(reflection.name).target == Thread.current[:sunstone_updating_model]

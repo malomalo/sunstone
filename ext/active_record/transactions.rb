@@ -38,7 +38,7 @@ module ActiveRecord
         status = nil
         # connection = self.class.connection
 
-        if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && instance_variable_defined?(:@sunstone_updating) && @sunstone_updating
+        if sunstone? && instance_variable_defined?(:@sunstone_updating) && @sunstone_updating
           status = yield
         else
           ensure_finalize = !connection.transaction_open?

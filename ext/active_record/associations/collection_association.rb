@@ -10,7 +10,7 @@ module ActiveRecord
 
         if owner.new_record?
           replace_records(other_array, original_target)
-        elsif owner.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
+        elsif owner.sunstone? && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
           replace_common_records_in_memory(other_array, original_target)
 
           # Remove from target
@@ -43,7 +43,7 @@ module ActiveRecord
       end
 
       def insert_record(record, validate = true, raise = false, &block)
-        if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter) && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
+        if record.sunstone? && owner.instance_variable_defined?(:@sunstone_updating) && owner.instance_variable_get(:@sunstone_updating)
           true
         elsif raise
           record.save!(validate: validate, &block)
@@ -58,7 +58,7 @@ module ActiveRecord
 
       private
       def save_through_record(record)
-        return if record.class.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        return if record.sunstone?
         association = build_through_record(record)
         if association.changed?
           association.save!

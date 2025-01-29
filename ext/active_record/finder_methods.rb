@@ -23,7 +23,7 @@ module ActiveRecord
           ka = table.associated_table(key, &block)
             .predicate_builder.expand_from_hash(value.stringify_keys)
 
-          if self.table.instance_variable_get(:@klass).connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          if self.table.instance_variable_get(:@klass).sunstone?
             ka.each { |k|
               if k.left.is_a?(Arel::Attributes::Attribute) || k.left.is_a?(Arel::Attributes::Relation)
                 k.left = Arel::Attributes::Relation.new(k.left, key)
@@ -206,7 +206,7 @@ module ActiveRecord
     end
 
     def apply_join_dependency(eager_loading: group_values.empty?)
-      if connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      if sunstone?
         join_dependency = SunstoneJoinDependency.new(base_class)
         relation = except(:includes, :eager_load, :preload)
         relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
@@ -227,7 +227,7 @@ module ActiveRecord
             ).reflections
           )
         )
-        if !connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+        if !sunstone?
           relation = skip_query_cache_if_necessary do
             klass.connection.distinct_relation_for_primary_key(relation)
           end

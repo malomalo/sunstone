@@ -14,7 +14,7 @@ module ActiveRecord
         with_connection do |conn|
           # Rails compiles this to a string, but we don't have string we
           # have a hash
-          if model.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+          if model.sunstone?
             sv = arel_columns(select_values)
             sv.one? ? sv.first : sv
           else
@@ -46,7 +46,7 @@ module ActiveRecord
       if has_include?(column_names.first)
         relation = apply_join_dependency
         relation.pluck(*column_names)
-      elsif model.connection.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
+      elsif model.sunstone?
         load
         return records.pluck(*column_names.map{|n| n.to_s.sub(/^#{model.table_name}\./, "")})
       else

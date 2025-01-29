@@ -20,6 +20,7 @@ require File.expand_path(File.join(__FILE__, '../arel/visitors/sunstone'))
 require File.expand_path(File.join(__FILE__, '../arel/collectors/sunstone'))
 
 # ActiveRecord Extensions
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/base'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/statement_cache'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))
