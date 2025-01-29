@@ -229,7 +229,7 @@ module ActiveRecord
         )
         if !model.sunstone?
           relation = skip_query_cache_if_necessary do
-            klass.connection.distinct_relation_for_primary_key(relation)
+            self.klass.connection.distinct_relation_for_primary_key(relation)
           end
         end
       end
