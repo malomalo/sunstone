@@ -11,16 +11,12 @@ module ActiveRecord
       if select_values.empty?
         :all
       else
-        with_connection do |conn|
-          # Rails compiles this to a string, but we don't have string we
-          # have a hash
-          if model.sunstone?
-            sv = arel_columns(select_values)
-            sv.one? ? sv.first : sv
-          else
-            sv = arel_columns(select_values).map { |column| conn.visitor.compile(column) } 
-            sv.one? ? sv.first : sv.join(", ")
-          end
+        if model.sunstone?
+          select_values.one? ? select_values.first : select_values
+        elsif select_values.one?
+          select_values.first
+        else
+          select_values.one? ? select_values.first : select_values.join(", ")
         end
       end
     end
