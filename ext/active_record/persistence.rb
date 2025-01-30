@@ -134,6 +134,18 @@ module ActiveRecord
       end
     end
 
+    def _touch_row(attribute_names, time)
+      time ||= current_time_from_proper_timezone
+
+      attribute_names.each do |attr_name|
+        _write_attribute(attr_name, time)
+      end
+
+      _update_row(attributes_with_values(attribute_names), "touch")
+    end
+
+    # Sunstone passes the values, not just the names. This is because if a
+    # sub resource has changed it'll send the whole shabang    
     def _update_row(attribute_values, attempted_action = "update")
       self.class._update_record(attribute_values, _query_constraints_hash)
     end
@@ -147,7 +159,9 @@ module ActiveRecord
         @_trigger_update_callback = true
       else
         affected_rows = _update_row(attribute_values)
-        @_trigger_update_callback = affected_rows == 1
+
+        # Suntone returns the row(s) not a int of afftecd_rows
+        @_trigger_update_callback = (sunstone? ? affected_rows.rows.size : affected_rows) == 1
       end
 
       @previously_new_record = false
@@ -156,7 +170,7 @@ module ActiveRecord
 
       affected_rows
     end
-
+    
     #!!!! TODO: I am duplicated from finder_methods.....
     def construct(parent, relations, seen, model_cache)
       relations.each do |key, attributes|

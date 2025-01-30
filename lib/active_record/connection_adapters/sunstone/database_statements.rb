@@ -118,6 +118,11 @@ module ActiveRecord
           sar, binds = sar_for_insert(arel, pk, binds, returning)
           internal_exec_query(sar, name, binds)
         end
+        
+        def exec_delete(arel, name = nil, binds = [])
+          x = internal_execute(arel, name, binds)
+          x.nil? ? 1 : x
+        end
 
         # Lowest level way to execute a query. Doesn't check for illegal writes, doesn't annotate queries, yields a native result object.
         def raw_execute(arel, name = nil, binds = [], prepare: false, async: false, allow_retry: false, materialize_transactions: true, batch: false)

@@ -6,7 +6,7 @@ module ActiveRecord
       
       private
 
-        def _update_row(attribute_names, attempted_action = "update")
+        def _update_row(attribute_values, attempted_action = "update")
           return super unless locking_enabled?
 
           begin
@@ -15,15 +15,15 @@ module ActiveRecord
 
             update_constraints = _query_constraints_hash
 
-            attribute_values = if attribute_names.is_a?(Hash)
-              attribute_names.merge(attributes_with_values([locking_column]))
-            else
-              attribute_names = attribute_names.dup if attribute_names.frozen?
-              attribute_names << locking_column
-              attributes_with_values(attribute_names)
-            end
-
             self[locking_column] += 1
+
+            attribute_values = if attribute_values.is_a?(Hash)
+              attribute_values.merge(attributes_with_values([locking_column]))
+            else
+              attribute_values = attribute_values.dup if attribute_values.frozen?
+              attribute_values << locking_column
+              attributes_with_values(attribute_values)
+            end
 
             # Suntone returns the row(s) not a int of afftecd_rows
             result = self.class._update_record(
