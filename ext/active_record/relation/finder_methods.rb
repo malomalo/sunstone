@@ -121,40 +121,42 @@ module ActiveRecord::FinderMethods
 
   end
 
-  def apply_join_dependency(eager_loading: group_values.empty?)
-    if model.sunstone?
-      join_dependency = SunstoneJoinDependency.new(base_class)
-      relation = except(:includes, :eager_load, :preload)
-      relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
-    else
-      join_dependency = construct_join_dependency(
-        eager_load_values | includes_values, Arel::Nodes::OuterJoin
-      )
-      relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
-      
-      if eager_loading && has_limit_or_offset? && !(
-          using_limitable_reflections?(join_dependency.reflections) &&
-          using_limitable_reflections?(
-            construct_join_dependency(
-              select_association_list(joins_values).concat(
-                select_association_list(left_outer_joins_values)
-              ), nil
-            ).reflections
-          )
+  private
+
+    def apply_join_dependency(eager_loading: group_values.empty?)
+      if model.sunstone?
+        join_dependency = SunstoneJoinDependency.new(base_class)
+        relation = except(:includes, :eager_load, :preload)
+        relation.arel.eager_load = Arel::Nodes::EagerLoad.new(eager_load_values)
+      else
+        join_dependency = construct_join_dependency(
+          eager_load_values | includes_values, Arel::Nodes::OuterJoin
         )
-        relation = skip_query_cache_if_necessary do
-          model.with_connection do |c|
-            c.distinct_relation_for_primary_key(relation)
+        relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
+      
+        if eager_loading && has_limit_or_offset? && !(
+            using_limitable_reflections?(join_dependency.reflections) &&
+            using_limitable_reflections?(
+              construct_join_dependency(
+                select_association_list(joins_values).concat(
+                  select_association_list(left_outer_joins_values)
+                ), nil
+              ).reflections
+            )
+          )
+          relation = skip_query_cache_if_necessary do
+            model.with_connection do |c|
+              c.distinct_relation_for_primary_key(relation)
+            end
           end
         end
       end
-    end
 
-    if block_given?
-      yield relation, join_dependency
-    else
-      relation
+      if block_given?
+        yield relation, join_dependency
+      else
+        relation
+      end
     end
-  end
   
 end

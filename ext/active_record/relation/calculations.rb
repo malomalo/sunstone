@@ -4,23 +4,6 @@
 module ActiveRecord
   module Calculations
 
-    # Prior to Rails 8 we didn't need this method becuase it would
-    # return the first value if there was just one - so we'll just
-    # do the same as prevously because it doesn't have to be joined
-    def select_for_count
-      if select_values.empty?
-        :all
-      else
-        if model.sunstone?
-          select_values.one? ? select_values.first : select_values
-        elsif select_values.one?
-          select_values.first
-        else
-          select_values.one? ? select_values.first : select_values.join(", ")
-        end
-      end
-    end
-
     def pluck(*column_names)
       if @none
         if @async
@@ -65,5 +48,24 @@ module ActiveRecord
       end
     end
 
+    private
+
+      # Prior to Rails 8 we didn't need this method becuase it would
+      # return the first value if there was just one - so we'll just
+      # do the same as prevously because it doesn't have to be joined
+      def select_for_count
+        if select_values.empty?
+          :all
+        else
+          if model.sunstone?
+            select_values.one? ? select_values.first : select_values
+          elsif select_values.one?
+            select_values.first
+          else
+            select_values.one? ? select_values.first : select_values.join(", ")
+          end
+        end
+      end
+    
   end
 end

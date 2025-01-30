@@ -81,6 +81,8 @@ jobs:
       - name: Fix Weird Test Cases
         run: |
           sed -i 's|} - \[:|} - \[:distinct_on, :uniq_on, :|' ~/rails/activerecord/test/cases/relation/delegation_test.rb
+          sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/database_configurations/resolver_test.rb
+          sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/connection_adapters/registration_test.rb
 
       - run: |
           pushd ~/rails/activerecord
@@ -174,6 +176,8 @@ jobs:
       - name: Fix Weird Test Cases
         run: |
           sed -i 's|} - \[:|} - \[:distinct_on, :uniq_on, :|' ~/rails/activerecord/test/cases/relation/delegation_test.rb
+          sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/database_configurations/resolver_test.rb
+          sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/connection_adapters/registration_test.rb
 
       - run: |
           pushd ~/rails/activerecord
