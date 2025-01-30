@@ -59,7 +59,7 @@ module ActiveRecord
 
       result = new_record? ? _create_record(&block) : _update_record(&block)
 
-      if self.sunstone? && result != 0
+      if self.sunstone? && result != 0 && !result[0].nil?
         row_hash = result[0]
 
         seen = Hash.new { |h, parent_klass|
@@ -134,6 +134,10 @@ module ActiveRecord
       end
     end
 
+    def _update_row(attribute_values, attempted_action = "update")
+      self.class._update_record(attribute_values, _query_constraints_hash)
+    end
+    
     def _update_record(attribute_names = self.attribute_names)
       attribute_names = attributes_for_update(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
@@ -142,7 +146,7 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record(attribute_values, _query_constraints_hash)
+        affected_rows = _update_row(attribute_values)
         @_trigger_update_callback = affected_rows == 1
       end
 

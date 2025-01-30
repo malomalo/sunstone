@@ -7,6 +7,7 @@ require 'msgpack'
 require 'cookie_store' # optional
 
 require "active_record"
+require "active_record/locking/optimistic"
 
 # Adapter
 require File.expand_path(File.join(__FILE__, '../sunstone/version'))
@@ -33,6 +34,8 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/callbacks'
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/transactions'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/collection_association'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/has_many_through_association'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/locking/optimistic'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))
 
