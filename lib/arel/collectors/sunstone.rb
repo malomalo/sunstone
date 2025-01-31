@@ -136,16 +136,24 @@ module Arel
         
         case operation
         when :count
-          path += "/#{operation}"
+          path << "/#{operation}"
         when :calculate
-          path += "/calculate"
+          path << "/calculate"
           params[:select] = columns
         when :update, :delete
-          path += "/#{params[:where]['id']}"
-          params.delete(:where)
+          if params[:where].is_a?(Array)
+            path << "/#{params[:where][0]['id']}"
+            params[:where][0].delete('id')
+            params[:where].shift if params[:where][0].empty?
+          else
+            path << "/#{params[:where]['id']}"
+            params[:where].delete('id')
+            params.delete(:where) if params[:where].empty?
+          end
+          params[:where] = params[:where].first if params[:where]&.one?
         end
 
-        if params.size > 0 && request_type == Net::HTTP::Get
+        if params.size > 0
           newpath = path + "?#{CGI.escape(MessagePack.pack(params))}"
           if newpath.length > MAX_URI_LENGTH
             request_type_override = Net::HTTP::Post

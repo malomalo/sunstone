@@ -160,7 +160,6 @@ module Arel
         collector.table = o.relation.name
         collector.operation     = :update
 
-        # collector.id = o.wheres.first.children.first.right
         if !o.wheres.empty?
           collector.where = o.wheres.map { |x| visit(x, collector) }.inject([]) { |c, w|
             w.is_a?(Array) ? c += w : c << w
@@ -170,8 +169,6 @@ module Arel
         if collector.where.size != 1 && collector.where.first.size != 1 && !collector.where.first['id']
           raise 'Upsupported'
         end
-
-        collector.where = collector.where.first
 
         if o.values
           collector.updates = {}

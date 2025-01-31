@@ -59,7 +59,7 @@ module ActiveRecord
 
       result = new_record? ? _create_record(&block) : _update_record(&block)
 
-      if self.sunstone? && result != 0
+      if self.sunstone? && result != 0 && !result[0].nil?
         row_hash = result[0]
 
         seen = Hash.new { |h, parent_klass|
@@ -70,7 +70,7 @@ module ActiveRecord
 
         model_cache = Hash.new { |h,klass| h[klass] = {} }
         parents = model_cache[self.class.base_class]
-        
+
         row_hash.each do |key, value|
           if self.class.column_names.include?(key.to_s)
             _write_attribute(key, value)
@@ -105,7 +105,7 @@ module ActiveRecord
       attribute_names = attributes_for_create(attribute_names)
       attribute_values = attributes_with_values(attribute_names)
       returning_values = nil
-      
+
       self.class.with_connection do |connection|
         returning_columns = self.class._returning_columns_for_insert(connection)
 
@@ -117,21 +117,37 @@ module ActiveRecord
 
         if !self.sunstone?
           returning_columns.zip(returning_values).each do |column, value|
-            _write_attribute(column, value) if !_read_attribute(column)
+            _write_attribute(column, type_for_attribute(column).deserialize(value)) if !_read_attribute(column)
           end if returning_values
         end
       end
 
       @new_record = false
       @previously_new_record = true
-      
+
       yield(self) if block_given?
-      
+
       if self.sunstone?
         returning_values
       else
         id
       end
+    end
+
+    def _touch_row(attribute_names, time)
+      time ||= current_time_from_proper_timezone
+
+      attribute_names.each do |attr_name|
+        _write_attribute(attr_name, time)
+      end
+
+      _update_row(attributes_with_values(attribute_names), "touch")
+    end
+
+    # Sunstone passes the values, not just the names. This is because if a
+    # sub resource has changed it'll send the whole shabang
+    def _update_row(attribute_values, attempted_action = "update")
+      self.class._update_record(attribute_values, _query_constraints_hash)
     end
 
     def _update_record(attribute_names = self.attribute_names)
@@ -142,8 +158,10 @@ module ActiveRecord
         affected_rows = 0
         @_trigger_update_callback = true
       else
-        affected_rows = self.class._update_record(attribute_values, _query_constraints_hash)
-        @_trigger_update_callback = affected_rows == 1
+        affected_rows = _update_row(attribute_values)
+
+        # Suntone returns the row(s) not a int of afftecd_rows
+        @_trigger_update_callback = (sunstone? ? affected_rows.rows.size : affected_rows) == 1
       end
 
       @previously_new_record = false
@@ -179,7 +197,7 @@ module ActiveRecord
 
       end
     end
-    
+
     #!!!! TODO: I am duplicated from finder_methods.....
     def construct_association(parent, reflection, attributes, seen, model_cache)
       return if attributes.nil?
@@ -231,6 +249,6 @@ module ActiveRecord
       other.set_inverse_instance(model)
       model
     end
-    
+
   end
 end

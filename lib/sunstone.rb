@@ -7,6 +7,7 @@ require 'msgpack'
 require 'cookie_store' # optional
 
 require "active_record"
+require "active_record/locking/optimistic"
 
 # Adapter
 require File.expand_path(File.join(__FILE__, '../sunstone/version'))
@@ -26,11 +27,15 @@ require File.expand_path(File.join(__FILE__, '../../ext/active_record/associatio
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/calculations'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/query_methods'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/predicate_builder'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/relation/finder_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/persistence'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/callbacks'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/attribute_methods'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/transactions'))
 require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/collection_association'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/associations/has_many_through_association'))
+require File.expand_path(File.join(__FILE__, '../../ext/active_record/locking/optimistic'))
 
 require File.expand_path(File.join(__FILE__, '../../ext/active_support/core_ext/object/to_query'))
 
@@ -38,7 +43,7 @@ require File.expand_path(File.join(__FILE__, '../../ext/arel/select_manager'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/eager_load'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/attributes/empty_relation'))
 require File.expand_path(File.join(__FILE__, '../../ext/arel/nodes/select_statement'))
-require File.expand_path(File.join(__FILE__, '../../ext/active_record/finder_methods'))
+
 
 
 ActiveRecord::ConnectionAdapters.register("sunstone", "ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter", "active_record/connection_adapters/sunstone_adapter")
