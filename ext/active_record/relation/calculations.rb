@@ -56,14 +56,12 @@ module ActiveRecord
       def select_for_count
         if select_values.empty?
           :all
+        elsif select_values.one?
+          select_values.first
+        elsif model.sunstone?
+          select_values
         else
-          if model.sunstone?
-            select_values.one? ? select_values.first : select_values
-          elsif select_values.one?
-            select_values.first
-          else
-            select_values.one? ? select_values.first : select_values.join(", ")
-          end
+          select_values.join(", ")
         end
       end
     

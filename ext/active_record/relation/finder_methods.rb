@@ -133,7 +133,8 @@ module ActiveRecord::FinderMethods
           eager_load_values | includes_values, Arel::Nodes::OuterJoin
         )
         relation = except(:includes, :eager_load, :preload).joins!(join_dependency)
-      
+        puts "===  #{caller.find { |l| l =~ /test\/cases/ }} ==="
+
         if eager_loading && has_limit_or_offset? && !(
             using_limitable_reflections?(join_dependency.reflections) &&
             using_limitable_reflections?(
@@ -144,12 +145,15 @@ module ActiveRecord::FinderMethods
               ).reflections
             )
           )
+          puts 1
           relation = skip_query_cache_if_necessary do
             model.with_connection do |c|
               c.distinct_relation_for_primary_key(relation)
             end
           end
         end
+        puts relation.arel.inspect
+        puts '======='
       end
 
       if block_given?
