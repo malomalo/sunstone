@@ -133,122 +133,122 @@ module ActiveRecord
         id
       end
     end
- #
- #    def _touch_row(attribute_names, time)
- #      time ||= current_time_from_proper_timezone
- #
- #      attribute_names.each do |attr_name|
- #        _write_attribute(attr_name, time)
- #      end
- #
- #      _update_row(attributes_with_values(attribute_names), "touch")
- #    end
- #
- #    # Sunstone passes the values, not just the names. This is because if a
- #    # sub resource has changed it'll send the whole shabang
- #    def _update_row(attribute_values, attempted_action = "update")
- #      self.class._update_record(attribute_values, _query_constraints_hash)
- #    end
- #
- #    def _update_record(attribute_names = self.attribute_names)
- #      attribute_names = attributes_for_update(attribute_names)
- #      attribute_values = attributes_with_values(attribute_names)
- #
- #      if attribute_values.empty?
- #        affected_rows = 0
- #        @_trigger_update_callback = true
- #      else
- #        affected_rows = _update_row(attribute_values)
- #
- #        # Suntone returns the row(s) not a int of afftecd_rows
- #        @_trigger_update_callback = (sunstone? ? affected_rows.rows.size : affected_rows) == 1
- #      end
- #
- #      @previously_new_record = false
- #
- #      yield(self) if block_given?
- #
- #      affected_rows
- #    end
- #
- #    #!!!! TODO: I am duplicated from finder_methods.....
- #    def construct(parent, relations, seen, model_cache)
- #      relations.each do |key, attributes|
- #        reflection = parent.class.reflect_on_association(key)
- #        next unless reflection
- #
- #        if reflection.collection?
- #          other = parent.association(reflection.name)
- #          other.loaded!
- #        else
- #          if parent.association_cached?(reflection.name)
- #            model = parent.association(reflection.name).target
- #            construct(model, attributes.select{|k,v| !reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
- #          end
- #        end
- #
- #        if !reflection.collection?
- #          construct_association(parent, reflection, attributes, seen, model_cache)
- #        else
- #          attributes.each do |row|
- #            construct_association(parent, reflection, row, seen, model_cache)
- #          end
- #        end
- #
- #      end
- #    end
- #
- #    #!!!! TODO: I am duplicated from finder_methods.....
- #    def construct_association(parent, reflection, attributes, seen, model_cache)
- #      return if attributes.nil?
- #
- #      klass = if reflection.polymorphic?
- #        parent.send(reflection.foreign_type).constantize.base_class
- #      else
- #        reflection.klass
- #      end
- #      id = attributes[klass.primary_key]
- #      model = seen[parent.class.base_class][parent.id][klass][id]
- #
- #      if model
- #        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
- #
- #        other = parent.association(reflection.name)
- #
- #        if reflection.collection?
- #          other.target.push(model)
- #        else
- #          other.target = model
- #        end
- #
- #        other.set_inverse_instance(model)
- #      else
- #        model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
- #        seen[parent.class.base_class][parent.id][model.class.base_class][id] = model
- #        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
- #      end
- #    end
- #
- #    #!!!! TODO: I am duplicated from finder_methods.....
- #    def construct_model(record, reflection, id, attributes, seen, model_cache)
- #      klass = if reflection.polymorphic?
- #        record.send(reflection.foreign_type).constantize
- #      else
- #        reflection.klass
- #      end
- #
- #      model = model_cache[klass][id] ||= klass.instantiate(attributes)
- #      other = record.association(reflection.name)
- #
- #      if reflection.collection?
- #        other.target.push(model)
- #      else
- #        other.target = model
- #      end
- #
- #      other.set_inverse_instance(model)
- #      model
- #    end
- #
+
+    def _touch_row(attribute_names, time)
+      time ||= current_time_from_proper_timezone
+
+      attribute_names.each do |attr_name|
+        _write_attribute(attr_name, time)
+      end
+
+      _update_row(attributes_with_values(attribute_names), "touch")
+    end
+
+    # Sunstone passes the values, not just the names. This is because if a
+    # sub resource has changed it'll send the whole shabang
+    def _update_row(attribute_values, attempted_action = "update")
+      self.class._update_record(attribute_values, _query_constraints_hash)
+    end
+
+    def _update_record(attribute_names = self.attribute_names)
+      attribute_names = attributes_for_update(attribute_names)
+      attribute_values = attributes_with_values(attribute_names)
+
+      if attribute_values.empty?
+        affected_rows = 0
+        @_trigger_update_callback = true
+      else
+        affected_rows = _update_row(attribute_values)
+
+        # Suntone returns the row(s) not a int of afftecd_rows
+        @_trigger_update_callback = (sunstone? ? affected_rows.rows.size : affected_rows) == 1
+      end
+
+      @previously_new_record = false
+
+      yield(self) if block_given?
+
+      affected_rows
+    end
+
+    #!!!! TODO: I am duplicated from finder_methods.....
+    def construct(parent, relations, seen, model_cache)
+      relations.each do |key, attributes|
+        reflection = parent.class.reflect_on_association(key)
+        next unless reflection
+
+        if reflection.collection?
+          other = parent.association(reflection.name)
+          other.loaded!
+        else
+          if parent.association_cached?(reflection.name)
+            model = parent.association(reflection.name).target
+            construct(model, attributes.select{|k,v| !reflection.klass.column_names.include?(k.to_s) }, seen, model_cache)
+          end
+        end
+
+        if !reflection.collection?
+          construct_association(parent, reflection, attributes, seen, model_cache)
+        else
+          attributes.each do |row|
+            construct_association(parent, reflection, row, seen, model_cache)
+          end
+        end
+
+      end
+    end
+
+    #!!!! TODO: I am duplicated from finder_methods.....
+    def construct_association(parent, reflection, attributes, seen, model_cache)
+      return if attributes.nil?
+
+      klass = if reflection.polymorphic?
+        parent.send(reflection.foreign_type).constantize.base_class
+      else
+        reflection.klass
+      end
+      id = attributes[klass.primary_key]
+      model = seen[parent.class.base_class][parent.id][klass][id]
+
+      if model
+        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+
+        other = parent.association(reflection.name)
+
+        if reflection.collection?
+          other.target.push(model)
+        else
+          other.target = model
+        end
+
+        other.set_inverse_instance(model)
+      else
+        model = construct_model(parent, reflection, id, attributes.select{|k,v| klass.column_names.include?(k.to_s) }, seen, model_cache)
+        seen[parent.class.base_class][parent.id][model.class.base_class][id] = model
+        construct(model, attributes.select{|k,v| !klass.column_names.include?(k.to_s) }, seen, model_cache)
+      end
+    end
+
+    #!!!! TODO: I am duplicated from finder_methods.....
+    def construct_model(record, reflection, id, attributes, seen, model_cache)
+      klass = if reflection.polymorphic?
+        record.send(reflection.foreign_type).constantize
+      else
+        reflection.klass
+      end
+
+      model = model_cache[klass][id] ||= klass.instantiate(attributes)
+      other = record.association(reflection.name)
+
+      if reflection.collection?
+        other.target.push(model)
+      else
+        other.target = model
+      end
+
+      other.set_inverse_instance(model)
+      model
+    end
+
   end
 end
