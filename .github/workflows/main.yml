@@ -36,7 +36,6 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.3
           - 3.4
         rails-version:
           - v8.0.1
@@ -95,7 +94,6 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.3
           - 3.4
         rails-version:
           - v8.0.1
@@ -141,7 +139,6 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - 3.3
           - 3.4
         rails-version:
           - v8.0.1
