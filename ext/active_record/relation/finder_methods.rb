@@ -10,8 +10,12 @@ module ActiveRecord::FinderMethods
       []
     end
     
+    # def apply_column_aliases(relation)
+    #   relation
+    # end
     def apply_column_aliases(relation)
-      relation
+      @join_root_alias = relation.select_values.empty?
+      relation._select!(-> { aliases.columns })
     end
     
     def instantiate(result_set, strict_loading_value, &block)
