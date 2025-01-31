@@ -99,40 +99,40 @@ module ActiveRecord
       Thread.current[:sunstone_updating_model] = nil
     end
 
- #    # Creates a record with values matching those of the instance attributes
- #    # and returns its id.
- #    def _create_record(attribute_names = self.attribute_names)
- #      attribute_names = attributes_for_create(attribute_names)
- #      attribute_values = attributes_with_values(attribute_names)
- #      returning_values = nil
- #
- #      self.class.with_connection do |connection|
- #        returning_columns = self.class._returning_columns_for_insert(connection)
- #
- #        returning_values = self.class._insert_record(
- #          connection,
- #          attribute_values,
- #          returning_columns
- #        )
- #
- #        if !self.sunstone?
- #          returning_columns.zip(returning_values).each do |column, value|
- #            _write_attribute(column, value) if !_read_attribute(column)
- #          end if returning_values
- #        end
- #      end
- #
- #      @new_record = false
- #      @previously_new_record = true
- #
- #      yield(self) if block_given?
- #
- #      if self.sunstone?
- #        returning_values
- #      else
- #        id
- #      end
- #    end
+    # Creates a record with values matching those of the instance attributes
+    # and returns its id.
+    def _create_record(attribute_names = self.attribute_names)
+      attribute_names = attributes_for_create(attribute_names)
+      attribute_values = attributes_with_values(attribute_names)
+      returning_values = nil
+
+      self.class.with_connection do |connection|
+        returning_columns = self.class._returning_columns_for_insert(connection)
+
+        returning_values = self.class._insert_record(
+          connection,
+          attribute_values,
+          returning_columns
+        )
+
+        if !self.sunstone?
+          returning_columns.zip(returning_values).each do |column, value|
+            _write_attribute(column, value) if !_read_attribute(column)
+          end if returning_values
+        end
+      end
+
+      @new_record = false
+      @previously_new_record = true
+
+      yield(self) if block_given?
+
+      if self.sunstone?
+        returning_values
+      else
+        id
+      end
+    end
  #
  #    def _touch_row(attribute_names, time)
  #      time ||= current_time_from_proper_timezone
