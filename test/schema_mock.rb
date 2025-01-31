@@ -27,6 +27,8 @@ class ActiveSupport::TestCase
         else
           integer('id', primary_key: true, null: false)
         end
+        
+        # case options[:primary_key]
 
         block.call(self)
       end
@@ -79,7 +81,7 @@ class ActiveSupport::TestCase
     end
 
     def create_table(name, options={}, &block)
-      @tables[name] = Table.new(name, options, &block)
+      @tables[name.to_s] = Table.new(name.to_s, options, &block)
     end
 
   end
