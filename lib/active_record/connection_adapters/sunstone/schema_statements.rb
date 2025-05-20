@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ActiveRecord
   module ConnectionAdapters
     module Sunstone
@@ -39,6 +41,8 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
+          puts table_name.inspect
+          puts definition(table_name).inspect
           # TODO: settle on schema, I think we've switched to attributes, so
           # columns can be removed soon?
           definition(table_name)['attributes'] || definition(table_name)['columns']

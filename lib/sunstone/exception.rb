@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sunstone
   
   class ServerError < ::RuntimeError

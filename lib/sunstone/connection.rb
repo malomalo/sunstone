@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # _Sunstone_ is a low-level API. It provides basic HTTP #get, #post, #put, and
 # #delete calls to the Sunstone Server. It can also provides basic error
 # checking of responses.

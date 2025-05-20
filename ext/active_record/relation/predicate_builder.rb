@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ActiveRecord::PredicateBuilder # :nodoc:
 
   def expand_from_hash(attributes, &block)

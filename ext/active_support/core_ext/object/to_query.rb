@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NilClass
   
   def to_query(namespace)
