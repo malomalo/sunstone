@@ -41,8 +41,6 @@ module ActiveRecord
         #  - format_type includes the column size constraint, e.g. varchar(50)
         #  - ::regclass is a function that gives the id for a table name
         def column_definitions(table_name) # :nodoc:
-          puts table_name.inspect
-          puts definition(table_name).inspect
           # TODO: settle on schema, I think we've switched to attributes, so
           # columns can be removed soon?
           definition(table_name)['attributes'] || definition(table_name)['columns']
@@ -63,16 +61,16 @@ module ActiveRecord
         end
 
         def new_column(name, options)
-          sql_type_metadata = fetch_type_metadata(options)
-          SunstoneColumn.new(name, sql_type_metadata, options)
+          cast_type = lookup_cast_type(options)
+          sql_type_metadata = fetch_type_metadata(cast_type, options)
+          SunstoneColumn.new(name, cast_type, sql_type_metadata, options)
         end
 
         def lookup_cast_type(options)
           @type_map.lookup(options['type'], options.symbolize_keys)
         end
 
-        def fetch_type_metadata(options)
-          cast_type = lookup_cast_type(options)
+        def fetch_type_metadata(cast_type, options)
           simple_type = SqlTypeMetadata.new(
             sql_type: options['type'],
             type: cast_type.type,

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The last ref that this code was synced with Rails
-# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+# ref: 90a1eaa1b3
 
 module ActiveRecord
   module AttributeMethods

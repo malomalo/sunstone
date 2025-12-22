@@ -11,7 +11,7 @@ end
 require 'rgeo'
 require 'byebug'
 require "minitest/autorun"
-require 'minitest/unit'
+require 'minitest'
 require 'minitest/reporters'
 require 'webmock/minitest'
 require 'mocha/minitest'

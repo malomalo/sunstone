@@ -68,7 +68,7 @@ module ActiveRecord
           elsif self.is_a?(ActiveRecord::ConnectionAdapters::SunstoneAPIAdapter)
             collector = SunstonePartialQueryCollector.new(self.collector)
             parts, binds = visitor.compile(arel.ast, collector)
-            query = StatementCache::PartialQuery.new(parts, true)
+            query = StatementCache::PartialQuery.new(parts, retryable: collector.retryable, sunstone: true)
           else
             collector = klass.partial_query_collector
             parts, binds = visitor.compile(arel.ast, collector)
@@ -245,6 +245,10 @@ module ActiveRecord
 
         def returning_column_values(result)
           result.rows.first
+        end
+
+        def write_query?(arel)
+          arel.request_type != Net::HTTP::Get
         end
 
       end

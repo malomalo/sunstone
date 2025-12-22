@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# The last ref that this code was synced with Rails
+# ref: 90a1eaa1b3
+
 class ActiveRecord::Associations::CollectionAssociation::HasManyThroughAssociation
 
   private
@@ -12,7 +15,7 @@ class ActiveRecord::Associations::CollectionAssociation::HasManyThroughAssociati
       association.save!
     end
   ensure
-    @through_records.delete(record.object_id)
+    @through_records.delete(record)
   end
 
 end

@@ -8,8 +8,9 @@ module ActiveRecord
 
       attr_reader :array
       
-      def initialize(name, sql_type_metadata, options={})
+      def initialize(name, cast_type, sql_type_metadata, options={})
         @name = name.freeze
+        @cast_type = cast_type
         @sql_type_metadata = sql_type_metadata
         @null = options['null']
         @default = options['default'] ? JSON.generate(options['default']) : options['default']

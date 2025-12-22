@@ -10,13 +10,14 @@ jobs:
     name: Sunstone Test
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         ruby-version:
           - 3.3
           - 3.4
-          - 3.5.0-preview1
+          - 4.0
         rails-version:
-          - 8.0.1
+          - 8.1.1
 
     steps:
       - uses: actions/checkout@v4
@@ -35,11 +36,12 @@ jobs:
     name: ActiveRecord PostgresQL Test
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.0.1
+          - v8.1.1
         postgres-version:
           - 17
 
@@ -76,13 +78,25 @@ jobs:
           rm ~/rails/Gemfile.lock
           sed -i "/# Active Record./a gem 'sunstone', path: File.expand_path\(ENV['GITHUB_WORKSPACE']\)" ~/rails/Gemfile
           cat ~/rails/Gemfile
-          bundle update --jobs=3 --retry=3
+
+      - name: This can eventually be removed
+        run: |
+          sed -i 's/gem "minitest"$/gem "minitest"\ngem "minitest-mock", require: "minitest\/mock"/' ~/rails/Gemfile
+          sed -i 's/module ActiveRecord$/module Rails\nend\nmodule ActiveRecord/' ~/rails/activerecord/test/cases/adapters/postgresql/postgresql_adapter_test.rb || true
+          sed -i 's/t.options = "--profile" if ENV\["CI"\]//g' ~/rails/activerecord/Rakefile
+          gem install minitest-mock
 
       - name: Fix Weird Test Cases
         run: |
           sed -i 's|} - \[:|} - \[:distinct_on, :uniq_on, :|' ~/rails/activerecord/test/cases/relation/delegation_test.rb
           sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/database_configurations/resolver_test.rb
           sed -i 's|sqlite3, trilogy|sqlite3, sunstone, trilogy|' ~/rails/activerecord/test/cases/connection_adapters/registration_test.rb
+
+      - run: |
+          pushd ~/rails
+          bundle install --jobs=3 --retry=3
+          bundle update --jobs=3 --retry=3
+          popd
 
       - run: |
           pushd ~/rails/activerecord
@@ -93,11 +107,12 @@ jobs:
     name: ActiveRecord SQLite Test
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.0.1
+          - v8.1.1
 
     steps:
       - uses: actions/checkout@v4
@@ -120,6 +135,13 @@ jobs:
           cat ~/rails/Gemfile
           bundle update --jobs=3 --retry=3
 
+      - name: This can eventually be removed
+        run: |
+          sed -i 's/gem "minitest"$/gem "minitest"\ngem "minitest-mock", require: "minitest\/mock"/' ~/rails/Gemfile
+          sed -i 's/module ActiveRecord$/module Rails\nend\nmodule ActiveRecord/' ~/rails/activerecord/test/cases/adapters/sqlite3/dbconsole_test.rb
+          sed -i 's/t.options = "--profile" if ENV\["CI"\]//g' ~/rails/activerecord/Rakefile
+          gem install minitest-mock
+
       - name: Fix Weird Test Cases
         run: |
           sed -i 's|} - \[:|} - \[:distinct_on, :uniq_on, :|' ~/rails/activerecord/test/cases/relation/delegation_test.rb
@@ -138,11 +160,12 @@ jobs:
     name: ActiveRecord MySQL Test
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.0.1
+          - v8.1.1
 
     steps:
       - name: Install MySQL
@@ -170,6 +193,15 @@ jobs:
           sed -i "/# Active Record./a gem 'sunstone', path: File.expand_path\(ENV['GITHUB_WORKSPACE']\)" ~/rails/Gemfile
           cat ~/rails/Gemfile
           bundle update --jobs=3 --retry=3
+
+
+      - name: This can eventually be removed
+        run: |
+          sed -i 's/gem "minitest"$/gem "minitest"\ngem "minitest-mock", require: "minitest\/mock"/' ~/rails/Gemfile
+          sed -i 's/class WarningsTest < ActiveRecord::AbstractMysqlTestCase$/module Rails\nend\nclass WarningsTest < ActiveRecord::AbstractMysqlTestCase/' ~/rails/activerecord/test/cases/adapters/abstract_mysql_adapter/warnings_test.rb || true
+          sed -i 's/class Mysql2AdapterTest < ActiveRecord::Mysql2TestCase$/module Rails\nend\nclass Mysql2AdapterTest < ActiveRecord::Mysql2TestCase/' ~/rails/activerecord/test/cases/adapters/mysql2/mysql2_adapter_test.rb || true
+          sed -i 's/t.options = "--profile" if ENV\["CI"\]//g' ~/rails/activerecord/Rakefile
+          gem install minitest-mock
 
       - name: Fix Weird Test Cases
         run: |

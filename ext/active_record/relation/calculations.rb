@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The last ref that this code was synced with Rails
-# ref: 9269f634d471ad6ca46752421eabd3e1c26220b5
+# ref: 90a1eaa1b3
 
 module ActiveRecord
   module Calculations
@@ -36,7 +36,7 @@ module ActiveRecord
         columns = relation.arel_columns(column_names)
         relation.select_values = columns
         result = skip_query_cache_if_necessary do
-          if where_clause.contradiction?
+          if where_clause.contradiction? && !possible_aggregation?(column_names)
             ActiveRecord::Result.empty(async: @async)
           else
             model.with_connection do |c|
