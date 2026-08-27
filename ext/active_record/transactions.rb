@@ -59,6 +59,8 @@ module ActiveRecord
           end
         end
 
+        # TODO: drop this Rails 8.0 compatibility branch when Rails 8.0
+        # support is dropped, and always use with_pool_transaction_isolation_level.
         # Rails 8.1 wraps the transaction in a pool-level isolation context;
         # this API doesn't exist on 8.0, so run the body directly there.
         if ActiveRecord.respond_to?(:default_transaction_isolation_level)

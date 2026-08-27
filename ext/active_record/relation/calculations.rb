@@ -36,6 +36,8 @@ module ActiveRecord
         columns = relation.arel_columns(column_names)
         relation.select_values = columns
         result = skip_query_cache_if_necessary do
+          # TODO: drop this Rails 8.0 compatibility guard when Rails 8.0 support is
+          # dropped, and call possible_aggregation?(column_names) directly.
           # possible_aggregation? was added in Rails 8.1; on 8.0 a contradiction
           # short-circuits to an empty result unconditionally.
           if where_clause.contradiction? && !(respond_to?(:possible_aggregation?, true) && possible_aggregation?(column_names))

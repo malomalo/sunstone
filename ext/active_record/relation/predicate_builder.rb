@@ -32,6 +32,8 @@ class ActiveRecord::PredicateBuilder # :nodoc:
           }
         end
         ka
+      # TODO: drop this Rails 8.0 compatibility branch when Rails 8.0 support is
+      # dropped, and always use table.associated_with(key). (8.0 named it associated_with?)
       elsif (associated_reflection = (table.respond_to?(:associated_with) ? table.associated_with(key) : table.associated_with?(key)))
         # Find the foreign key when using queries such as:
         # Post.where(author: author)
@@ -51,6 +53,8 @@ class ActiveRecord::PredicateBuilder # :nodoc:
         end
 
         klass ||= AssociationQueryValue
+        # TODO: drop this Rails 8.0 compatibility branch when Rails 8.0 support is
+        # dropped, and always pass associated_reflection.
         # Rails 8.1 threads the reflection through the value objects; 8.0 threads the table metadata.
         query_source = table.respond_to?(:associated_with) ? associated_reflection : table.associated_table(key)
         queries = klass.new(query_source, value).queries.map! do |query|
