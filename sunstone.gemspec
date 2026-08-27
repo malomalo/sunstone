@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   s.summary     = %q{A library for interacting with REST APIs}
   s.description = %q{A library for interacting with REST APIs. Similar to ActiveResource}
 
-  s.files         = Dir["LICENSE", "README.rdoc", "lib/**/*", "ext/**/*"]
+  s.files         = Dir["LICENSE", "README.md", "lib/**/*", "ext/**/*"]
   s.require_paths = ["lib"]
-  s.required_ruby_version = '>= 2.6'
+  s.required_ruby_version = '>= 3.3'
 
   # Developoment 
   s.add_development_dependency 'rake'
