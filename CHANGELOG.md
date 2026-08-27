@@ -5,9 +5,12 @@
   synced to Rails 8.1 and used 8.1-only APIs; they now work against 8.0 as well.
 - Require Ruby >= 3.3. The gemspec previously declared `>= 2.6`, which the
   `activerecord >= 8.0.1` dependency never actually permitted.
+- Require `arel-extensions >= 9.0.0` and `activerecord-filter >= 9.0.0`; the
+  previous `>= 7.x` floors predated Rails 8 support.
 
 ### Added
 - Declare the MIT license in the gemspec.
+- Add gemspec `metadata` (source code and changelog URIs, `rubygems_mfa_required`).
 
 ### Fixed
 - Package `README.md` in the published gem. The gemspec referenced a
