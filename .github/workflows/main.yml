@@ -3,7 +3,7 @@ name: CI
 on: 
   push:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   sunstone:
@@ -17,13 +17,13 @@ jobs:
           - 3.4
           - 4.0
         rails-version:
-          - 8.1.1
+          - "8.1"
 
     steps:
       - uses: actions/checkout@v4
 
       - run: |
-          echo 'gem "rails", "${{ matrix.rails-version }}"' >> Gemfile
+          echo 'gem "rails", "~> ${{ matrix.rails-version }}.0"' >> Gemfile
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -41,7 +41,7 @@ jobs:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.1.1
+          - "8.1"
         postgres-version:
           - 17
 
@@ -69,7 +69,9 @@ jobs:
     
       - name: Download Rails
         run: |
-          git clone --branch ${{ matrix.rails-version }} https://github.com/rails/rails.git ~/rails
+          RAILS_TAG=$(git ls-remote --tags --refs https://github.com/rails/rails.git 'v${{ matrix.rails-version }}.*' | awk '{print $2}' | sed 's#refs/tags/##' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1)
+          echo "Using latest Rails tag: $RAILS_TAG"
+          git clone --branch "$RAILS_TAG" --depth 1 https://github.com/rails/rails.git ~/rails
           pushd ~/rails
           cat /home/runner/work/_temp/*.sh
           sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
@@ -112,7 +114,7 @@ jobs:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.1.1
+          - "8.1"
 
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +126,9 @@ jobs:
     
       - name: Download Rails
         run: |
-          git clone --branch ${{ matrix.rails-version }} https://github.com/rails/rails.git ~/rails
+          RAILS_TAG=$(git ls-remote --tags --refs https://github.com/rails/rails.git 'v${{ matrix.rails-version }}.*' | awk '{print $2}' | sed 's#refs/tags/##' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1)
+          echo "Using latest Rails tag: $RAILS_TAG"
+          git clone --branch "$RAILS_TAG" --depth 1 https://github.com/rails/rails.git ~/rails
           pushd ~/rails
           cat /home/runner/work/_temp/*.sh
           sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
@@ -165,7 +169,7 @@ jobs:
         ruby-version:
           - 3.4
         rails-version:
-          - v8.1.1
+          - "8.1"
 
     steps:
       - name: Install MySQL
@@ -183,7 +187,9 @@ jobs:
     
       - name: Download Rails
         run: |
-          git clone --branch ${{ matrix.rails-version }} https://github.com/rails/rails.git ~/rails
+          RAILS_TAG=$(git ls-remote --tags --refs https://github.com/rails/rails.git 'v${{ matrix.rails-version }}.*' | awk '{print $2}' | sed 's#refs/tags/##' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1)
+          echo "Using latest Rails tag: $RAILS_TAG"
+          git clone --branch "$RAILS_TAG" --depth 1 https://github.com/rails/rails.git ~/rails
           pushd ~/rails
           cat /home/runner/work/_temp/*.sh
           sed -i "s/Gem.ruby, '-w'/Gem.ruby, '-w0'/" ~/rails/activerecord/Rakefile
