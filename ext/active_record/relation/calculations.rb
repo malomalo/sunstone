@@ -36,7 +36,9 @@ module ActiveRecord
         columns = relation.arel_columns(column_names)
         relation.select_values = columns
         result = skip_query_cache_if_necessary do
-          if where_clause.contradiction? && !possible_aggregation?(column_names)
+          # possible_aggregation? was added in Rails 8.1; on 8.0 a contradiction
+          # short-circuits to an empty result unconditionally.
+          if where_clause.contradiction? && !(respond_to?(:possible_aggregation?, true) && possible_aggregation?(column_names))
             ActiveRecord::Result.empty(async: @async)
           else
             model.with_connection do |c|
