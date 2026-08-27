@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.homepage    = "http://sunstonerb.com"
   s.summary     = %q{A library for interacting with REST APIs}
   s.description = %q{A library for interacting with REST APIs. Similar to ActiveResource}
+  s.license     = "MIT"
 
   s.files         = Dir["LICENSE", "README.md", "lib/**/*", "ext/**/*"]
   s.require_paths = ["lib"]
