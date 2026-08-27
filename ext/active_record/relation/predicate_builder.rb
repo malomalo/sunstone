@@ -32,7 +32,7 @@ class ActiveRecord::PredicateBuilder # :nodoc:
           }
         end
         ka
-      elsif (associated_reflection = table.associated_with(key))
+      elsif (associated_reflection = (table.respond_to?(:associated_with) ? table.associated_with(key) : table.associated_with?(key)))
         # Find the foreign key when using queries such as:
         # Post.where(author: author)
         #
@@ -51,7 +51,9 @@ class ActiveRecord::PredicateBuilder # :nodoc:
         end
 
         klass ||= AssociationQueryValue
-        queries = klass.new(associated_reflection, value).queries.map! do |query|
+        # Rails 8.1 threads the reflection through the value objects; 8.0 threads the table metadata.
+        query_source = table.respond_to?(:associated_with) ? associated_reflection : table.associated_table(key)
+        queries = klass.new(query_source, value).queries.map! do |query|
           # If the query produced is identical to attributes don't go any deeper.
           # Prevents stack level too deep errors when association and foreign_key are identical.
           query == attributes ? self[key, value] : expand_from_hash(query)

@@ -40,9 +40,9 @@ module ActiveRecord
 
     def with_transaction_returning_status
       self.class.with_connection do |connection|
-        connection.pool.with_pool_transaction_isolation_level(ActiveRecord.default_transaction_isolation_level, connection.transaction_open?) do
+        transaction_body = proc do
           status = nil
-          
+
           if sunstone? && instance_variable_defined?(:@sunstone_updating) && @sunstone_updating
             status = yield
           else
@@ -50,13 +50,21 @@ module ActiveRecord
             connection.transaction do
               add_to_transaction(ensure_finalize || has_transactional_callbacks?)
               remember_transaction_record_state
-  
+
               status = yield
               raise ActiveRecord::Rollback unless status
             end
             @_last_transaction_return_status = status
             status
           end
+        end
+
+        # Rails 8.1 wraps the transaction in a pool-level isolation context;
+        # this API doesn't exist on 8.0, so run the body directly there.
+        if ActiveRecord.respond_to?(:default_transaction_isolation_level)
+          connection.pool.with_pool_transaction_isolation_level(ActiveRecord.default_transaction_isolation_level, connection.transaction_open?, &transaction_body)
+        else
+          transaction_body.call
         end
       end
     end
