@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = %q{A library for interacting with REST APIs. Similar to ActiveResource}
   s.license     = "MIT"
 
-  s.files         = Dir["LICENSE", "README.md", "lib/**/*", "ext/**/*"]
+  s.files         = Dir["LICENSE", "README.md", "CHANGELOG.md", "lib/**/*", "ext/**/*"]
   s.require_paths = ["lib"]
   s.required_ruby_version = '>= 3.3'
 
