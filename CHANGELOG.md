@@ -1,4 +1,4 @@
-## [8.0.1] - 2026-08-27
+## [8.1.0] - 2026-08-27
 
 ### Changed
 - Support both Rails 8.0 and 8.1. The ActiveRecord overrides in `ext/` had been
@@ -34,7 +34,7 @@ full history; notable releases:
 - [6.1.0] - 2021-01-14
 - [6.0.0] - 2019-06-10
 
-[8.0.1]: https://github.com/malomalo/sunstone/compare/v8.0.0...v8.0.1
+[8.1.0]: https://github.com/malomalo/sunstone/compare/v8.0.0...v8.1.0
 [8.0.0]: https://github.com/malomalo/sunstone/releases/tag/v8.0.0
 [7.1.0.1]: https://github.com/malomalo/sunstone/releases/tag/v7.1.0.1
 [7.1.0]: https://github.com/malomalo/sunstone/releases/tag/v7.1.0
