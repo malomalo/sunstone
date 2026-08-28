@@ -7,7 +7,10 @@ module ActiveRecord
   class StatementCache
     class PartialQuery
 
-      def initialize(values, retryable:, sunstone: false)
+      # TODO: drop this Rails 8.0 compatibility default when Rails 8.0 support is
+      # dropped, and make retryable: a required keyword again.
+      # retryable: is required on Rails 8.1 but absent from 8.0's caller.
+      def initialize(values, retryable: false, sunstone: false)
         @values = values
         @indexes = if sunstone
         else
